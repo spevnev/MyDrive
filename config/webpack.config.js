@@ -1,3 +1,5 @@
+// NODE_ENV=production
+
 const fs = require("fs");
 const path = require("path");
 const webpack = require("webpack");
@@ -12,7 +14,6 @@ const {WebpackManifestPlugin} = require("webpack-manifest-plugin");
 const InterpolateHtmlPlugin = require("react-dev-utils/InterpolateHtmlPlugin");
 const WorkboxWebpackPlugin = require("workbox-webpack-plugin");
 const ModuleScopePlugin = require("react-dev-utils/ModuleScopePlugin");
-const getCSSModuleLocalIdent = require("react-dev-utils/getCSSModuleLocalIdent");
 const ESLintPlugin = require("eslint-webpack-plugin");
 const paths = require("./paths");
 const modules = require("./modules");
@@ -27,16 +28,9 @@ const babelRuntimeEntry = require.resolve("babel-preset-react-app");
 const babelRuntimeEntryHelpers = require.resolve("@babel/runtime/helpers/esm/assertThisInitialized", {paths: [babelRuntimeEntry]});
 const babelRuntimeRegenerator = require.resolve("@babel/runtime/regenerator", {paths: [babelRuntimeEntry]});
 
-const shouldInlineRuntimeChunk = process.env.INLINE_RUNTIME_CHUNK !== "false";
-const emitErrorsAsWarnings = process.env.ESLINT_NO_DEV_ERRORS === "true";
 const disableESLintPlugin = process.env.DISABLE_ESLINT_PLUGIN === "true";
 const imageInlineSizeLimit = parseInt(process.env.IMAGE_INLINE_SIZE_LIMIT || "10000");
 const swSrc = paths.swSrc;
-
-const cssRegex = /\.css$/;
-const cssModuleRegex = /\.module\.css$/;
-const sassRegex = /\.(scss|sass)$/;
-const sassModuleRegex = /\.module\.(scss|sass)$/;
 
 const hasJsxRuntime = (() => {
 	if (process.env.DISABLE_NEW_JSX_TRANSFORM === "true") return false;
@@ -48,58 +42,12 @@ const hasJsxRuntime = (() => {
 	}
 })();
 
-module.exports = function (webpackEnv) {
+module.exports = webpackEnv => {
 	const isEnvDevelopment = webpackEnv === "development";
 	const isEnvProduction = webpackEnv === "production";
 	const isEnvProductionProfile = isEnvProduction && process.argv.includes("--profile");
-
 	const env = getClientEnvironment(paths.publicUrlOrPath.slice(0, -1));
-
 	const shouldUseReactRefresh = env.raw.FAST_REFRESH;
-
-	const getStyleLoaders = (cssOptions, preProcessor) => {
-		const loaders = [
-			isEnvDevelopment && require.resolve("style-loader"),
-			isEnvProduction && {
-				loader: MiniCssExtractPlugin.loader,
-				options: paths.publicUrlOrPath.startsWith(".") ? {publicPath: "../../"} : {},
-			},
-			{
-				loader: require.resolve("css-loader"),
-				options: cssOptions,
-			},
-			{
-				loader: require.resolve("postcss-loader"),
-				options: {
-					postcssOptions: {
-						ident: "postcss",
-						config: false,
-						plugins: ["postcss-flexbugs-fixes", ["postcss-preset-env", {autoprefixer: {flexbox: "no-2009"}, stage: 3}], "postcss-normalize"],
-					},
-					sourceMap: isEnvProduction ? false : isEnvDevelopment,
-				},
-			},
-		].filter(Boolean);
-		if (preProcessor) {
-			loaders.push(
-				{
-					loader: require.resolve("resolve-url-loader"),
-					options: {
-						sourceMap: isEnvProduction ? false : isEnvDevelopment,
-						root: paths.appSrc,
-					},
-				},
-				{
-					loader: require.resolve(preProcessor),
-					options: {
-						sourceMap: true,
-					},
-				},
-			);
-		}
-		return loaders;
-	};
-
 	return {
 		target: ["browserslist"],
 		mode: isEnvProduction ? "production" : isEnvDevelopment && "development",
@@ -253,49 +201,6 @@ module.exports = function (webpackEnv) {
 							},
 						},
 						{
-							test: cssRegex,
-							exclude: cssModuleRegex,
-							use: getStyleLoaders({
-								importLoaders: 1,
-								sourceMap: isEnvProduction ? false : isEnvDevelopment,
-								modules: {mode: "icss"},
-							}),
-							sideEffects: true,
-						},
-						{
-							test: cssModuleRegex,
-							use: getStyleLoaders({
-								importLoaders: 1,
-								sourceMap: isEnvProduction ? false : isEnvDevelopment,
-								modules: {mode: "local", getLocalIdent: getCSSModuleLocalIdent},
-							}),
-						},
-						{
-							test: sassRegex,
-							exclude: sassModuleRegex,
-							use: getStyleLoaders(
-								{
-									importLoaders: 3,
-									sourceMap: isEnvProduction ? false : isEnvDevelopment,
-									modules: {mode: "icss"},
-								},
-							),
-							sideEffects: true,
-						},
-						{
-							test: sassModuleRegex,
-							use: getStyleLoaders(
-								{
-									importLoaders: 3,
-									sourceMap: isEnvProduction ? false : isEnvDevelopment,
-									modules: {
-										mode: "local",
-										getLocalIdent: getCSSModuleLocalIdent,
-									},
-								},
-							),
-						},
-						{
 							exclude: [/^$/, /\.(js|mjs|jsx|ts|tsx)$/, /\.html$/, /\.json$/],
 							type: "asset/resource",
 						},
@@ -322,7 +227,7 @@ module.exports = function (webpackEnv) {
 					} : undefined,
 				),
 			),
-			isEnvProduction && shouldInlineRuntimeChunk &&
+			isEnvProduction && process.env.INLINE_RUNTIME_CHUNK !== "false" &&
 			new InlineChunkHtmlPlugin(HtmlWebpackPlugin, [/runtime-.+[.]js/]),
 			new InterpolateHtmlPlugin(HtmlWebpackPlugin, env.raw),
 			new ModuleNotFoundPlugin(paths.appPath),
@@ -395,7 +300,7 @@ module.exports = function (webpackEnv) {
 				extensions: ["js", "mjs", "jsx", "ts", "tsx"],
 				formatter: require.resolve("react-dev-utils/eslintFormatter"),
 				eslintPath: require.resolve("eslint"),
-				failOnError: !(isEnvDevelopment && emitErrorsAsWarnings),
+				failOnError: !(isEnvDevelopment && process.env.ESLINT_NO_DEV_ERRORS === "true"),
 				context: paths.appSrc,
 				cache: true,
 				cacheLocation: path.resolve(paths.appNodeModules, ".cache/.eslintcache"),
@@ -407,6 +312,5 @@ module.exports = function (webpackEnv) {
 				},
 			}),
 		].filter(Boolean),
-		performance: false,
 	};
 };
