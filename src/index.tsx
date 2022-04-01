@@ -1,17 +1,16 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
+import React from "react";
+import App from "./App";
+import GlobalStyles from "./styles";
+import * as ReactDOMClient from "react-dom/client";
 
-ReactDOM.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-  document.getElementById('root')
+
+const root: Element | null = document.getElementById("root");
+if (!root) throw new Error("Couldn't mount app - no element matched the selector!");
+const app = ReactDOMClient.createRoot(root);
+
+app.render(
+	<>
+		<GlobalStyles/>
+		<App/>
+	</>,
 );
-
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
