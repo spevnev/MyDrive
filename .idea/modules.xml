@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/mydrivefront.iml" filepath="$PROJECT_DIR$/.idea/mydrivefront.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/myDriveFront.iml" filepath="$PROJECT_DIR$/.idea/myDriveFront.iml" />
     </modules>
   </component>
 </project>
