@@ -1,7 +1,23 @@
-import React from "react";
+import React, {useEffect, useState} from "react";
+import {Navigate, Route, Routes} from "react-router-dom";
+import getToken from "./service/jwt";
+import MainPage from "./pages/main";
+import LoginPage from "./pages/login";
 
 const App = () => {
-	return <h1>Text</h1>;
+	const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+
+	const checkAuthentication = () => setIsAuthenticated(!!getToken());
+	useEffect(checkAuthentication, []);
+
+
+	return (
+		<Routes>
+			<Route index element={isAuthenticated ? <MainPage/> : <Navigate to="/login"/>}/>
+			<Route path="login" element={!isAuthenticated ? <LoginPage checkAuthentication={checkAuthentication}/> : <Navigate to="/"/>}/>
+		</Routes>
+	);
 };
 
 export default App;

@@ -3,6 +3,7 @@ import App from "./App";
 import GlobalStyles from "./styles";
 import * as ReactDOMClient from "react-dom/client";
 import {ApolloClient, ApolloProvider, InMemoryCache} from "@apollo/client";
+import {BrowserRouter} from "react-router-dom";
 
 const loading: Element | null = document.getElementById("loading");
 if (loading) loading.remove();
@@ -18,8 +19,10 @@ if (!root) throw new Error("Couldn't mount app - no element matched the selector
 const app = ReactDOMClient.createRoot(root);
 
 app.render(
-	<ApolloProvider client={client}>
-		<GlobalStyles/>
-		<App/>
-	</ApolloProvider>,
+	<BrowserRouter>
+		<ApolloProvider client={client}>
+			<GlobalStyles/>
+			<App/>
+		</ApolloProvider>
+	</BrowserRouter>,
 );
