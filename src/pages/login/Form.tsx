@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from "react";
-import {Button, Container, ErrorMessage, FormInputs, FormTitle, Input} from "./index.styles";
+import {Button, Container, ErrorMessage, FormInputs, FormTitle, Input} from "./Form.styles";
 
 export type FormInput = {
 	name: string;
