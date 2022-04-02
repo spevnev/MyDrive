@@ -1,15 +1,7 @@
 import React from "react";
-import styled from "styled-components";
-
-const Style = styled.p`
-  font-size: 24px;
-`;
-
 
 const App = () => {
-	return (
-		<Style>Hello world!</Style>
-	);
+	return <h1>Text</h1>;
 };
 
 export default App;
