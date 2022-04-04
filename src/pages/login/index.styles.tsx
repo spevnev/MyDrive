@@ -1,6 +1,4 @@
 import styled from "styled-components";
-import StyledInput from "../../components/StyledInput";
-import StyledButton from "../../components/StyledButton";
 
 export const Page = styled.main`
   width: 100vw;

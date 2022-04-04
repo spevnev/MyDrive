@@ -1,6 +1,6 @@
 import React from "react";
 import App from "./App";
-import GlobalStyles from "./styles";
+import GlobalStyles from "./index.styles";
 import * as ReactDOMClient from "react-dom/client";
 import {ApolloClient, ApolloProvider, InMemoryCache} from "@apollo/client";
 import {BrowserRouter} from "react-router-dom";
