@@ -1,7 +1,6 @@
 import React, {MouseEvent} from "react";
 import {createPortal} from "react-dom";
 import {BR, Container, Icon, Name, Option} from "./ContextMenu.styles";
-import contextMenuOptionsFactory, {EContextMenuOptions} from "../service/contextMenuOptionFactory";
 
 export type ContextMenuOption = {
 	name: string;
@@ -15,6 +14,7 @@ export type ContextMenuProps = {
 	x?: number;
 	y?: number;
 	options?: ContextMenuOption[];
+	onClick?: (e: MouseEvent) => void;
 }
 
 const areCoordinatesValid = (x: number, y: number): boolean => !(x < 0 || x > window.innerWidth || y < 0 || y > window.innerHeight);
@@ -33,7 +33,7 @@ const calculateAbsolutePosition = (x: number, y: number, [optionsNum, BRNum]: nu
 	return {width, height, top, left};
 };
 
-const ContextMenu = ({isOpened = false, options = [], x = 0, y = 0}: ContextMenuProps) => {
+const ContextMenu = ({isOpened = false, options = [], x = 0, y = 0, onClick = () => {}}: ContextMenuProps) => {
 	if (!options || !isOpened || !areCoordinatesValid(x, y)) return null;
 
 	const element: Element | null = document.getElementById("contextMenu");
@@ -47,7 +47,7 @@ const ContextMenu = ({isOpened = false, options = [], x = 0, y = 0}: ContextMenu
 	}, [0, 0]);
 
 	return createPortal(
-		<Container style={calculateAbsolutePosition(x, y, optionsNum)}>
+		<Container style={calculateAbsolutePosition(x, y, optionsNum)} onClick={onClick}>
 			{options.map(({name, icon, callback}: ContextMenuOption, i) =>
 				name === "BR" ?
 					<BR key={i}/>

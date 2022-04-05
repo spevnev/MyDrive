@@ -33,7 +33,7 @@ export const Icon = styled.img`
 `;
 
 export const Name = styled.p`
-  font-size: 20px;
+  font-size: 18px;
   text-align: center;
   width: 100%;
 `;

@@ -1,7 +1,7 @@
 import React, {MouseEvent, useContext} from "react";
-import folderImage from "../../assets/folder.svg";
-import {ContextMenuContext} from "./index";
-import {EContextMenuOptions} from "../../service/contextMenuOptionFactory";
+import folderImage from "../../../assets/folder.svg";
+import {ContextMenuContext} from "../index";
+import {EContextMenuTypes} from "../../../service/contextMenuOptionFactory";
 import {Container, Image, Name} from "./Folder.styles";
 
 type FolderProps = {
@@ -28,7 +28,7 @@ const Folder = ({name, isSelected, onClick}: FolderProps) => {
 
 	const onContextMenu = (e: MouseEvent) => {
 		const contextMenuData: object = {onDelete, onDownload, onRename, onGetLink, onShare, onMoveTo};
-		openContextMenu(e, contextMenuData, EContextMenuOptions.FOLDER);
+		openContextMenu(e, contextMenuData, EContextMenuTypes.FOLDER);
 	};
 
 
