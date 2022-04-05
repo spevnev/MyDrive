@@ -8,10 +8,21 @@ import renameIcon from "../assets/rename.svg";
 import previewIcon from "../assets/eye.svg";
 
 export enum EContextMenuOptions {
-	"FILE"
+	FILE,
+	FOLDER
 }
 
 const contextMenuOptionFactory = (type: EContextMenuOptions, data: { [key: string]: any }): ContextMenuOption[] | null => {
+	const defaultContextMenu = [
+		{name: "Share", icon: shareIcon, callback: data.onShare},
+		{name: "Get link", icon: linkIcon, callback: data.onGetLink},
+		{name: "Move to", icon: moveToIcon, callback: data.onMoveTo},
+		{name: "Rename", icon: renameIcon, callback: data.onRename},
+		{name: "BR", icon: "", callback: () => {}},
+		{name: "Download", icon: downloadIcon, callback: data.onDownload},
+		{name: "Delete", icon: binIcon, callback: data.onDelete},
+	];
+
 	switch (type) {
 		case EContextMenuOptions.FILE:
 			return [
@@ -19,14 +30,10 @@ const contextMenuOptionFactory = (type: EContextMenuOptions, data: { [key: strin
 					{name: "Preview", icon: previewIcon, callback: data.onPreview},
 					{name: "BR", icon: "", callback: () => {}},
 				] : []),
-				{name: "Share", icon: shareIcon, callback: data.onShare},
-				{name: "Get link", icon: linkIcon, callback: data.onGetLink},
-				{name: "Move to", icon: moveToIcon, callback: data.onMoveTo},
-				{name: "Rename", icon: renameIcon, callback: data.onRename},
-				{name: "BR", icon: "", callback: () => {}},
-				{name: "Download", icon: downloadIcon, callback: data.onDownload},
-				{name: "Delete", icon: binIcon, callback: data.onDelete},
+				...defaultContextMenu,
 			];
+		case EContextMenuOptions.FOLDER:
+			return defaultContextMenu;
 		default:
 			return null;
 	}

@@ -10,24 +10,25 @@ import wordFile from "../../assets/file-word.svg";
 import compressedFile from "../../assets/file-zip.svg";
 import emptyFile from "../../assets/file-empty.svg";
 import {ContextMenuContext} from "./index";
-import contextMenuOptionsFactory, {EContextMenuOptions} from "../../service/contextMenuOptionFactory";
-import {ContextMenuOption} from "../../components/ContextMenu";
+import {EContextMenuOptions} from "../../service/contextMenuOptionFactory";
 
-const defaultImageType: string = emptyFile;
-const typeToImage: { [key: string]: string } = {
-	IMAGE: imageFile,
-	TEXT: textFile,
-	MUSIC: musicFile,
-	PDF: pdfFile,
-	VIDEO: videoFile,
-	EXCEL: excelFile,
-	WORD: wordFile,
-	COMPRESSED: compressedFile,
-};
+const defaultImage: string = emptyFile;
+const images: string[] = [imageFile, textFile, musicFile, pdfFile, videoFile, excelFile, wordFile, compressedFile];
+
+export enum EFileType {
+	IMAGE,
+	TEXT,
+	MUSIC,
+	PDF,
+	VIDEO,
+	EXCEL,
+	WORD,
+	COMPRESSED
+}
 
 type FileProps = {
 	filename: string;
-	type: string;
+	type: EFileType | null;
 	isSelected: boolean;
 	onClick: (e: MouseEvent) => void;
 }
@@ -36,33 +37,29 @@ const File = ({filename, type, isSelected, onClick}: FileProps) => {
 	const {openContextMenu}: { [key: string]: Function } = useContext(ContextMenuContext);
 
 
-	const onDelete = () => console.log(1);
+	const onDelete = () => console.log(8);
 
-	const onDownload = () => console.log(1);
+	const onDownload = () => console.log(7);
 
-	const onRename = () => console.log(1);
+	const onRename = () => console.log(6);
 
-	const onGetLink = () => console.log(1);
+	const onGetLink = () => console.log(5);
 
-	const onShare = () => console.log(1);
+	const onShare = () => console.log(4);
 
-	const onMoveTo = () => console.log(1);
+	const onMoveTo = () => console.log(3);
+
+	const onPreview = type !== EFileType.IMAGE ? undefined : () => console.log(1);
 
 	const onContextMenu = (e: MouseEvent) => {
-		const contextMenuData: object = {onDelete, onDownload, onRename, onGetLink, onShare, onMoveTo};
-		const options: ContextMenuOption[] | null = contextMenuOptionsFactory(EContextMenuOptions.FILE, contextMenuData);
-		if (!options) throw new Error("Invalid context menu type!");
-
-		e.preventDefault();
-		e.stopPropagation();
-
-		openContextMenu(e.pageX, e.pageY, options);
+		const contextMenuData: object = {onDelete, onDownload, onRename, onGetLink, onShare, onMoveTo, onPreview};
+		openContextMenu(e, contextMenuData, EContextMenuOptions.FILE);
 	};
 
 
 	return (
 		<Container className={isSelected ? "selected" : ""} onContextMenuCapture={onContextMenu} onClick={onClick}>
-			<FileImage src={typeToImage[type] || defaultImageType}/>
+			<FileImage src={type ? images[type] : defaultImage}/>
 			<Filename>{filename}</Filename>
 		</Container>
 	);

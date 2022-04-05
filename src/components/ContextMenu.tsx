@@ -1,6 +1,7 @@
-import React from "react";
+import React, {MouseEvent} from "react";
 import {createPortal} from "react-dom";
 import {BR, Container, Icon, Name, Option} from "./ContextMenu.styles";
+import contextMenuOptionsFactory, {EContextMenuOptions} from "../service/contextMenuOptionFactory";
 
 export type ContextMenuOption = {
 	name: string;

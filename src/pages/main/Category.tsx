@@ -1,5 +1,6 @@
-import React, {MouseEvent, useEffect} from "react";
+import React, {MouseEvent, useContext, useEffect, useState} from "react";
 import {Container, Name, Row} from "./Category.styles";
+import {SelectedContext} from "./index";
 
 type DataElement = {
 	key: string;
@@ -10,14 +11,15 @@ type CategoryProps = {
 	name: string;
 	Element: (...args: any) => JSX.Element;
 	data: DataElement[];
-	selected: boolean[];
-	setSelected: (arg: boolean[]) => void;
 }
 
-let lastIdx = -1;
-const Category = ({Element, name, data, selected, setSelected}: CategoryProps) => {
+const Category = ({Element, name, data}: CategoryProps) => {
+	const {selected, setSelected} = useContext<any>(SelectedContext);
+	const [lastIdx, setLastIdx] = useState(-1);
+	const curSelected = selected[name];
+
 	useEffect(() => {
-		if (selected.length === 0) setSelected(new Array(data.length).fill(false));
+		if (!selected[name]) setSelected({...selected, [name]: new Array(data.length).fill(false)});
 	}, [selected]);
 
 
@@ -25,21 +27,24 @@ const Category = ({Element, name, data, selected, setSelected}: CategoryProps) =
 		e.stopPropagation();
 
 		if ((lastIdx === idx && e.shiftKey) || e.ctrlKey || e.metaKey) {
-			const newSelected = [...selected];
+			const newSelected = [...curSelected];
 			newSelected[idx] = !newSelected[idx];
-			setSelected(newSelected);
+			setSelected({...selected, [name]: newSelected});
 		} else if (e.shiftKey && lastIdx !== -1) {
-			setSelected(lastIdx < idx ?
-				selected.map((cur, curIdx) => (curIdx >= lastIdx && curIdx <= idx) ? true : cur) :
-				selected.map((cur, curIdx) => (curIdx >= idx && curIdx <= lastIdx) ? true : cur),
-			);
+			setSelected({
+				...selected,
+				[name]:
+					lastIdx < idx ?
+						curSelected.map((cur: boolean, curIdx: number) => (curIdx >= lastIdx && curIdx <= idx) ? true : cur) :
+						curSelected.map((cur: boolean, curIdx: number) => (curIdx >= idx && curIdx <= lastIdx) ? true : cur),
+			});
 		} else {
 			const newSelected = new Array(data.length).fill(false);
 			newSelected[idx] = true;
-			setSelected(newSelected);
+			setSelected({...selected, [name]: newSelected});
 		}
 
-		lastIdx = idx;
+		setLastIdx(idx);
 	};
 
 
@@ -49,7 +54,7 @@ const Category = ({Element, name, data, selected, setSelected}: CategoryProps) =
 
 			<Row>
 				{data.map((dataEl: DataElement, idx: number) =>
-					<Element {...dataEl} isSelected={selected[idx]} onClick={(e: MouseEvent) => changeSelection(e, idx)}/>,
+					<Element {...dataEl} isSelected={curSelected ? curSelected[idx] : false} onClick={(e: MouseEvent) => changeSelection(e, idx)}/>,
 				)}
 			</Row>
 		</Container>

@@ -6,10 +6,6 @@ export const Container = styled.div`
   flex-direction: column;
   outline: none;
   user-select: none;
-  
-  & .selected{
-	background: #8888fd;
-  }
 `;
 
 export const Name = styled.p`

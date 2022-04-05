@@ -30,7 +30,7 @@ const Navigation = ({path = [], actionType = EActionType.HIDDEN}: NavigationProp
 			</Path>
 
 			{actionType !== 0 &&
-				<Icons>
+				<Icons onClick={e => e.stopPropagation()}>
 					{actionType === 1 ?
 						<>
 							<LinkIcon/>
