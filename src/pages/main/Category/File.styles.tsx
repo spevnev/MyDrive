@@ -16,19 +16,30 @@ export const Container = styled.div`
   cursor: pointer;
   transition: all .2s;
 
-  &:hover{
+  &:hover {
     background: #eaeaea;
   }
-  
+
   &.selected {
     background: #d8d8ff;
-	color: #4444ff;
+    color: #4444ff;
+  }
+
+  @media (min-width: 1280px) {
+    width: 140px;
+    height: 140px;
+    padding: 8px;
   }
 `;
 
 export const FileImage = styled.img`
   width: 80px;
   height: 80px;
+
+  @media (min-width: 1280px) {
+    width: 90px;
+    height: 90px;
+  }
 `;
 
 export const Filename = styled.p`
@@ -38,4 +49,8 @@ export const Filename = styled.p`
   white-space: nowrap;
   overflow: hidden;
   width: 100%;
+
+  @media (min-width: 1280px) {
+    font-size: 15px;
+  }
 `;

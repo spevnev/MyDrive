@@ -12,6 +12,7 @@ import useTitle from "components/useTitle";
 
 export const ContextMenuContext = createContext({});
 export const SelectedContext = createContext({});
+export const SidebarContext = createContext({});
 
 const fileData = [
 	{key: "first", filename: "Filename that spans over three lines", type: EFileType.IMAGE},
@@ -43,9 +44,10 @@ const folderData = [
 ];
 
 const MainPage = () => {
+	const [selected, setSelected] = useState<{ [key: string]: boolean[] }>({});
+	const [isSidebarShown, setIsSidebarShown] = useState(false);
 	const [contextMenuProps, setContextMenuProps] = useState<ContextMenuProps>({});
 	const [isContextMenuOpened, setIsContextMenuOpened] = useState(false);
-	const [selected, setSelected] = useState<{ [key: string]: boolean[] }>({});
 
 	useTitle("PATH");
 
@@ -59,20 +61,15 @@ const MainPage = () => {
 		}, 0);
 	};
 
-	const openContextMenu = (e: MouseEvent, contextMenuData: object, contextMenuType: EContextMenuTypes) => {
+	const openContextMenu = (e: MouseEvent, contextMenuData: object, contextMenuType: EContextMenuTypes, width?: number) => {
 		const options: ContextMenuOption[] | null = contextMenuOptionsFactory(contextMenuType, contextMenuData);
-		if (!options) throw new Error("Invalid context menu type!");
+		if (!options) throw new Error("Invalid context menu.svg type!");
 
 		e.preventDefault();
 		e.stopPropagation();
 
-		setContextMenuProps({x: e.pageX, y: e.pageY, options});
+		setContextMenuProps({x: e.pageX, y: e.pageY, options, width});
 		setIsContextMenuOpened(true);
-	};
-
-	const onClick = (e: MouseEvent) => {
-		setIsContextMenuOpened(false);
-		setSelected({});
 	};
 
 	const onNewFolder = () => console.log(1);
@@ -83,29 +80,34 @@ const MainPage = () => {
 
 	const onContextMenu = (e: MouseEvent) => openContextMenu(e, {onNewFolder, onUploadFolder, onUploadFile}, EContextMenuTypes.CREATE);
 
+	const onClick = (e: MouseEvent) => {
+		setIsContextMenuOpened(false);
+		if (selectedNum > 0) setSelected({});
+	};
+
 
 	const selectedNum: number = getSelectedNum();
 	const navigationActionType: EActionType = selectedNum === 0 ? EActionType.HIDDEN : selectedNum === 1 ? EActionType.SINGLE : EActionType.MULTIPLE;
 
 	return (
 		<Page onContextMenu={() => setIsContextMenuOpened(false)}>
+			<Header username="Test username"/>
+
 			<ContextMenu {...contextMenuProps} isOpened={isContextMenuOpened} onClick={() => setIsContextMenuOpened(false)}/>
 			<ContextMenuContext.Provider value={{openContextMenu}}>
-				<Header username="Test username"/>
-
 				<Row onClick={onClick}>
-					<Sidebar/>
-
-					<Main>
-						<Navigation path={["Root", "Folder"]} actionType={navigationActionType}/>
-
-						<SelectedContext.Provider value={{selected, setSelected}}>
-							<Column onContextMenu={onContextMenu}>
-								<Category name="Folders" Element={Folder} data={folderData}/>
-								<Category name="Files" Element={File} data={fileData}/>
-							</Column>
-						</SelectedContext.Provider>
-					</Main>
+					<SidebarContext.Provider value={{isSidebarShown, setIsSidebarShown}}>
+						<Sidebar/>
+						<Main>
+							<Navigation path={["Root", "Folder"]} actionType={navigationActionType}/>
+							<SelectedContext.Provider value={{selected, setSelected}}>
+								<Column onContextMenu={onContextMenu}>
+									<Category name="Folders" Element={Folder} data={folderData}/>
+									<Category name="Files" Element={File} data={fileData}/>
+								</Column>
+							</SelectedContext.Provider>
+						</Main>
+					</SidebarContext.Provider>
 				</Row>
 			</ContextMenuContext.Provider>
 		</Page>

@@ -1,7 +1,9 @@
 import styled from "styled-components";
 
 export const Container = styled.div`
-  width: 200px;
+  min-width: 175px;
+  max-width: 300px;
+  flex: 1 0 calc(25% - 15px);
   height: 50px;
   padding: 5px;
   margin-right: 15px;
@@ -14,7 +16,7 @@ export const Container = styled.div`
   align-items: center;
   cursor: pointer;
   transition: all .2s;
-  
+
   &:hover {
     background: #eaeaea;
   }
@@ -22,6 +24,11 @@ export const Container = styled.div`
   &.selected {
     background: #d8d8ff;
     color: #4444ff;
+  }
+
+  @media (min-width: 1280px) {
+    max-width: 350px;
+    flex: 1 0 calc(20% - 15px);
   }
 `;
 
@@ -38,4 +45,9 @@ export const Name = styled.p`
   overflow: hidden;
   width: 100%;
   margin-left: 8px;
+
+  @media (min-width: 1280px) {
+    font-size: 20px;
+    margin-left: 10px;
+  }
 `;

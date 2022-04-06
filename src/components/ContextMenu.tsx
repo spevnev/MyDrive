@@ -13,41 +13,46 @@ export type ContextMenuProps = {
 	setIsOpened?: (isOpened: boolean) => void;
 	x?: number;
 	y?: number;
+	width?: number;
 	options?: ContextMenuOption[];
 	onClick?: (e: MouseEvent) => void;
 }
 
-const areCoordinatesValid = (x: number, y: number): boolean => !(x < 0 || x > window.innerWidth || y < 0 || y > window.innerHeight);
+const ContextMenu = ({isOpened = false, options = [], x = 0, y = 0, width = 200, onClick = () => {}}: ContextMenuProps) => {
+	const areCoordinatesValid = (): boolean => !(x < 0 || x > window.innerWidth || y < 0 || y > window.innerHeight);
 
-const calculateAbsolutePosition = (x: number, y: number, [optionsNum, BRNum]: number[]): { width: number, height: number, top: number, left: number } => {
-	const cx = window.innerWidth / 2;
-	const cy = window.innerHeight / 2;
-
-	const width = 200;
-	const optionWidth = 35;
-	const height = optionsNum * optionWidth + BRNum * (optionWidth / 2);
-
-	const top = cy < y ? y - height : y;
-	const left = cx < x ? x - width : x;
-
-	return {width, height, top, left};
-};
-
-const ContextMenu = ({isOpened = false, options = [], x = 0, y = 0, onClick = () => {}}: ContextMenuProps) => {
-	if (!options || !isOpened || !areCoordinatesValid(x, y)) return null;
+	if (!options || !isOpened || !areCoordinatesValid()) return null;
 
 	const element: Element | null = document.getElementById("contextMenu");
 	if (!element) return null;
 
 
-	const optionsNum = options.reduce((prev, cur) => {
-		const temp = prev;
-		temp[cur.name === "BR" ? 1 : 0]++;
-		return temp;
-	}, [0, 0]);
+	const countOptions = () => {
+		return options.reduce((prev, cur) => {
+			const temp = prev;
+			temp[cur.name === "BR" ? 1 : 0]++;
+			return temp;
+		}, [0, 0]);
+	};
+
+	const calculateAbsolutePosition = (): { width: number, height: number, top: number, left: number } => {
+		const [optionNum, BRNum] = countOptions();
+
+		const cx = window.innerWidth / 2;
+		const cy = window.innerHeight / 2;
+
+		const optionHeight = 35;
+		const height = optionNum * optionHeight + BRNum * (optionHeight / 2);
+
+		const top = cy < y ? y - height : y;
+		const left = cx < x ? x - width : x;
+
+		return {width, height, top, left};
+	};
+
 
 	return createPortal(
-		<Container style={calculateAbsolutePosition(x, y, optionsNum)} onClick={onClick}>
+		<Container style={calculateAbsolutePosition()} onClick={onClick}>
 			{options.map(({name, icon, callback}: ContextMenuOption, i) =>
 				name === "BR" ?
 					<BR key={i}/>
