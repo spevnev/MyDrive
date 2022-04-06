@@ -27,22 +27,69 @@ export const FormInputs = styled.div`
   justify-content: flex-end;
 `;
 
-export const FormTitle = styled.p`
+export const Title = styled.p`
   font-size: 32px;
   font-weight: 300;
+
+  @media (min-width: 1280px) {
+    font-size: 36px;
+  }
+
+  @media (max-width: 800px) {
+    font-size: 24px;
+  }
 `;
 
 export const ErrorMessage = styled.p`
   font-size: 12px;
   text-align: center;
   color: #ff0000;
+
+  @media (min-width: 1280px) {
+    font-size: 14px;
+  }
+
+  @media (max-width: 800px) {
+    font-size: 10px;
+  }
 `;
 
 export const Input = styled(StyledInput)`
   width: 90%;
   margin: 5px 0;
+
+  @media (max-width: 800px) {
+    width: 95%;
+    margin: 2px 0;
+  }
 `;
 
 export const Button = styled(StyledButton)`
   margin: 20px 0 10px 0;
+
+  @media (max-width: 800px) {
+    margin: 8px 0 4px 0;
+  }
+`;
+
+export const Column = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+export const SubTitle = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 18px;
+  margin-top: 5px;
+
+  @media (min-width: 1280px) {
+    font-size: 24px;
+  }
+
+  @media (max-width: 800px) {
+    font-size: 14px;
+  }
 `;

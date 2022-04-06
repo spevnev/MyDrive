@@ -1,8 +1,9 @@
-import React from "react";
+import React, {useState} from "react";
 import logo from "assets/logo.svg";
 import {Header, Logo, Page, Title, Wrapper} from "./index.styles";
 import Form, {FormInput} from "./Form";
 import {useNavigate} from "react-router-dom";
+import LinkButton from "components/LinkButton";
 
 type LoginData = {
 	username: string;
@@ -33,6 +34,7 @@ type LoginProps = {
 
 const LoginPage = ({checkAuthentication = () => {}}: LoginProps) => {
 	const navigate = useNavigate();
+	const [isLoginShown, setIsLoginShown] = useState(true);
 
 
 	const goToDrive = () => {
@@ -67,10 +69,24 @@ const LoginPage = ({checkAuthentication = () => {}}: LoginProps) => {
 				<Logo src={logo}/>
 				<Title>My Drive</Title>
 			</Header>
-			<Wrapper>
-				<Form initialFormData={initialLoginData} submitForm={login} background="#fdfdfd" color="#000" inputs={loginInputs}/>
-				<Form initialFormData={initialSignupData} submitForm={signup} background="#4444fb" color="#fff" inputs={signupInputs}/>
-			</Wrapper>
+			{window.innerWidth > 450 ?
+				<Wrapper>
+					<Form inputs={loginInputs} initialFormData={initialLoginData} submitForm={login}
+						  background="#fdfdfd" color="#000" title="Login" buttonText="Login"/>
+					<Form inputs={signupInputs} initialFormData={initialSignupData} submitForm={signup}
+						  background="#4444fb" color="#fff" title="Signup" buttonText="Signup"/>
+				</Wrapper>
+				:
+				<Wrapper>
+					{isLoginShown ?
+						<Form inputs={loginInputs} initialFormData={initialLoginData} background="#fdfdfd" color="#000" title="Login" buttonText="Login" submitForm={login}
+							  subTitle={<>Don't have an Account yet?<LinkButton onClick={() => setIsLoginShown(false)}>Sign up</LinkButton></>}/>
+						:
+						<Form inputs={signupInputs} initialFormData={initialSignupData} submitForm={signup} background="#4444fb" color="#fff" title="Signup" buttonText="Signup"
+							  subTitle={<>Already have an Account?<LinkButton onClick={() => setIsLoginShown(true)}>Log in</LinkButton></>}/>
+					}
+				</Wrapper>
+			}
 		</Page>
 	);
 };

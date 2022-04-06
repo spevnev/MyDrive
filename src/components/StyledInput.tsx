@@ -12,4 +12,14 @@ export default styled.input`
   &:hover {
     background: #f4f4f4;
   }
+
+  @media(min-width: 1280px) {
+    font-size: 24px;
+	padding: 5px 8px;
+  }
+
+  @media(max-width: 800px) {
+	font-size: 16px;
+	padding: 2px 4px;
+  }
 `;

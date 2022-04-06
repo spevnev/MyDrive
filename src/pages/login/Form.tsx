@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from "react";
-import {Button, Container, ErrorMessage, FormInputs, FormTitle, Input} from "./Form.styles";
+import {Button, Column, Container, ErrorMessage, FormInputs, Input, SubTitle, Title} from "./Form.styles";
 
 export type FormInput = {
 	name: string;
@@ -14,9 +14,12 @@ export type FormProps = {
 	inputs: FormInput[];
 	background: string;
 	color: string;
+	title: string;
+	buttonText: string;
+	subTitle?: JSX.Element;
 }
 
-const Form = ({initialFormData, submitForm, inputs, background, color}: FormProps) => {
+const Form = ({initialFormData, submitForm, inputs, title, buttonText, background, color, subTitle}: FormProps) => {
 	const [formData, setFormData] = useState<any>(initialFormData);
 	const [shownError, setShownError] = useState(0);
 	const [timeout, setTimeoutId] = useState<NodeJS.Timeout | null>();
@@ -44,7 +47,10 @@ const Form = ({initialFormData, submitForm, inputs, background, color}: FormProp
 
 	return (
 		<Container background={background} color={color}>
-			<FormTitle>Signup</FormTitle>
+			<Column>
+				<Title>{title}</Title>
+				{subTitle && <SubTitle>{subTitle}</SubTitle>}
+			</Column>
 
 			<FormInputs>
 				{inputs.map(({name, maxLength, errorMessage, placeholder}, i) =>
@@ -57,7 +63,7 @@ const Form = ({initialFormData, submitForm, inputs, background, color}: FormProp
 					</React.Fragment>,
 				)}
 
-				<Button onClick={() => submitForm(formData, showError)}>Sign up</Button>
+				<Button onClick={() => submitForm(formData, showError)}>{buttonText}</Button>
 			</FormInputs>
 		</Container>
 	);
