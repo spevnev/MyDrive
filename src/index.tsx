@@ -6,7 +6,7 @@ import {ApolloClient, ApolloProvider, InMemoryCache} from "@apollo/client";
 import {BrowserRouter} from "react-router-dom";
 
 const loading: Element | null = document.getElementById("loading");
-if (loading) loading.remove();
+if (loading) setTimeout(() => loading.remove(), 100);
 
 
 const client = new ApolloClient({

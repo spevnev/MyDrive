@@ -5,10 +5,10 @@ import Navigation, {EActionType} from "./Navigation";
 import Category from "./Category/Category";
 import {Column, Main, Page, Row} from "./index.styles";
 import File, {EFileType} from "./Category/File";
-import ContextMenu, {ContextMenuOption, ContextMenuProps} from "../../components/ContextMenu";
+import ContextMenu, {ContextMenuOption, ContextMenuProps} from "components/ContextMenu";
 import Folder from "./Category/Folder";
-import contextMenuOptionsFactory, {EContextMenuTypes} from "../../service/contextMenuOptionFactory";
-import useTitle from "../../components/useTitle";
+import contextMenuOptionsFactory, {EContextMenuTypes} from "services/contextMenuOptionFactory";
+import useTitle from "components/useTitle";
 
 export const ContextMenuContext = createContext({});
 export const SelectedContext = createContext({});

@@ -14,16 +14,6 @@ export const Container = styled.div`
   align-items: center;
   cursor: pointer;
   transition: all .2s;
-
-  //@media (max-width: 1200px) {
-  //  width: 23%;
-  //  margin-right: 2%;
-  //}
-  //
-  //@media (max-width: 850px) {
-  //  margin-right: 3%;
-  //  width: 30%;
-  //}
   
   &:hover {
     background: #eaeaea;

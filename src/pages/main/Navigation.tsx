@@ -1,10 +1,10 @@
 import React from "react";
 import {Container, Icons, Path} from "./Navigation.styles";
 import {Link} from "react-router-dom";
-import {ReactComponent as LinkIcon} from "../../assets/link.svg";
-import {ReactComponent as ShareIcon} from "../../assets/share.svg";
-import {ReactComponent as DownloadIcon} from "../../assets/download.svg";
-import {ReactComponent as BinIcon} from "../../assets/bin.svg";
+import {ReactComponent as LinkIcon} from "assets/link.svg";
+import {ReactComponent as ShareIcon} from "assets/share.svg";
+import {ReactComponent as DownloadIcon} from "assets/download.svg";
+import {ReactComponent as BinIcon} from "assets/bin.svg";
 
 export enum EActionType {
 	HIDDEN,

@@ -1,6 +1,6 @@
 import styled from "styled-components";
-import StyledInput from "../../components/StyledInput";
-import StyledButton from "../../components/StyledButton";
+import StyledInput from "components/StyledInput";
+import StyledButton from "components/StyledButton";
 
 type ContainerProps = {
 	background: string;

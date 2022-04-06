@@ -15,12 +15,12 @@ export const EntryContainer = styled.div`
 `;
 
 export const Icon = styled.img`
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
 `;
 
 export const Text = styled.p`
-  font-size: 20px;
+  font-size: 16px;
   margin: 0 10px;
   white-space: nowrap;
   text-overflow: ellipsis;

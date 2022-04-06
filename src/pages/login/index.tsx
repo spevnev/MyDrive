@@ -1,5 +1,5 @@
 import React from "react";
-import logo from "../../assets/logo.svg";
+import logo from "assets/logo.svg";
 import {Header, Logo, Page, Title, Wrapper} from "./index.styles";
 import Form, {FormInput} from "./Form";
 import {useNavigate} from "react-router-dom";

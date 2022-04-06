@@ -1,16 +1,16 @@
 import React, {MouseEvent, useContext} from "react";
 import {Container, FileImage, Filename} from "./File.styles";
-import imageFile from "../../../assets/file-picture.svg";
-import textFile from "../../../assets/file-text.svg";
-import musicFile from "../../../assets/file-music.svg";
-import pdfFile from "../../../assets/file-pdf.svg";
-import videoFile from "../../../assets/file-play.svg";
-import excelFile from "../../../assets/file-excel.svg";
-import wordFile from "../../../assets/file-word.svg";
-import compressedFile from "../../../assets/file-zip.svg";
-import emptyFile from "../../../assets/file-empty.svg";
+import imageFile from "assets/file-picture.svg";
+import textFile from "assets/file-text.svg";
+import musicFile from "assets/file-music.svg";
+import pdfFile from "assets/file-pdf.svg";
+import videoFile from "assets/file-play.svg";
+import excelFile from "assets/file-excel.svg";
+import wordFile from "assets/file-word.svg";
+import compressedFile from "assets/file-zip.svg";
+import emptyFile from "assets/file-empty.svg";
 import {ContextMenuContext} from "../index";
-import {EContextMenuTypes} from "../../../service/contextMenuOptionFactory";
+import {EContextMenuTypes} from "services/contextMenuOptionFactory";
 
 const defaultImage: string = emptyFile;
 const images: string[] = [imageFile, textFile, musicFile, pdfFile, videoFile, excelFile, wordFile, compressedFile];

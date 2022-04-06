@@ -1,6 +1,6 @@
 import React, {MouseEvent, useContext, useEffect, useState} from "react";
 import {Container, Name, Row} from "./Category.styles";
-import {ContextMenuContext, SelectedContext} from "../index";
+import {SelectedContext} from "../index";
 
 type DataElement = {
 	key: string;
@@ -14,13 +14,15 @@ type CategoryProps = {
 }
 
 const Category = ({Element, name, data}: CategoryProps) => {
-	const {openContextMenu} = useContext<any>(ContextMenuContext);
 	const {selected, setSelected} = useContext<any>(SelectedContext);
 	const [lastIdx, setLastIdx] = useState(-1);
 	const curSelected = selected[name];
 
 	useEffect(() => {
-		if (!selected[name]) setSelected({...selected, [name]: new Array(data.length).fill(false)});
+		if (selected[name]) return;
+
+		setSelected({...selected, [name]: new Array(data.length).fill(false)});
+		setLastIdx(-1);
 	}, [selected]);
 
 

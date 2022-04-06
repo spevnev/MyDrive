@@ -1,7 +1,7 @@
 import React, {MouseEvent, useContext} from "react";
-import folderImage from "../../../assets/folder.svg";
+import folderImage from "assets/folder.svg";
 import {ContextMenuContext} from "../index";
-import {EContextMenuTypes} from "../../../service/contextMenuOptionFactory";
+import {EContextMenuTypes} from "services/contextMenuOptionFactory";
 import {Container, Image, Name} from "./Folder.styles";
 
 type FolderProps = {

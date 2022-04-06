@@ -1,14 +1,14 @@
-import {ContextMenuOption} from "../components/ContextMenu";
-import binIcon from "../assets/bin.svg";
-import downloadIcon from "../assets/download.svg";
-import shareIcon from "../assets/share.svg";
-import linkIcon from "../assets/link.svg";
-import moveToIcon from "../assets/moveTo.svg";
-import renameIcon from "../assets/rename.svg";
-import previewIcon from "../assets/eye.svg";
-import createFolderIcon from "../assets/add-folder.svg";
-import uploadFolderIcon from "../assets/upload-folder.svg";
-import uploadFileIcon from "../assets/upload-file.svg";
+import {ContextMenuOption} from "components/ContextMenu";
+import binIcon from "assets/bin.svg";
+import downloadIcon from "assets/download.svg";
+import shareIcon from "assets/share.svg";
+import linkIcon from "assets/link.svg";
+import moveToIcon from "assets/moveTo.svg";
+import renameIcon from "assets/rename.svg";
+import previewIcon from "assets/eye.svg";
+import createFolderIcon from "assets/add-folder.svg";
+import uploadFolderIcon from "assets/upload-folder.svg";
+import uploadFileIcon from "assets/upload-file.svg";
 
 export enum EContextMenuTypes {
 	FILE,
@@ -42,7 +42,7 @@ const contextMenuOptionFactory = (type: EContextMenuTypes, data: { [key: string]
 			return [
 				{name: "New folder", icon: createFolderIcon, callback: data.onNewFolder},
 				{name: "Upload folder", icon: uploadFolderIcon, callback: data.onUploadFolder},
-				{name: "Upload file", icon: uploadFileIcon, callback: data.onUploadFile}
+				{name: "Upload file", icon: uploadFileIcon, callback: data.onUploadFile},
 			];
 		default:
 			return null;

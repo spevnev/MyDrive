@@ -1,5 +1,5 @@
 import React, {useState} from "react";
-import dropDownIcon from "../../../assets/dropdown.svg";
+import dropDownIcon from "assets/dropdown.svg";
 import {DepthPadding, EntryContainer, Icon, Text} from "./Entry.styles";
 
 type EntryProps = {
