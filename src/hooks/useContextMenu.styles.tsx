@@ -16,7 +16,7 @@ export const Option = styled.div`
   display: flex;
   flex-direction: row;
   align-items: center;
-  padding: 6px 10px;
+  padding: 8px 12px;
   width: 100%;
   transition: all .2s;
   cursor: pointer;
@@ -30,12 +30,21 @@ export const Icon = styled.img`
   width: 24px;
   height: 24px;
   margin-right: 10px;
+  
+  @media(min-width: 1280px){
+    width: 26px;
+    height: 26px;
+  }
 `;
 
 export const Name = styled.p`
   font-size: 18px;
   text-align: center;
   width: 100%;
+
+  @media(min-width: 1280px){
+	font-size: 22px;
+  }
 `;
 
 export const BR = styled.div`

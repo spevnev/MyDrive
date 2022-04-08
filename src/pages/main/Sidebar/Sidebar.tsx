@@ -6,11 +6,13 @@ import sharedIcon from "assets/share.svg";
 import ProgressBar from "components/ProgressBar";
 import Entry from "./Entry";
 import {Button, Container, Cross, Explorer, Icon, Overlay, ProgressText, Storage, Text} from "./Sidebar.styles";
-import {ContextMenuContext, SidebarContext} from "../index";
-import {EContextMenuTypes} from "services/contextMenuOptionFactory";
+import {SidebarContext} from "../index";
 
-const Sidebar = () => {
-	const {openContextMenu} = useContext<any>(ContextMenuContext);
+type SidebarProps = {
+	openCreateContextMenu: (e: MouseEvent) => void;
+}
+
+const Sidebar = ({openCreateContextMenu}: SidebarProps) => {
 	const {isSidebarShown, setIsSidebarShown} = useContext<any>(SidebarContext);
 
 
@@ -19,7 +21,7 @@ const Sidebar = () => {
 		e.pageX = target.offsetLeft;
 		e.pageY = target.offsetTop + target.offsetHeight;
 
-		openContextMenu(e, {}, EContextMenuTypes.CREATE, target.offsetWidth);
+		openCreateContextMenu(e);
 	};
 
 

@@ -1,4 +1,4 @@
-import {ContextMenuOption} from "components/ContextMenu";
+import {ContextMenuOption} from "hooks/useContextMenu";
 import binIcon from "assets/bin.svg";
 import downloadIcon from "assets/download.svg";
 import shareIcon from "assets/share.svg";

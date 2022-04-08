@@ -11,6 +11,7 @@ type CategoryProps = {
 	name: string;
 	Element: (...args: any) => JSX.Element;
 	data: DataElement[];
+	onDrop?: Function;
 }
 
 const Category = ({Element, name, data}: CategoryProps) => {
@@ -23,7 +24,7 @@ const Category = ({Element, name, data}: CategoryProps) => {
 
 		setSelected({...selected, [name]: new Array(data.length).fill(false)});
 		setLastIdx(-1);
-	}, [selected]);
+	}, [data.length, name, selected]);
 
 
 	const changeSelection = (e: MouseEvent, idx: number) => {

@@ -1,14 +1,15 @@
-import React, {createContext, MouseEvent, useState} from "react";
+import React, {createContext, FormEvent, MouseEvent, useState} from "react";
 import Header from "./Header";
 import Sidebar from "./Sidebar/Sidebar";
 import Navigation, {EActionType} from "./Navigation";
 import Category from "./Category/Category";
-import {Column, Main, Page, Row} from "./index.styles";
+import {Column, Hidden, Main, Page, Row} from "./index.styles";
 import File, {EFileType} from "./Category/File";
-import ContextMenu, {ContextMenuOption, ContextMenuProps} from "components/ContextMenu";
+import useContextMenu from "hooks/useContextMenu";
 import Folder from "./Category/Folder";
-import contextMenuOptionsFactory, {EContextMenuTypes} from "services/contextMenuOptionFactory";
-import useTitle from "components/useTitle";
+import {EContextMenuTypes} from "services/contextMenuOptionFactory";
+import useTitle from "hooks/useTitle";
+import DropZone from "../../components/DropZone";
 
 export const ContextMenuContext = createContext({});
 export const SelectedContext = createContext({});
@@ -43,11 +44,12 @@ const folderData = [
 	{key: "eighth", name: "Dir"},
 ];
 
+let timeout: NodeJS.Timeout | null = null;
 const MainPage = () => {
 	const [selected, setSelected] = useState<{ [key: string]: boolean[] }>({});
 	const [isSidebarShown, setIsSidebarShown] = useState(false);
-	const [contextMenuProps, setContextMenuProps] = useState<ContextMenuProps>({});
-	const [isContextMenuOpened, setIsContextMenuOpened] = useState(false);
+	const [isDropZoneVisible, setIsDropZoneVisible] = useState(false);
+	const [openContextMenu, setIsContextMenuOpened, ContextMenu]: [Function, Function, JSX.Element | null] = useContextMenu();
 
 	useTitle("PATH");
 
@@ -61,28 +63,61 @@ const MainPage = () => {
 		}, 0);
 	};
 
-	const openContextMenu = (e: MouseEvent, contextMenuData: object, contextMenuType: EContextMenuTypes, width?: number) => {
-		const options: ContextMenuOption[] | null = contextMenuOptionsFactory(contextMenuType, contextMenuData);
-		if (!options) throw new Error("Invalid context menu.svg type!");
-
-		e.preventDefault();
-		e.stopPropagation();
-
-		setContextMenuProps({x: e.pageX, y: e.pageY, options, width});
-		setIsContextMenuOpened(true);
-	};
-
 	const onNewFolder = () => console.log(1);
 
-	const onUploadFolder = () => console.log(2);
+	const onUploadFolder = () => {
+		const input: HTMLElement | null = document.getElementById("folderUpload");
+		if (input) input.click();
+	};
 
-	const onUploadFile = () => console.log(3);
+	const onUploadFile = () => {
+		const input: HTMLElement | null = document.getElementById("fileUpload");
+		if (input) input.click();
+	};
 
-	const onContextMenu = (e: MouseEvent) => openContextMenu(e, {onNewFolder, onUploadFolder, onUploadFile}, EContextMenuTypes.CREATE);
+	const getFiles = (e: FormEvent): FileList | null => {
+		const target: HTMLElement | null = e.target as HTMLElement;
+		if (target === null) return null;
 
-	const onClick = (e: MouseEvent) => {
+		return (target as HTMLInputElement).files;
+	};
+
+	const onFolderInput = (e: FormEvent) => {
+		const files: FileList | null = getFiles(e);
+		if (files === null) return;
+
+		console.log(files);
+	};
+
+	const onFileInput = (e: FormEvent) => {
+		const files: FileList | null = getFiles(e);
+		if (files === null) return;
+
+		console.log(files);
+	};
+
+	const openCreateContextMenu = (e: MouseEvent) => openContextMenu(e, {onNewFolder, onUploadFolder, onUploadFile}, EContextMenuTypes.CREATE);
+
+	const onClick = () => {
 		setIsContextMenuOpened(false);
 		if (selectedNum > 0) setSelected({});
+	};
+
+	const onDrop = (e: any) => {
+		e.preventDefault();
+		console.log(e.dataTransfer.items);
+	};
+
+	const onDragOver = (e: any) => {
+		const event: Event = e;
+		event.preventDefault();
+		event.stopPropagation();
+
+		setIsDropZoneVisible(true);
+		if (timeout) clearTimeout(timeout);
+		timeout = setTimeout(() => {
+			setIsDropZoneVisible(false);
+		}, 200);
 	};
 
 
@@ -90,26 +125,32 @@ const MainPage = () => {
 	const navigationActionType: EActionType = selectedNum === 0 ? EActionType.HIDDEN : selectedNum === 1 ? EActionType.SINGLE : EActionType.MULTIPLE;
 
 	return (
-		<Page onContextMenu={() => setIsContextMenuOpened(false)}>
-			<Header username="Test username"/>
+		<Page onContextMenu={() => setIsContextMenuOpened(false)} onDrop={onDrop} onDragOver={onDragOver}>
+			<Hidden>
+				{/* @ts-ignore */}
+				<input id="folderUpload" type="file" onInput={onFolderInput} webkitdirectory="true" directory="true"/>
+				<input id="fileUpload" type="file" onInput={onFileInput} multiple/>
+			</Hidden>
+			{isDropZoneVisible && <DropZone/>}
 
-			<ContextMenu {...contextMenuProps} isOpened={isContextMenuOpened} onClick={() => setIsContextMenuOpened(false)}/>
-			<ContextMenuContext.Provider value={{openContextMenu}}>
-				<Row onClick={onClick}>
-					<SidebarContext.Provider value={{isSidebarShown, setIsSidebarShown}}>
-						<Sidebar/>
-						<Main>
-							<Navigation path={["Root", "Folder"]} actionType={navigationActionType}/>
-							<SelectedContext.Provider value={{selected, setSelected}}>
-								<Column onContextMenu={onContextMenu}>
+			<Header username="Test username"/>
+			<Row onClick={onClick}>
+				<SidebarContext.Provider value={{isSidebarShown, setIsSidebarShown}}>
+					<Sidebar openCreateContextMenu={openCreateContextMenu}/>
+					<Main>
+						<Navigation path={["Root", "Folder"]} actionType={navigationActionType}/>
+						<Column onContextMenu={openCreateContextMenu}>
+							{ContextMenu}
+							<ContextMenuContext.Provider value={{openContextMenu}}>
+								<SelectedContext.Provider value={{selected, setSelected}}>
 									<Category name="Folders" Element={Folder} data={folderData}/>
 									<Category name="Files" Element={File} data={fileData}/>
-								</Column>
-							</SelectedContext.Provider>
-						</Main>
-					</SidebarContext.Provider>
-				</Row>
-			</ContextMenuContext.Provider>
+								</SelectedContext.Provider>
+							</ContextMenuContext.Provider>
+						</Column>
+					</Main>
+				</SidebarContext.Provider>
+			</Row>
 		</Page>
 	);
 };

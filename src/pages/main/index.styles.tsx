@@ -34,3 +34,7 @@ export const Column = styled.div`
   padding: 0 5px;
   overflow-y: scroll;
 `;
+
+export const Hidden = styled.div`
+  display: none;
+`;
