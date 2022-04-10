@@ -4,6 +4,8 @@ import {Header, Logo, Page, Title, Wrapper} from "./index.styles";
 import Form, {FormInput} from "./Form";
 import {useNavigate} from "react-router-dom";
 import LinkButton from "components/LinkButton";
+import {useMutation} from "@apollo/client";
+import {SIGNUP_MUTATION} from "../../queries/authentication";
 
 type LoginData = {
 	username: string;
@@ -13,7 +15,7 @@ type LoginData = {
 const initialLoginData: LoginData = {username: "", password: ""};
 const loginInputs: FormInput[] = [
 	{name: "username", placeholder: "Username", maxLength: 30, errorMessage: "Username must be between 4 - 30 characters long!"},
-	{name: "password", placeholder: "Password", maxLength: 128, errorMessage: "Password must be between 4 - 128 characters long!"},
+	{name: "password", placeholder: "Password", maxLength: 128, errorMessage: "Password must be between 4 - 128 characters long!", type: "password"},
 ];
 
 type SignupData = {
@@ -25,7 +27,7 @@ type SignupData = {
 const initialSignupData: SignupData = {username: "", password: "", confirmPassword: ""};
 const signupInputs: FormInput[] = [
 	...loginInputs,
-	{name: "confirmPassword", maxLength: 128, errorMessage: "Passwords don't match!", placeholder: "Confirm password"},
+	{name: "confirmPassword", maxLength: 128, errorMessage: "Passwords don't match!", placeholder: "Confirm password", type: "password"},
 ];
 
 type LoginProps = {
@@ -35,22 +37,24 @@ type LoginProps = {
 const LoginPage = ({checkAuthentication = () => {}}: LoginProps) => {
 	const navigate = useNavigate();
 	const [isLoginShown, setIsLoginShown] = useState(true);
+	const [signupMutation, {loading, data, error}] = useMutation(SIGNUP_MUTATION);
 
 
 	const goToDrive = () => {
-		localStorage.setItem("JWT", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IlRlc3QgVXNlcm5hbWUiLCJleHAiOjE2OTYyMzkwMjJ9.KugsjwVJmBx-93flGk3g0Eq90zARAJGva4ALW-QDlXs");
 		checkAuthentication();
 		navigate("/");
 	};
 
-	const signup = (formData: SignupData, showError: Function) => {
+	const signup = async (formData: SignupData, showError: Function) => {
 		const {username, password, confirmPassword} = formData;
 		if (username.length < 4 || username.length > 30) return showError(1);
 		if (password.length < 4 || password.length > 128) return showError(2);
 		if (password !== confirmPassword) return showError(3);
 
-		console.log(formData);
-		goToDrive();
+		// TODO: doesn't work :(
+		await signupMutation({variables: {username, password}});
+		console.log(loading, data, error);
+		// goToDrive();
 	};
 
 	const login = (formData: LoginData, showError: Function) => {

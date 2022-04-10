@@ -3,9 +3,10 @@ import {Button, Column, Container, ErrorMessage, FormInputs, Input, SubTitle, Ti
 
 export type FormInput = {
 	name: string;
-	maxLength: number | null;
-	errorMessage: string | null;
-	placeholder: string | null;
+	maxLength: number;
+	errorMessage: string;
+	placeholder: string;
+	type?: string;
 }
 
 export type FormProps = {
@@ -53,9 +54,9 @@ const Form = ({initialFormData, submitForm, inputs, title, buttonText, backgroun
 			</Column>
 
 			<FormInputs>
-				{inputs.map(({name, maxLength, errorMessage, placeholder}, i) =>
+				{inputs.map(({name, maxLength, errorMessage, placeholder, type}, i) =>
 					<React.Fragment key={name}>
-						<Input value={formData[name]} onChange={e => onChange(name, e.target.value)}
+						<Input value={formData[name]} onChange={e => onChange(name, e.target.value)} type={type || "text"}
 							   placeholder={placeholder || ""} maxLength={maxLength || -1}
 							   style={shownError === i + 1 ? {border: "1px solid #d44"} : {}}/>
 
