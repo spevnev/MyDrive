@@ -4,8 +4,8 @@ import {Header, Logo, Page, Title, Wrapper} from "./index.styles";
 import Form, {FormInput} from "./Form";
 import {useNavigate} from "react-router-dom";
 import LinkButton from "components/LinkButton";
+import {LOGIN_MUTATION, SIGNUP_MUTATION} from "../../queries/authentication";
 import {useMutation} from "@apollo/client";
-import {SIGNUP_MUTATION} from "../../queries/authentication";
 
 type LoginData = {
 	username: string;
@@ -37,10 +37,11 @@ type LoginProps = {
 const LoginPage = ({checkAuthentication = () => {}}: LoginProps) => {
 	const navigate = useNavigate();
 	const [isLoginShown, setIsLoginShown] = useState(true);
-	const [signupMutation, {loading, data, error}] = useMutation(SIGNUP_MUTATION);
+	const [signupMutation] = useMutation(SIGNUP_MUTATION);
+	const [loginMutation] = useMutation(LOGIN_MUTATION);
 
 
-	const goToDrive = () => {
+	const goToMainPage = () => {
 		checkAuthentication();
 		navigate("/");
 	};
@@ -51,19 +52,37 @@ const LoginPage = ({checkAuthentication = () => {}}: LoginProps) => {
 		if (password.length < 4 || password.length > 128) return showError(2);
 		if (password !== confirmPassword) return showError(3);
 
-		// TODO: doesn't work :(
-		await signupMutation({variables: {username, password}});
-		console.log(loading, data, error);
-		// goToDrive();
+		try {
+			const data = await signupMutation({variables: {username, password}});
+			if (!data.data) return;
+			const {token, error} = data.data.signup;
+			if (error) {
+				showError(1, error);
+				return;
+			}
+
+			localStorage.setItem("JWT", token);
+			goToMainPage();
+		} catch (e) {}
 	};
 
-	const login = (formData: LoginData, showError: Function) => {
+	const login = async (formData: LoginData, showError: Function) => {
 		const {username, password} = formData;
 		if (username.length < 4 || username.length > 30) return showError(1);
 		if (password.length < 4 || password.length > 128) return showError(2);
 
-		console.log(formData);
-		goToDrive();
+		try {
+			const data = await loginMutation({variables: {username, password}});
+			if (!data.data) return;
+			const {token, error} = data.data.login;
+			if (error) {
+				showError(2, error);
+				return;
+			}
+
+			localStorage.setItem("JWT", token);
+			goToMainPage();
+		} catch (e) {}
 	};
 
 

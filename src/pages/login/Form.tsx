@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, {useState} from "react";
 import {Button, Column, Container, ErrorMessage, FormInputs, Input, SubTitle, Title} from "./Form.styles";
 
 export type FormInput = {
@@ -20,22 +20,19 @@ export type FormProps = {
 	subTitle?: JSX.Element;
 }
 
+const SUBMIT_DELAY_MS = 500; // .5s
+
+let lastSubmit: number = 0;
 const Form = ({initialFormData, submitForm, inputs, title, buttonText, background, color, subTitle}: FormProps) => {
 	const [formData, setFormData] = useState<any>(initialFormData);
 	const [shownError, setShownError] = useState(0);
-	const [timeout, setTimeoutId] = useState<NodeJS.Timeout | null>();
+	const [errorText, setErrorText] = useState<null | string>(null);
 
-	useEffect(() => () => {
-		if (timeout) clearTimeout(timeout);
-	});
 
-	const showError = (errorNumber: number) => {
+	const showError = (errorNumber: number, text?: string) => {
 		setShownError(errorNumber);
-
-		if (timeout) clearTimeout(timeout);
-		setTimeoutId(setTimeout(() => {
-			setShownError(0);
-		}, 3000));
+		if (text) setErrorText(text);
+		else setErrorText(null);
 	};
 
 	const onChange = (name: string, value: string) => {
@@ -43,6 +40,14 @@ const Form = ({initialFormData, submitForm, inputs, title, buttonText, backgroun
 		if (newFormData[name] !== null) newFormData[name] = value;
 
 		setFormData(newFormData);
+	};
+
+	const onSubmit = () => {
+		if (lastSubmit + SUBMIT_DELAY_MS > Date.now()) return;
+
+		lastSubmit = Date.now();
+		setShownError(0);
+		submitForm(formData, showError);
 	};
 
 
@@ -60,11 +65,11 @@ const Form = ({initialFormData, submitForm, inputs, title, buttonText, backgroun
 							   placeholder={placeholder || ""} maxLength={maxLength || -1}
 							   style={shownError === i + 1 ? {border: "1px solid #d44"} : {}}/>
 
-						{errorMessage && shownError === i + 1 && <ErrorMessage>{errorMessage}</ErrorMessage>}
+						{errorMessage && shownError === i + 1 && <ErrorMessage>{errorText || errorMessage}</ErrorMessage>}
 					</React.Fragment>,
 				)}
 
-				<Button onClick={() => submitForm(formData, showError)}>{buttonText}</Button>
+				<Button onClick={onSubmit}>{buttonText}</Button>
 			</FormInputs>
 		</Container>
 	);
