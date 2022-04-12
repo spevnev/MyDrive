@@ -1,4 +1,4 @@
-import React, {createContext, FormEvent, MouseEvent, useState} from "react";
+import React, {createContext, FormEvent, MouseEvent, useEffect, useState} from "react";
 import Header from "./Header";
 import Sidebar from "./Sidebar/Sidebar";
 import Navigation, {EActionType} from "./Navigation";
@@ -10,6 +10,7 @@ import Folder from "./Category/Folder";
 import {EContextMenuTypes} from "services/contextMenuOptionFactory";
 import useTitle from "hooks/useTitle";
 import DropZone from "../../components/DropZone";
+import {gql, useQuery} from "@apollo/client";
 
 export const ContextMenuContext = createContext({});
 export const SelectedContext = createContext({});
@@ -133,7 +134,7 @@ const MainPage = () => {
 			</Hidden>
 			{isDropZoneVisible && <DropZone/>}
 
-			<Header username="Test username"/>
+			<Header/>
 			<Row onClick={onClick}>
 				<SidebarContext.Provider value={{isSidebarShown, setIsSidebarShown}}>
 					<Sidebar openCreateContextMenu={openCreateContextMenu}/>

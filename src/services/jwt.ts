@@ -1,6 +1,6 @@
 import decode, {JwtPayload} from "jwt-decode";
 
-const getToken = (): string | null => {
+export const getToken = (): string | null => {
 	const token = localStorage.getItem("JWT");
 	if (!token) return null;
 
@@ -13,4 +13,9 @@ const getToken = (): string | null => {
 	return token;
 };
 
-export default getToken;
+export const getData = (): { [key: string]: any } | null => {
+	const token = getToken();
+	if (!token) return null;
+
+	return decode(token);
+};

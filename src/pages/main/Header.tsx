@@ -1,13 +1,11 @@
 import React from "react";
 import {Container, Logo, Title, TitleContainer, Username} from "./Header.styles";
 import {useNavigate} from "react-router-dom";
+import {getData} from "../../services/jwt";
 
-type HeaderProps = {
-	username: string;
-}
-
-const Header = ({username = ""}: HeaderProps) => {
+const Header = () => {
 	const navigate = useNavigate();
+	const tokenData = getData();
 
 
 	return (
@@ -17,7 +15,7 @@ const Header = ({username = ""}: HeaderProps) => {
 				<Title>My Drive</Title>
 			</TitleContainer>
 
-			<Username>{username}</Username>
+			<Username>{tokenData ? tokenData.username || "" : ""}</Username>
 		</Container>
 	);
 };
