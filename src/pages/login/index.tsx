@@ -4,12 +4,18 @@ import {Header, Logo, Page, Title, Wrapper} from "./index.styles";
 import Form, {FormInput} from "./Form";
 import {useNavigate} from "react-router-dom";
 import LinkButton from "components/LinkButton";
-import {LOGIN_MUTATION, SIGNUP_MUTATION} from "../../queries/authentication";
 import {useMutation} from "@apollo/client";
+import {LOGIN_MUTATION, SIGNUP_MUTATION} from "./index.queries";
 
 type LoginData = {
 	username: string;
 	password: string;
+}
+
+type SignupData = {
+	username: string;
+	password: string;
+	confirmPassword: string;
 }
 
 const initialLoginData: LoginData = {username: "", password: ""};
@@ -17,12 +23,6 @@ const loginInputs: FormInput[] = [
 	{name: "username", placeholder: "Username", maxLength: 30, errorMessage: "Username must be between 4 - 30 characters long!"},
 	{name: "password", placeholder: "Password", maxLength: 128, errorMessage: "Password must be between 4 - 128 characters long!", type: "password"},
 ];
-
-type SignupData = {
-	username: string;
-	password: string;
-	confirmPassword: string;
-}
 
 const initialSignupData: SignupData = {username: "", password: "", confirmPassword: ""};
 const signupInputs: FormInput[] = [

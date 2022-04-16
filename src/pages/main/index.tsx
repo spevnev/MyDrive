@@ -1,49 +1,20 @@
-import React, {createContext, FormEvent, MouseEvent, useEffect, useState} from "react";
+import React, {createContext, FormEvent, MouseEvent, useState} from "react";
 import Header from "./Header";
 import Sidebar from "./Sidebar/Sidebar";
 import Navigation, {EActionType} from "./Navigation";
-import Category from "./Category/Category";
+import Category, {DataElement} from "./Category/Category";
 import {Column, Hidden, Main, Page, Row} from "./index.styles";
-import File, {EFileType} from "./Category/File";
+import File from "./Category/File";
 import useContextMenu from "hooks/useContextMenu";
 import Folder from "./Category/Folder";
 import {EContextMenuTypes} from "services/contextMenuOptionFactory";
 import useTitle from "hooks/useTitle";
 import DropZone from "../../components/DropZone";
-import {gql, useQuery} from "@apollo/client";
+import usePath from "../../hooks/usePath";
 
 export const ContextMenuContext = createContext({});
 export const SelectedContext = createContext({});
 export const SidebarContext = createContext({});
-
-const fileData = [
-	{key: "first", filename: "Filename that spans over three lines", type: EFileType.IMAGE},
-	{key: "third", filename: "Filename", type: EFileType.WORD},
-	{key: "sixth", filename: "Something.unknown", type: null},
-	{key: "seventh", filename: "test.mp4", type: EFileType.MUSIC},
-	{key: "a", filename: "Filename that spans over three lines", type: EFileType.IMAGE},
-	{key: "b", filename: "Filename", type: EFileType.TEXT},
-	{key: "c", filename: "Filename asd", type: EFileType.EXCEL},
-	{key: "d", filename: "Video", type: EFileType.VIDEO},
-	{key: "f", filename: "test.mp4", type: EFileType.MUSIC},
-	{key: "1", filename: "three", type: EFileType.COMPRESSED},
-	{key: "2", filename: "Filename", type: EFileType.VIDEO},
-	{key: "3", filename: "Filename asd", type: EFileType.EXCEL},
-	{key: "4", filename: "Video", type: EFileType.VIDEO},
-	{key: "5", filename: "Something", type: null},
-	{key: "6", filename: "test", type: EFileType.PDF},
-];
-
-const folderData = [
-	{key: "first", name: "Test"},
-	{key: "second", name: "Text"},
-	{key: "third", name: "Something"},
-	{key: "fourth", name: "Ver long name"},
-	{key: "fifth", name: "Directory"},
-	{key: "sixth", name: "Name"},
-	{key: "seventh", name: "Folder"},
-	{key: "eighth", name: "Dir"},
-];
 
 let timeout: NodeJS.Timeout | null = null;
 const MainPage = () => {
@@ -51,8 +22,10 @@ const MainPage = () => {
 	const [isSidebarShown, setIsSidebarShown] = useState(false);
 	const [isDropZoneVisible, setIsDropZoneVisible] = useState(false);
 	const [openContextMenu, setIsContextMenuOpened, ContextMenu]: [Function, Function, JSX.Element | null] = useContextMenu();
+	const path = window.location.hash.slice(1);
 
-	useTitle("PATH");
+	useTitle("Drive");
+	usePath(path || "Drive");
 
 
 	const getSelectedNum = (): number => {
@@ -122,6 +95,8 @@ const MainPage = () => {
 	};
 
 
+	const folderData: DataElement[] = [];
+	const fileData: DataElement[] = [];
 	const selectedNum: number = getSelectedNum();
 	const navigationActionType: EActionType = selectedNum === 0 ? EActionType.HIDDEN : selectedNum === 1 ? EActionType.SINGLE : EActionType.MULTIPLE;
 
@@ -139,7 +114,7 @@ const MainPage = () => {
 				<SidebarContext.Provider value={{isSidebarShown, setIsSidebarShown}}>
 					<Sidebar openCreateContextMenu={openCreateContextMenu}/>
 					<Main>
-						<Navigation path={["Root", "Folder"]} actionType={navigationActionType}/>
+						<Navigation path={path} actionType={navigationActionType}/>
 						<Column onContextMenu={openCreateContextMenu}>
 							{ContextMenu}
 							<ContextMenuContext.Provider value={{openContextMenu}}>

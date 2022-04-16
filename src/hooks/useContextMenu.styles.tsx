@@ -18,7 +18,7 @@ export const Option = styled.div`
   align-items: center;
   padding: 8px 12px;
   width: 100%;
-  transition: all .2s;
+  transition: background-color .2s;
   cursor: pointer;
 
   &:hover {
@@ -30,8 +30,8 @@ export const Icon = styled.img`
   width: 24px;
   height: 24px;
   margin-right: 10px;
-  
-  @media(min-width: 1280px){
+
+  @media (min-width: 1280px) {
     width: 26px;
     height: 26px;
   }
@@ -42,8 +42,8 @@ export const Name = styled.p`
   text-align: center;
   width: 100%;
 
-  @media(min-width: 1280px){
-	font-size: 22px;
+  @media (min-width: 1280px) {
+    font-size: 22px;
   }
 `;
 

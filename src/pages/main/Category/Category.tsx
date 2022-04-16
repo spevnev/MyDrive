@@ -2,7 +2,7 @@ import React, {MouseEvent, useContext, useEffect, useState} from "react";
 import {Container, Name, Row} from "./Category.styles";
 import {SelectedContext} from "../index";
 
-type DataElement = {
+export type DataElement = {
 	key: string;
 	[key: string]: any;
 }
@@ -51,6 +51,8 @@ const Category = ({Element, name, data}: CategoryProps) => {
 		setLastIdx(idx);
 	};
 
+
+	if (data.length === 0) return null;
 
 	return (
 		<Container>

@@ -15,13 +15,15 @@ export enum EActionType {
 }
 
 type NavigationProps = {
-	path: string[];
+	path: string;
 	actionType: EActionType;
 }
 
-const Navigation = ({path = [], actionType = EActionType.HIDDEN}: NavigationProps) => {
+const Navigation = ({path = "", actionType = EActionType.HIDDEN}: NavigationProps) => {
 	const {isSidebarShown, setIsSidebarShown} = useContext<any>(SidebarContext);
 
+
+	const pathArray = path.split("/");
 
 	return (
 		<Container>
@@ -29,7 +31,7 @@ const Navigation = ({path = [], actionType = EActionType.HIDDEN}: NavigationProp
 				<SidebarMenu src={menuIcon} className={isSidebarShown ? "shown" : ""} onClick={() => setIsSidebarShown(!isSidebarShown)}/>
 
 				<Path>
-					{path.map((text, i) =>
+					{pathArray.map((text, i) =>
 						<React.Fragment key={i}>
 							<Link to="">{text}</Link>
 							{i + 1 !== path.length && <span>/</span>}

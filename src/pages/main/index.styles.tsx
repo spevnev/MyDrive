@@ -33,6 +33,7 @@ export const Column = styled.div`
   flex-direction: column;
   padding: 0 5px;
   overflow-y: scroll;
+  height: 100%;
 `;
 
 export const Hidden = styled.div`

@@ -73,6 +73,8 @@ export const Explorer = styled.div`
   display: flex;
   flex-direction: column;
   width: 100%;
+  max-height: 60vh;
+  overflow-y: scroll;
 `;
 
 export const Storage = styled.div`
@@ -111,12 +113,12 @@ export const Cross = styled(CrossIcon)`
   color: #fff;
   cursor: pointer;
   transition: color .2s;
-  
-  &:hover{
-	color: #4444fb;
+
+  &:hover {
+    color: #4444fb;
   }
 
   @media (min-width: 800px) {
-	display: none;
+    display: none;
   }
 `;

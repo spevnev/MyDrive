@@ -29,12 +29,9 @@ const useKeyboard = ({key, cb, priority = 0}: UseKeyboardProps) => {
 	}, [cb, curId, key, priority]);
 };
 
-window.onkeydown = (e: KeyboardEvent) => {
+window.onkeydown = e => {
 	for (let i = 0; i < keys.length; i++) {
-		if (keys[i].key === e.key) {
-			keys[i].cb(e);
-			break;
-		}
+		if (keys[i].key === e.key) keys[i].cb(e);
 	}
 };
 

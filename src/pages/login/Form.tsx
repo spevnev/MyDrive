@@ -1,5 +1,6 @@
-import React, {useState} from "react";
+import React, {useRef, useState} from "react";
 import {Button, Column, Container, ErrorMessage, FormInputs, Input, SubTitle, Title} from "./Form.styles";
+import useKeyboard from "../../hooks/useKeyboard";
 
 export type FormInput = {
 	name: string;
@@ -27,6 +28,15 @@ const Form = ({initialFormData, submitForm, inputs, title, buttonText, backgroun
 	const [formData, setFormData] = useState<any>(initialFormData);
 	const [shownError, setShownError] = useState(0);
 	const [errorText, setErrorText] = useState<null | string>(null);
+	const containerRef = useRef(null);
+
+	useKeyboard({
+		key: "Enter", cb: e => {
+			const path = (e as any).path;
+			if (path.indexOf(containerRef.current) === -1) return;
+			onSubmit();
+		},
+	});
 
 
 	const showError = (errorNumber: number, text?: string) => {
@@ -52,7 +62,7 @@ const Form = ({initialFormData, submitForm, inputs, title, buttonText, backgroun
 
 
 	return (
-		<Container background={background} color={color}>
+		<Container background={background} color={color} ref={containerRef}>
 			<Column>
 				<Title>{title}</Title>
 				{subTitle && <SubTitle>{subTitle}</SubTitle>}

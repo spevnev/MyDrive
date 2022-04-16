@@ -8,13 +8,14 @@ type EntryProps = {
 	text: string;
 	depth?: number;
 	children?: JSX.Element[] | JSX.Element;
+	onClick?: (e: MouseEvent) => void;
 }
 
-const Entry = ({hasChildren = false, depth = 0, icon, text, children}: EntryProps) => {
+const Entry = ({hasChildren = false, depth = 0, icon, text, children, onClick = () => {}}: EntryProps) => {
 	const [areChildrenShow, setAreChildrenShow] = useState(false);
 
 
-	const onClick = (e: MouseEvent) => {
+	const onDropDown = (e: MouseEvent) => {
 		e.stopPropagation();
 		setAreChildrenShow(!areChildrenShow);
 	};
@@ -22,10 +23,10 @@ const Entry = ({hasChildren = false, depth = 0, icon, text, children}: EntryProp
 
 	return (
 		<>
-			<EntryContainer>
+			<EntryContainer onClick={onClick}>
 				{new Array(depth).fill(0).map((_: any, i: number) => <DepthPadding key={i}/>)}
 
-				<DropDownIcon style={{transform: areChildrenShow ? "" : "rotate(-90deg)", opacity: hasChildren ? 1 : 0}} src={dropDownIcon} onClick={onClick}/>
+				<DropDownIcon style={{transform: areChildrenShow ? "" : "rotate(-90deg)", opacity: hasChildren ? 1 : 0}} src={dropDownIcon} onClick={onDropDown}/>
 
 				<Icon src={icon}/>
 				<Text>{text}</Text>
