@@ -31,7 +31,7 @@ export const Title = styled.p`
   font-size: 32px;
   font-weight: 300;
 
-  @media (min-width: 1280px) {
+  @media (min-width: 1600px) {
     font-size: 36px;
   }
 
@@ -45,7 +45,7 @@ export const ErrorMessage = styled.p`
   text-align: center;
   color: #ff0000;
 
-  @media (min-width: 1280px) {
+  @media (min-width: 1600px) {
     font-size: 14px;
   }
 
@@ -85,7 +85,7 @@ export const SubTitle = styled.div`
   font-size: 18px;
   margin-top: 5px;
 
-  @media (min-width: 1280px) {
+  @media (min-width: 1600px) {
     font-size: 24px;
   }
 

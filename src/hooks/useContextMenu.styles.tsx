@@ -31,7 +31,7 @@ export const Icon = styled.img`
   height: 24px;
   margin-right: 10px;
 
-  @media (min-width: 1280px) {
+  @media (min-width: 1600px) {
     width: 26px;
     height: 26px;
   }
@@ -42,7 +42,7 @@ export const Name = styled.p`
   text-align: center;
   width: 100%;
 
-  @media (min-width: 1280px) {
+  @media (min-width: 1600px) {
     font-size: 22px;
   }
 `;

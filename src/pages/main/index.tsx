@@ -11,6 +11,9 @@ import {EContextMenuTypes} from "services/contextMenuOptionFactory";
 import useTitle from "hooks/useTitle";
 import DropZone from "../../components/DropZone";
 import usePath from "../../hooks/usePath";
+import {filesToEntry, folderToEntries} from "../../services/fileInput";
+import {useMutation} from "@apollo/client";
+import {UPLOAD_FILES_AND_FOLDERS_MUTATION, UPLOAD_FILES_MUTATION} from "./index.queries";
 
 export const ContextMenuContext = createContext({});
 export const SelectedContext = createContext({});
@@ -22,32 +25,13 @@ const MainPage = () => {
 	const [isSidebarShown, setIsSidebarShown] = useState(false);
 	const [isDropZoneVisible, setIsDropZoneVisible] = useState(false);
 	const [openContextMenu, setIsContextMenuOpened, ContextMenu]: [Function, Function, JSX.Element | null] = useContextMenu();
+	const [uploadFilesMutation] = useMutation(UPLOAD_FILES_MUTATION);
+	const [uploadFilesAndFoldersMutation] = useMutation(UPLOAD_FILES_AND_FOLDERS_MUTATION);
+
 	const path = window.location.hash.slice(1);
-
-	useTitle("Drive");
 	usePath(path || "Drive");
+	useTitle("Drive");
 
-
-	const getSelectedNum = (): number => {
-		const values = Object.values(selected);
-
-		return values.reduce((prev: number, cur: boolean[]) => {
-			const currentNum = cur.reduce((prev: number, cur: boolean) => prev + (cur ? 1 : 0), 0);
-			return prev + currentNum;
-		}, 0);
-	};
-
-	const onNewFolder = () => console.log(1);
-
-	const onUploadFolder = () => {
-		const input: HTMLElement | null = document.getElementById("folderUpload");
-		if (input) input.click();
-	};
-
-	const onUploadFile = () => {
-		const input: HTMLElement | null = document.getElementById("fileUpload");
-		if (input) input.click();
-	};
 
 	const getFiles = (e: FormEvent): FileList | null => {
 		const target: HTMLElement | null = e.target as HTMLElement;
@@ -57,25 +41,48 @@ const MainPage = () => {
 	};
 
 	const onFolderInput = (e: FormEvent) => {
-		const files: FileList | null = getFiles(e);
-		if (files === null) return;
+		const folderFiles: FileList | null = getFiles(e);
+		if (folderFiles === null) return;
+		const entries = folderToEntries(folderFiles);
 
-		console.log(files);
+		uploadFilesAndFoldersMutation({
+			variables: {
+				parent_id: null, // Current folder id
+				entries,
+			},
+		}).then(result => console.log(result));
+
 	};
 
 	const onFileInput = (e: FormEvent) => {
 		const files: FileList | null = getFiles(e);
 		if (files === null) return;
+		const entries = filesToEntry(files);
 
-		console.log(files);
+		uploadFilesMutation({
+			variables: {
+				parent_id: null, // Current folder id
+				entries,
+			},
+		}).then(result => console.log(result));
 	};
 
-	const openCreateContextMenu = (e: MouseEvent) => openContextMenu(e, {onNewFolder, onUploadFolder, onUploadFile}, EContextMenuTypes.CREATE);
+
+	const onNewFolder = () => console.log(1);
+
+	const clickIfExists = (elementId: string) => {
+		const element: HTMLElement | null = document.getElementById(elementId);
+		if (element) element.click();
+	};
+
+	const openCreateContextMenu = (e: MouseEvent) =>
+		openContextMenu(e, {onNewFolder, onUploadFolder: () => clickIfExists("folderUpload"), onUploadFile: () => clickIfExists("fileUpload")}, EContextMenuTypes.CREATE);
 
 	const onClick = () => {
 		setIsContextMenuOpened(false);
 		if (selectedNum > 0) setSelected({});
 	};
+
 
 	const onDrop = (e: any) => {
 		e.preventDefault();
@@ -92,6 +99,16 @@ const MainPage = () => {
 		timeout = setTimeout(() => {
 			setIsDropZoneVisible(false);
 		}, 200);
+	};
+
+
+	const getSelectedNum = (): number => {
+		const values = Object.values(selected);
+
+		return values.reduce((prev: number, cur: boolean[]) => {
+			const currentNum = cur.reduce((prev: number, cur: boolean) => prev + (cur ? 1 : 0), 0);
+			return prev + currentNum;
+		}, 0);
 	};
 
 

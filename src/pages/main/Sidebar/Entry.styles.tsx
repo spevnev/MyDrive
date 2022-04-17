@@ -9,12 +9,12 @@ export const EntryContainer = styled.div`
   border-radius: 0 50px 50px 0;
   transition: background-color .2s;
 
-  &:hover, &.selected{
+  &:hover, &.selected {
     background: #f0f0f0;
   }
 
   @media (max-width: 800px) {
-  	padding: 10px;
+    padding: 10px;
   }
 `;
 
@@ -25,10 +25,10 @@ export const Icon = styled.img`
   @media (max-width: 800px) {
     width: 24px;
     height: 24px;
-	margin-left: 5px;
+    margin-left: 5px;
   }
 
-  @media (min-width: 1280px) {
+  @media (min-width: 1600px) {
     width: 32px;
     height: 32px;
     margin-left: 5px;
@@ -42,15 +42,15 @@ export const DropDownIcon = styled.img`
   transition: transform .15s;
 
   @media (max-width: 800px) {
-  	width: 35px;
-	height: 35px;
-	margin: -10px;
+    width: 35px;
+    height: 35px;
+    margin: -10px;
   }
-  
-  @media (min-width: 1280px) {
+
+  @media (min-width: 1600px) {
     width: 40px;
     height: 40px;
-	margin-right: -10px;
+    margin-right: -10px;
   }
 `;
 
@@ -63,10 +63,10 @@ export const Text = styled.p`
   width: 100%;
 
   @media (max-width: 800px) {
-  	font-size: 18px;
+    font-size: 18px;
   }
 
-  @media (min-width: 1280px) {
+  @media (min-width: 1600px) {
     font-size: 20px;
   }
 `;
@@ -80,7 +80,7 @@ export const DepthPadding = styled.div`
     width: 15px;
   }
 
-  @media (min-width: 1280px) {
+  @media (min-width: 1600px) {
     width: 20px;
   }
 `;

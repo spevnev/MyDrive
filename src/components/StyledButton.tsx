@@ -20,13 +20,13 @@ export default styled.button`
     box-shadow: 0 1px 2px rgba(0, 0, 0, .8);
   }
 
-  @media(min-width: 1280px) {
-	font-size: 24px;
-	padding: 5px 10px;
+  @media (min-width: 1600px) {
+    font-size: 24px;
+    padding: 5px 10px;
   }
 
-  @media(max-width: 800px) {
-  	font-size: 16px;
-	padding: 3px 5px;
+  @media (max-width: 800px) {
+    font-size: 16px;
+    padding: 3px 5px;
   }
 `;

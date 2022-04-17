@@ -42,7 +42,7 @@ const contextMenuOptionFactory = (type: EContextMenuTypes, data: { [key: string]
 			return [
 				{name: "New folder", icon: createFolderIcon, callback: data.onNewFolder},
 				{name: "Upload folder", icon: uploadFolderIcon, callback: data.onUploadFolder},
-				{name: "Upload file", icon: uploadFileIcon, callback: data.onUploadFile},
+				{name: "Upload files", icon: uploadFileIcon, callback: data.onUploadFile},
 			];
 		default:
 			return null;

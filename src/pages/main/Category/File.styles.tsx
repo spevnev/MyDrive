@@ -25,7 +25,7 @@ export const Container = styled.div`
     color: #4444ff;
   }
 
-  @media (min-width: 1280px) {
+  @media (min-width: 1600px) {
     width: 140px;
     height: 140px;
     padding: 8px;
@@ -36,7 +36,7 @@ export const FileImage = styled.img`
   width: 80px;
   height: 80px;
 
-  @media (min-width: 1280px) {
+  @media (min-width: 1600px) {
     width: 90px;
     height: 90px;
   }
@@ -50,7 +50,7 @@ export const Filename = styled.p`
   overflow: hidden;
   width: 100%;
 
-  @media (min-width: 1280px) {
+  @media (min-width: 1600px) {
     font-size: 15px;
   }
 `;

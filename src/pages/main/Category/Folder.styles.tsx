@@ -26,7 +26,7 @@ export const Container = styled.div`
     color: #4444ff;
   }
 
-  @media (min-width: 1280px) {
+  @media (min-width: 1600px) {
     max-width: 350px;
     flex: 1 0 calc(20% - 15px);
   }
@@ -46,7 +46,7 @@ export const Name = styled.p`
   width: 100%;
   margin-left: 8px;
 
-  @media (min-width: 1280px) {
+  @media (min-width: 1600px) {
     font-size: 20px;
     margin-left: 10px;
   }

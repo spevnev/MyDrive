@@ -54,7 +54,7 @@ export const Icon = styled.img`
   height: 24px;
   margin: 0 12px;
 
-  @media (max-width: 800px), (min-width: 1280px) {
+  @media (max-width: 800px), (min-width: 1600px) {
     width: 32px;
     height: 32px;
   }
@@ -64,7 +64,7 @@ export const Text = styled.p`
   font-size: 20px;
   font-weight: 300;
 
-  @media (max-width: 800px), (min-width: 1280px) {
+  @media (max-width: 800px), (min-width: 1600px) {
     font-size: 24px;
   }
 `;
@@ -98,7 +98,7 @@ export const ProgressText = styled.p`
     margin-top: 8px;
   }
 
-  @media (min-width: 1280px) {
+  @media (min-width: 1600px) {
     margin-top: 6px;
     font-size: 16px;
   }

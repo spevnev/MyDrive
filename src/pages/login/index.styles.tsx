@@ -35,7 +35,7 @@ export const Logo = styled.img`
   width: 60px;
   height: 60px;
 
-  @media (min-width: 1280px) {
+  @media (min-width: 1600px) {
     width: 80px;
     height: 80px;
   }
@@ -51,7 +51,7 @@ export const Title = styled.p`
   font-weight: 100;
   margin-left: 25px;
 
-  @media (min-width: 1280px) {
+  @media (min-width: 1600px) {
     font-size: 56px;
   }
 
