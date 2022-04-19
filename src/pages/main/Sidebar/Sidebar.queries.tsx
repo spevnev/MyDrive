@@ -6,9 +6,10 @@ export const SIDEBAR_QUERY = gql`
             space_used
         }
 
-        folders{
+        folders(recursively: true){
             name
             id
+            parent_id
         }
 
         rootSharedFolders{

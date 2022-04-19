@@ -1,6 +1,7 @@
 import React, {MouseEvent, useState} from "react";
 import dropDownIcon from "assets/dropdown.svg";
 import {DepthPadding, DropDownIcon, EntryContainer, Icon, Text} from "./Entry.styles";
+import {useNavigate} from "react-router-dom";
 
 type EntryProps = {
 	hasChildren?: boolean;
@@ -8,10 +9,11 @@ type EntryProps = {
 	text: string;
 	depth?: number;
 	children?: JSX.Element[] | JSX.Element;
-	onClick?: (e: MouseEvent) => void;
+	path: string;
 }
 
-const Entry = ({hasChildren = false, depth = 0, icon, text, children, onClick = () => {}}: EntryProps) => {
+const Entry = ({hasChildren = false, depth = 0, icon, text, children, path}: EntryProps) => {
+	const navigate = useNavigate();
 	const [areChildrenShow, setAreChildrenShow] = useState(false);
 
 
@@ -21,9 +23,22 @@ const Entry = ({hasChildren = false, depth = 0, icon, text, children, onClick = 
 	};
 
 
+	const modifiedChildren = React.Children.map(children, child => {
+		if (React.isValidElement(child)) {
+			const props = child.props as any;
+			if (!props || !props.path) return child;
+			const updatedPath = path === "" ? props.path : `${path}/${props.path}`;
+			const updatedDepth = depth + 1;
+			// @ts-ignore
+			return React.cloneElement(child, {path: updatedPath, depth: updatedDepth});
+		}
+		return child;
+
+	});
+
 	return (
 		<>
-			<EntryContainer onClick={onClick}>
+			<EntryContainer onClick={() => navigate(`${document.location.pathname}#${path}`)}>
 				{new Array(depth).fill(0).map((_: any, i: number) => <DepthPadding key={i}/>)}
 
 				<DropDownIcon style={{transform: areChildrenShow ? "" : "rotate(-90deg)", opacity: hasChildren ? 1 : 0}} src={dropDownIcon} onClick={onDropDown}/>
@@ -31,7 +46,7 @@ const Entry = ({hasChildren = false, depth = 0, icon, text, children, onClick = 
 				<Icon src={icon}/>
 				<Text>{text}</Text>
 			</EntryContainer>
-			{areChildrenShow && children}
+			{areChildrenShow && modifiedChildren}
 		</>
 	);
 };

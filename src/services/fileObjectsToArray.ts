@@ -31,7 +31,7 @@ export const folderToEntries = (files: FileList): FileEntry[] => {
 		let curPath = pathEntries.join("/");
 		for (let j = 0; j < pathEntries.length; j++) {
 			if (j > 0) curPath = curPath.split("/").slice(0, -1 * j).join("/");
-			if (entry_paths.has(curPath)) continue;
+			if (!curPath || entry_paths.has(curPath)) continue;
 
 			const curPathEntries = curPath.split("/");
 			const name = curPathEntries.slice(-1)[0];
@@ -40,7 +40,7 @@ export const folderToEntries = (files: FileList): FileEntry[] => {
 			entry_paths.add(curPath);
 		}
 
-		entries.push({path: path.split("/").slice(0, -1).join("/"), size, name, is_directory: false});
+		if (name !== ".DS_Store") entries.push({path: path.split("/").slice(0, -1).join("/"), size, name, is_directory: false});
 		entry_paths.add(path);
 	}
 

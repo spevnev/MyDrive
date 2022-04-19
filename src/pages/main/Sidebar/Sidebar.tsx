@@ -1,15 +1,16 @@
 import React, {MouseEvent, useContext, useEffect} from "react";
 import addIcon from "assets/add-solid.svg";
-import binIcon from "assets/bin.svg";
 import diskIcon from "assets/drive.svg";
-import sharedIcon from "assets/share.svg";
 import ProgressBar from "components/ProgressBar";
-import Entry from "./Entry";
 import {Button, Container, Cross, Explorer, Icon, Overlay, ProgressText, Storage, Text} from "./Sidebar.styles";
 import {SidebarContext} from "../index";
 import {useQuery} from "@apollo/client";
 import {SIDEBAR_QUERY} from "./Sidebar.queries";
-import {useNavigate} from "react-router-dom";
+import {Folder, foldersArrayToObject} from "services/foldersArrayToObject";
+import folderIcon from "assets/folder.svg";
+import sharedIcon from "assets/users.svg";
+import binIcon from "assets/bin.svg";
+import Entry from "./Entry";
 
 type SidebarProps = {
 	openCreateContextMenu: (e: MouseEvent) => void;
@@ -17,7 +18,6 @@ type SidebarProps = {
 
 const MAX_CAPACITY = 1000; // MB
 const Sidebar = ({openCreateContextMenu}: SidebarProps) => {
-	const navigate = useNavigate();
 	const {loading, error, data} = useQuery(SIDEBAR_QUERY);
 	const {isSidebarShown, setIsSidebarShown} = useContext<any>(SidebarContext);
 
@@ -34,10 +34,16 @@ const Sidebar = ({openCreateContextMenu}: SidebarProps) => {
 		openCreateContextMenu(e);
 	};
 
+	const folderToEntries = ({name, children}: Folder, depth: number = 0): JSX.Element => (
+		<Entry icon={folderIcon} path={name} key={name} text={name} hasChildren={children.length > 0} depth={depth + 1}>
+			{children.map(folder => folderToEntries(folder, depth + 1))}
+		</Entry>
+	);
+
 
 	const spaceUsedPercentage: number = data ? data.user.space_used || 0 : 0;
-	const rootFolders: { name: string, id: number }[] = data ? data.folders || [] : [];
-	const sharedFolders: { name: string, id: number }[] = data ? data.rootSharedFolders || [] : [];
+	const sharedFolders = foldersArrayToObject(data ? data.rootSharedFolders || [] : []);
+	const driveFolders = foldersArrayToObject(data ? data.folders || [] : []);
 
 	return (
 		<Overlay className={isSidebarShown ? "" : "hidden"} onClick={() => setIsSidebarShown(false)}>
@@ -48,17 +54,13 @@ const Sidebar = ({openCreateContextMenu}: SidebarProps) => {
 				</Button>
 
 				<Explorer>
-					<Entry onClick={() => navigate(`${document.location.pathname}#Drive`)} icon={diskIcon} text="Drive" hasChildren={!!rootFolders.length}>
-						{rootFolders.map(folder =>
-							<Entry onClick={() => navigate(`${document.location.pathname}#Drive/${folder.name}`)} icon={diskIcon} key={folder.id} text={folder.name} depth={1}/>,
-						)}
+					<Entry icon={diskIcon} text="Drive" path="Drive" hasChildren={driveFolders.length > 0}>
+						{driveFolders.map(folder => folderToEntries(folder))}
 					</Entry>
-					<Entry onClick={() => navigate(`${document.location.pathname}#Shared`)} icon={sharedIcon} text="Shared" hasChildren={!!sharedFolders.length}>
-						{sharedFolders.map(folder =>
-							<Entry onClick={() => navigate(`${document.location.pathname}#Drive/${folder.name}`)} icon={diskIcon} key={folder.id} text={folder.name} depth={1}/>,
-						)}
+					<Entry icon={sharedIcon} text="Shared" path="" hasChildren={sharedFolders.length > 0}>
+						{sharedFolders.map(folder => folderToEntries(folder))}
 					</Entry>
-					<Entry onClick={() => navigate(`${document.location.pathname}#Bin`)} icon={binIcon} text="Bin"/>
+					<Entry icon={binIcon} text="Bin" path="Bin"/>
 				</Explorer>
 
 				<Storage>

@@ -11,7 +11,7 @@ import {EContextMenuTypes} from "services/contextMenuOptionFactory";
 import useTitle from "hooks/useTitle";
 import DropZone from "../../components/DropZone";
 import usePath from "../../hooks/usePath";
-import {filesToEntry, folderToEntries} from "../../services/fileInput";
+import {filesToEntry, folderToEntries} from "../../services/fileObjectsToArray";
 import {useMutation} from "@apollo/client";
 import {UPLOAD_FILES_AND_FOLDERS_MUTATION, UPLOAD_FILES_MUTATION} from "./index.queries";
 
@@ -21,10 +21,12 @@ export const SidebarContext = createContext({});
 
 let timeout: NodeJS.Timeout | null = null;
 const MainPage = () => {
+	const [openContextMenu, setIsContextMenuOpened, ContextMenu] = useContextMenu();
+
 	const [selected, setSelected] = useState<{ [key: string]: boolean[] }>({});
 	const [isSidebarShown, setIsSidebarShown] = useState(false);
 	const [isDropZoneVisible, setIsDropZoneVisible] = useState(false);
-	const [openContextMenu, setIsContextMenuOpened, ContextMenu]: [Function, Function, JSX.Element | null] = useContextMenu();
+
 	const [uploadFilesMutation] = useMutation(UPLOAD_FILES_MUTATION);
 	const [uploadFilesAndFoldersMutation] = useMutation(UPLOAD_FILES_AND_FOLDERS_MUTATION);
 
@@ -51,7 +53,6 @@ const MainPage = () => {
 				entries,
 			},
 		}).then(result => console.log(result));
-
 	};
 
 	const onFileInput = (e: FormEvent) => {
