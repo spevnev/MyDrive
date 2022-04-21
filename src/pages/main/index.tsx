@@ -11,7 +11,7 @@ import {EContextMenuTypes} from "services/contextMenuOptionFactory";
 import useTitle from "hooks/useTitle";
 import DropZone from "../../components/DropZone";
 import usePath from "../../hooks/usePath";
-import {filesToEntry, folderToEntries} from "../../services/fileObjectsToArray";
+import {dataTransferToEntries, FileEntry, filesToEntry, folderToEntries, SimpleFileEntry} from "../../services/fileInput";
 import {useMutation} from "@apollo/client";
 import {UPLOAD_FILES_AND_FOLDERS_MUTATION, UPLOAD_FILES_MUTATION} from "./index.queries";
 
@@ -35,6 +35,18 @@ const MainPage = () => {
 	useTitle("Drive");
 
 
+	const uploadFiles = (variables: { parent_id: number | null, entries: SimpleFileEntry[] }) => {
+		uploadFilesMutation({variables}).then(result => {
+			console.log(result);
+		});
+	};
+
+	const uploadFilesAndFolders = (variables: { parent_id: number | null, entries: FileEntry[] }) => {
+		uploadFilesAndFoldersMutation({variables}).then(result => {
+			console.log(result);
+		});
+	};
+
 	const getFiles = (e: FormEvent): FileList | null => {
 		const target: HTMLElement | null = e.target as HTMLElement;
 		if (target === null) return null;
@@ -46,13 +58,12 @@ const MainPage = () => {
 		const folderFiles: FileList | null = getFiles(e);
 		if (folderFiles === null) return;
 		const entries = folderToEntries(folderFiles);
+		console.log(entries.reduce((sum, cur) => sum + (cur.is_directory ? 1 : 0), 0));
 
-		uploadFilesAndFoldersMutation({
-			variables: {
-				parent_id: null, // Current folder id
-				entries,
-			},
-		}).then(result => console.log(result));
+		uploadFilesAndFolders({
+			parent_id: null, // Current folder id
+			entries,
+		});
 	};
 
 	const onFileInput = (e: FormEvent) => {
@@ -60,14 +71,11 @@ const MainPage = () => {
 		if (files === null) return;
 		const entries = filesToEntry(files);
 
-		uploadFilesMutation({
-			variables: {
-				parent_id: null, // Current folder id
-				entries,
-			},
-		}).then(result => console.log(result));
+		uploadFiles({
+			parent_id: null, // Current folder id
+			entries,
+		});
 	};
-
 
 	const onNewFolder = () => console.log(1);
 
@@ -84,10 +92,21 @@ const MainPage = () => {
 		if (selectedNum > 0) setSelected({});
 	};
 
-
-	const onDrop = (e: any) => {
+	const onDrop = async (e: any) => {
 		e.preventDefault();
-		console.log(e.dataTransfer.items);
+
+		const {fileEntries, simpleFileEntries} = await dataTransferToEntries(e.dataTransfer.items);
+		if (fileEntries) {
+			uploadFilesAndFolders({
+				parent_id: null, // Current folder id
+				entries: fileEntries,
+			});
+		} else if (simpleFileEntries) {
+			uploadFiles({
+				parent_id: null, // Current folder id
+				entries: simpleFileEntries,
+			});
+		}
 	};
 
 	const onDragOver = (e: any) => {
@@ -101,7 +120,6 @@ const MainPage = () => {
 			setIsDropZoneVisible(false);
 		}, 200);
 	};
-
 
 	const getSelectedNum = (): number => {
 		const values = Object.values(selected);

@@ -16,7 +16,9 @@ type SidebarProps = {
 	openCreateContextMenu: (e: MouseEvent) => void;
 }
 
-const MAX_CAPACITY = 1000; // MB
+const MEGABYTE = 2 ** 20;
+
+const MAX_CAPACITY = 1000; // in Megabytes
 const Sidebar = ({openCreateContextMenu}: SidebarProps) => {
 	const {loading, error, data} = useQuery(SIDEBAR_QUERY);
 	const {isSidebarShown, setIsSidebarShown} = useContext<any>(SidebarContext);
@@ -40,8 +42,13 @@ const Sidebar = ({openCreateContextMenu}: SidebarProps) => {
 		</Entry>
 	);
 
+	const bytesToMegabytes = (bytes: number, decimalPlaces: number): number => {
+		const mbs = bytes / MEGABYTE;
+		return Math.floor(mbs * 10 ** decimalPlaces) / 10 ** decimalPlaces;
+	};
 
-	const spaceUsedPercentage: number = data ? data.user.space_used || 0 : 0;
+
+	const spaceUsedPercentage: number = data ? bytesToMegabytes(data.user.space_used, 2) || 0 : 0;
 	const sharedFolders = foldersArrayToObject(data ? data.rootSharedFolders || [] : []);
 	const driveFolders = foldersArrayToObject(data ? data.folders || [] : []);
 
