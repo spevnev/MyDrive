@@ -4,7 +4,7 @@ import GlobalStyles from "./index.styles";
 import * as ReactDOMClient from "react-dom/client";
 import {ApolloClient, ApolloLink, ApolloProvider, concat, HttpLink, InMemoryCache} from "@apollo/client";
 import {BrowserRouter} from "react-router-dom";
-import {getToken} from "./services/jwt";
+import {getToken} from "./services/token";
 
 const loading: Element | null = document.getElementById("loading");
 if (loading) setTimeout(() => loading.remove(), 100);

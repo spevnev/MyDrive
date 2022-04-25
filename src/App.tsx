@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from "react";
 import {Navigate, Route, Routes} from "react-router-dom";
-import {getToken} from "./services/jwt";
+import {getToken} from "./services/token";
 import MainPage from "./pages/main";
 import LoginPage from "./pages/login";
 

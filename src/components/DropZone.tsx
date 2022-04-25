@@ -17,8 +17,12 @@ const Text = styled.p`
   text-align: center;
 `;
 
-const DropZone = () => (
-	<Container>
+type DropZoneProps = {
+	onDrop: (arg: any) => void;
+}
+
+const DropZone = ({onDrop}: DropZoneProps) => (
+	<Container onDrop={onDrop}>
 		<Text>Drop files and folders here to upload!</Text>
 	</Container>
 );

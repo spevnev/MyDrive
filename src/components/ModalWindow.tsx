@@ -9,6 +9,7 @@ const Overlay = styled.div`
   top: 0;
   left: 0;
   background: #000000aa;
+  z-index: 9999;
 `;
 
 const Container = styled.div`

@@ -35,7 +35,3 @@ export const Column = styled.div`
   overflow-y: scroll;
   height: 100%;
 `;
-
-export const Hidden = styled.div`
-  display: none;
-`;

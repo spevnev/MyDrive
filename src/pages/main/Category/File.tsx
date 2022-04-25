@@ -10,7 +10,7 @@ import wordFile from "assets/file-word.svg";
 import compressedFile from "assets/file-zip.svg";
 import emptyFile from "assets/file-empty.svg";
 import {ContextMenuContext} from "../index";
-import {EContextMenuTypes} from "services/contextMenuOptionFactory";
+import {EContextMenuTypes} from "helpers/contextMenuOptionFactory";
 
 const defaultImage: string = emptyFile;
 const images: string[] = [imageFile, textFile, musicFile, pdfFile, videoFile, excelFile, wordFile, compressedFile];

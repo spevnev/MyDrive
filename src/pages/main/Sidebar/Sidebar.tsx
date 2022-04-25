@@ -6,17 +6,15 @@ import {Button, Container, Cross, Explorer, Icon, Overlay, ProgressText, Storage
 import {SidebarContext} from "../index";
 import {useQuery} from "@apollo/client";
 import {SIDEBAR_QUERY} from "./Sidebar.queries";
-import {Folder, foldersArrayToObject} from "services/foldersArrayToObject";
 import folderIcon from "assets/folder.svg";
 import sharedIcon from "assets/users.svg";
 import binIcon from "assets/bin.svg";
 import Entry from "./Entry";
+import {Folder, foldersArrayToObject} from "../../../services/file";
 
 type SidebarProps = {
 	openCreateContextMenu: (e: MouseEvent) => void;
 }
-
-const MEGABYTE = 2 ** 20;
 
 const MAX_CAPACITY = 1000; // in Megabytes
 const Sidebar = ({openCreateContextMenu}: SidebarProps) => {
@@ -43,8 +41,9 @@ const Sidebar = ({openCreateContextMenu}: SidebarProps) => {
 	);
 
 	const bytesToMegabytes = (bytes: number, decimalPlaces: number): number => {
-		const mbs = bytes / MEGABYTE;
-		return Math.floor(mbs * 10 ** decimalPlaces) / 10 ** decimalPlaces;
+		const MB = 2 ** 20;
+		const megabytes = bytes / MB;
+		return Math.floor(megabytes * 10 ** decimalPlaces) / 10 ** decimalPlaces;
 	};
 
 
@@ -72,7 +71,7 @@ const Sidebar = ({openCreateContextMenu}: SidebarProps) => {
 
 				<Storage>
 					<ProgressBar fillPercent={spaceUsedPercentage}/>
-					<ProgressText>{Math.floor(MAX_CAPACITY * spaceUsedPercentage / 100 * 10) / 10}MB of {MAX_CAPACITY / 1000}GB used</ProgressText>
+					<ProgressText>{Math.floor(MAX_CAPACITY * spaceUsedPercentage / 100 * 10) / 10}MBs of {MAX_CAPACITY / 1000}GB used</ProgressText>
 				</Storage>
 			</Container>
 
