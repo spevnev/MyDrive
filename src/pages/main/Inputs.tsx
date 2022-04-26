@@ -21,6 +21,7 @@ import {Trie} from "../../dataStructures/trie";
 
 type InputsProps = {
 	isDropZoneVisible: boolean;
+	setIsDropZoneVisible: (arg: boolean) => void;
 	currentFolderId: number | null;
 	folders: FolderArrayElement[];
 }
@@ -34,7 +35,7 @@ type ModalData = {
 
 const trie = new Trie();
 let callbackModalData: ModalData | null = null;
-const Inputs = ({isDropZoneVisible = false, currentFolderId, folders}: InputsProps) => {
+const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, currentFolderId, folders}: InputsProps) => {
 	const [uploadFilesMutation] = useMutation(UPLOAD_FILES_MUTATION);
 	const [uploadFilesAndFoldersMutation] = useMutation(UPLOAD_FILES_AND_FOLDERS_MUTATION);
 
@@ -56,17 +57,21 @@ const Inputs = ({isDropZoneVisible = false, currentFolderId, folders}: InputsPro
 	};
 
 	const uploadFilesAndFolders = (variables: { parent_id: number | null, entries: FileEntry[] }) => {
+		// Sorting by shortest path (number of folders in path)
+		variables.entries.sort((a, b) => (a.path || "").split("/").length - (b.path || "").split("/").length);
+
 		uploadFilesAndFoldersMutation({variables}).then(result => {
 			console.log(result);
 		});
 	};
 
 	const getFiles = (e: FormEvent): File[] | null => {
-		const target: HTMLElement | null = e.target as HTMLElement;
+		const target: HTMLInputElement | null = e.target as HTMLInputElement;
 		if (target === null) return null;
 
-		const list: FileList | null = (target as HTMLInputElement).files;
+		const list: FileList | null = target.files;
 		if (list === null) return null;
+		target.files = new DataTransfer().files; // empty FileList to reset input
 		return [...list].filter(file => file.name !== ".DS_Store");
 	};
 
@@ -112,8 +117,9 @@ const Inputs = ({isDropZoneVisible = false, currentFolderId, folders}: InputsPro
 		setModalData({files, included, onContinue, input: getFolderPath(folders, currentFolderId) || "/"});
 	};
 
-	const onDrop = async (e: any) => { // TODO: test drag'n'drop upload of files and folders and regular upload of files
+	const onDrop = async (e: any) => {
 		e.preventDefault();
+		setIsDropZoneVisible(false);
 
 		const {fileEntries, simpleFileEntries} = await dataTransferToEntries(e.dataTransfer.items);
 		if (!folders || !currentFolderId) return;

@@ -1,7 +1,7 @@
 import React, {createContext, MouseEvent, useEffect, useState} from "react";
 import Header from "./Header";
 import Sidebar from "./Sidebar/Sidebar";
-import Navigation, {EActionType} from "./Navigation";
+import Navigation, {EActionType} from "./Navigation/Navigation";
 import Category, {DataElement} from "./Category/Category";
 import {Column, Main, Page, Row} from "./index.styles";
 import File from "./Category/File";
@@ -90,7 +90,7 @@ const MainPage = () => {
 
 	return (
 		<Page onContextMenu={() => setIsContextMenuOpened(false)} onDragOver={onDragOver}>
-			<Inputs isDropZoneVisible={isDropZoneVisible} currentFolderId={currentFolderId} folders={data ? data.folders : null}/>
+			<Inputs setIsDropZoneVisible={setIsDropZoneVisible} isDropZoneVisible={isDropZoneVisible} currentFolderId={currentFolderId} folders={data ? data.folders : null}/>
 
 			<Header/>
 			<Row onClick={onClick}>

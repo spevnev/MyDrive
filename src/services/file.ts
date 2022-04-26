@@ -8,41 +8,30 @@ export type FileEntry = SimpleFileEntry & {
 	is_directory: boolean;
 }
 
-export const filesToEntries = (files: FileList | File[]): SimpleFileEntry[] => {
-	const entries: SimpleFileEntry[] = [];
+export const filesToEntries = (files: File[]): SimpleFileEntry[] => files.map(({size, name}) => ({size, name}));
 
-	for (let i = 0; i < files.length; i++) {
-		const {size, name} = files[i];
-		entries.push({size, name});
-	}
-
-	return entries;
-};
-
-export const folderToEntries = (files: FileList | File[]): FileEntry[] => {
+export const folderToEntries = (files: File[]): FileEntry[] => {
 	const entries: FileEntry[] = [];
 	const entry_paths = new Set<string>();
 
-	for (let i = 0; i < files.length; i++) {
-		const {webkitRelativePath: path, size, name} = files[i];
-		if (entry_paths.has(path)) continue;
+	files.forEach(({webkitRelativePath: path, size, name}) => {
+		if (entry_paths.has(path)) return;
 
 		const pathEntries = path.split("/").slice(0, -1);
 		let curPath = pathEntries.join("/");
+
+		entries.push({path: curPath, size, name, is_directory: false});
+		entry_paths.add(path);
+
 		for (let j = 0; j < pathEntries.length; j++) {
 			if (j > 0) curPath = curPath.split("/").slice(0, -1 * j).join("/");
 			if (!curPath || entry_paths.has(curPath)) continue;
 
-			const curPathEntries = curPath.split("/");
-			const name = curPathEntries.slice(-1)[0];
-
+			const name = curPath.split("/").slice(-1)[0];
 			entries.push({path: curPath.split("/").slice(0, -1).join("/"), size: 0, is_directory: true, name});
 			entry_paths.add(curPath);
 		}
-
-		entries.push({path: path.split("/").slice(0, -1).join("/"), size, name, is_directory: false});
-		entry_paths.add(path);
-	}
+	});
 
 	return entries;
 };

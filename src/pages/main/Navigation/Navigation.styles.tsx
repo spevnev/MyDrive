@@ -19,44 +19,12 @@ export const Row = styled.div`
   display: flex;
   flex-direction: row;
   align-items: center;
-`;
-
-export const Path = styled.div`
-  font-size: 24px;
-  font-weight: 300;
-
-  & a {
-    text-decoration: none;
-    color: #000;
-    position: relative;
-
-    &::after {
-      content: '';
-      position: absolute;
-      top: calc(100% - 2px);
-      left: 50%;
-      transform: translateX(-50%);
-      width: 0;
-      height: 1px;
-      background: #8888fd;
-      opacity: .8;
-      transition: all .2s ease;
-    }
-
-    &:hover {
-      &::after {
-        width: 100%;
-      }
-    }
-  }
-
-  & span {
-    margin: 0 2px;
-    font-weight: 200;
-  }
+  width: 90%;
 `;
 
 export const Icons = styled.div`
+  min-width: fit-content;
+
   & svg {
     margin-left: 12px;
     width: 24px;
@@ -80,11 +48,11 @@ export const SidebarMenu = styled.img`
   &:hover {
     transform: rotate(90deg);
   }
-  
-  &.shown{
+
+  &.shown {
     transform: rotate(90deg);
 
-    &:hover{
+    &:hover {
       transform: rotate(0);
     }
   }

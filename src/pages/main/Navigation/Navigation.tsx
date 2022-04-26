@@ -1,12 +1,12 @@
 import React, {useContext} from "react";
-import {Container, Icons, Path, Row, SidebarMenu} from "./Navigation.styles";
-import {Link} from "react-router-dom";
+import {Container, Icons, Row, SidebarMenu} from "./Navigation.styles";
 import {ReactComponent as LinkIcon} from "assets/link.svg";
 import {ReactComponent as ShareIcon} from "assets/share.svg";
 import {ReactComponent as DownloadIcon} from "assets/download.svg";
 import {ReactComponent as BinIcon} from "assets/bin.svg";
 import menuIcon from "assets/menu.svg";
-import {SidebarContext} from "./index";
+import {SidebarContext} from "../index";
+import Path from "./Path";
 
 export enum EActionType {
 	HIDDEN,
@@ -22,22 +22,11 @@ type NavigationProps = {
 const Navigation = ({path = "", actionType = EActionType.HIDDEN}: NavigationProps) => {
 	const {isSidebarShown, setIsSidebarShown} = useContext<any>(SidebarContext);
 
-
-	const pathArray = path.split("/");
-
 	return (
 		<Container>
 			<Row>
 				<SidebarMenu src={menuIcon} className={isSidebarShown ? "shown" : ""} onClick={() => setIsSidebarShown(!isSidebarShown)}/>
-
-				<Path>
-					{pathArray.map((text, i) =>
-						<React.Fragment key={i}>
-							<Link to="">{text}</Link>
-							{i + 1 !== path.length && <span>/</span>}
-						</React.Fragment>,
-					)}
-				</Path>
+				<Path path={path}/>
 			</Row>
 
 			{actionType !== 0 &&

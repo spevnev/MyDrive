@@ -112,7 +112,7 @@ const AutoCompleteInput = ({trie, placeholder, onChange, initialValue = ""}: Inp
 
 	return (
 		<Container>
-			<Input style={{borderColor: isValid(value) ? "#35e525" : "#e52525"}} onFocus={() => setShowOptions(true)} onBlur={() => setTimeout(() => setShowOptions(false), 100)}
+			<Input style={{borderColor: isValid(value) ? "#35e525" : "#e52525"}} onFocus={() => setShowOptions(true)} onBlur={() => setTimeout(() => setShowOptions(false), 200)}
 				   placeholder={placeholder} value={value} onChange={onInput} className={options.length === 0 ? "" : "has-options"}/>
 
 			{(options.length > 0 && showOptions) &&
