@@ -115,7 +115,7 @@ export const Cross = styled(CrossIcon)`
   transition: color .2s;
 
   &:hover {
-    color: #4444fb;
+    color: #b8b8b8;
   }
 
   @media (min-width: 800px) {

@@ -11,3 +11,12 @@ export const UPLOAD_FILES_AND_FOLDERS_MUTATION = gql`
         uploadFilesAndFolders(entries: $entries, parent_id: $parent_id)
     }
 `;
+
+export const GET_ENTRIES_QUERY = gql`
+    query getEntries($parent_id: Int){
+        entries(parent_id: $parent_id){
+            name
+            is_directory
+        }
+    }
+`;

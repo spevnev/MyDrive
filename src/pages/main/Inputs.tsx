@@ -1,7 +1,7 @@
 import React, {FormEvent, useEffect, useState} from "react";
 import DropZone from "../../components/DropZone";
-import {useMutation} from "@apollo/client";
-import {UPLOAD_FILES_AND_FOLDERS_MUTATION, UPLOAD_FILES_MUTATION} from "./Inputs.queries";
+import {useLazyQuery, useMutation} from "@apollo/client";
+import {GET_ENTRIES_QUERY, UPLOAD_FILES_AND_FOLDERS_MUTATION, UPLOAD_FILES_MUTATION} from "./Inputs.queries";
 import {Button, Buttons, Container, Header, Hidden, PrimaryButton} from "./Inputs.styles";
 import ModalWindow from "../../components/ModalWindow";
 import Checkbox from "../../components/Checkbox";
@@ -14,6 +14,7 @@ import {
 	folderToEntries,
 	getFolderByPath,
 	getFolderPath,
+	renameToAvoidNamingCollisions,
 	SimpleFileEntry,
 } from "../../services/file";
 import AutoCompleteInput from "../../components/AutoCompleteInput";
@@ -38,6 +39,7 @@ let callbackModalData: ModalData | null = null;
 const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, currentFolderId, folders}: InputsProps) => {
 	const [uploadFilesMutation] = useMutation(UPLOAD_FILES_MUTATION);
 	const [uploadFilesAndFoldersMutation] = useMutation(UPLOAD_FILES_AND_FOLDERS_MUTATION);
+	const [getEntriesQuery] = useLazyQuery(GET_ENTRIES_QUERY);
 
 	const [modalData, setModalData] = useState<ModalData | null>(null);
 
@@ -50,19 +52,19 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, currentFolderI
 	}, [folders, modalData]);
 
 
-	const uploadFiles = (variables: { parent_id: number | null, entries: SimpleFileEntry[] }) => {
-		uploadFilesMutation({variables}).then(result => {
-			console.log(result);
-		});
+	const uploadFiles = async (parent_id: number | null, entries: SimpleFileEntry[]) => {
+		const parentEntries = (await getEntriesQuery({variables: {parent_id}})).data.entries;
+		const result = await uploadFilesMutation({variables: {parent_id, entries: renameToAvoidNamingCollisions(entries as FileEntry[], parentEntries)}});
+		console.log(result);
 	};
 
-	const uploadFilesAndFolders = (variables: { parent_id: number | null, entries: FileEntry[] }) => {
+	const uploadFilesAndFolders = async (parent_id: number | null, entries: FileEntry[]) => {
 		// Sorting by shortest path (number of folders in path)
-		variables.entries.sort((a, b) => (a.path || "").split("/").length - (b.path || "").split("/").length);
+		entries.sort((a, b) => (a.path || "").split("/").length - (b.path || "").split("/").length);
 
-		uploadFilesAndFoldersMutation({variables}).then(result => {
-			console.log(result);
-		});
+		const parentEntries = (await getEntriesQuery({variables: {parent_id}})).data.entries;
+		const result = await uploadFilesAndFoldersMutation({variables: {parent_id, entries: renameToAvoidNamingCollisions(entries, parentEntries)}});
+		console.log(result);
 	};
 
 	const getFiles = (e: FormEvent): File[] | null => {
@@ -87,10 +89,7 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, currentFolderI
 			const parent_id = getFolderByPath(folders, callbackModalData.input || "/");
 
 			setModalData(null);
-			uploadFiles({
-				entries: filesToEntries(includedFiles),
-				parent_id,
-			});
+			uploadFiles(parent_id, filesToEntries(includedFiles));
 		};
 
 		setModalData({files, included, onContinue, input: getFolderPath(folders, currentFolderId) || "/"});
@@ -108,10 +107,7 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, currentFolderI
 			const parent_id = getFolderByPath(folders, callbackModalData.input || "/");
 
 			setModalData(null);
-			uploadFilesAndFolders({
-				entries: folderToEntries(includedFiles),
-				parent_id,
-			});
+			uploadFilesAndFolders(parent_id, folderToEntries(includedFiles));
 		};
 
 		setModalData({files, included, onContinue, input: getFolderPath(folders, currentFolderId) || "/"});
@@ -134,10 +130,7 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, currentFolderI
 				const parent_id = getFolderByPath(folders, callbackModalData.input || "/");
 
 				setModalData(null);
-				uploadFilesAndFolders({
-					entries: includedFiles,
-					parent_id,
-				});
+				uploadFilesAndFolders(parent_id, includedFiles);
 			};
 			// @ts-ignore
 			setModalData({files: fileEntries, included, onContinue, input: getFolderPath(folders, currentFolderId) || "/"});
@@ -151,10 +144,7 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, currentFolderI
 				const parent_id = getFolderByPath(folders, callbackModalData.input || "/");
 
 				setModalData(null);
-				uploadFiles({
-					entries: includedFiles,
-					parent_id,
-				});
+				uploadFiles(parent_id, includedFiles);
 			};
 			// @ts-ignore
 			setModalData({files: simpleFileEntries, included, onContinue, input: getFolderPath(folders, currentFolderId) || "/"});

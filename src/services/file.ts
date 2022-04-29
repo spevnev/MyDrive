@@ -1,4 +1,5 @@
 export type SimpleFileEntry = {
+	newName?: string;
 	name: string;
 	size: number;
 }
@@ -38,23 +39,21 @@ export const folderToEntries = (files: File[]): FileEntry[] => {
 
 
 const getFiles = (file: FileSystemEntry, path?: string): Promise<File[]> => new Promise(resolve => {
-	if (file.isFile) {
-		(file as FileSystemFileEntry).file(file => resolve([file]));
-		return;
-	}
+	if (file.isFile) return (file as FileSystemFileEntry).file(file => resolve([file]));
 
 	(file as FileSystemDirectoryEntry).createReader().readEntries(async entries => {
 		const files: File[] = [];
 
 		for (let i = 0; i < entries.length; i++) {
 			const newPath = `${path}/${entries[i].name}`;
-			const newFiles = (await getFiles(entries[i], newPath)).map(({webkitRelativePath, name, type, size}) => ({
-				webkitRelativePath: webkitRelativePath || `${path}/${name}`,
-				name,
-				type,
-				size,
-			})) as File[];
-			files.push(...newFiles);
+			const childrenFiles = await getFiles(entries[i], newPath);
+
+			files.push(...(childrenFiles.map(file => ({
+				webkitRelativePath: file.webkitRelativePath || `${path}/${file.name}`,
+				name: file.name,
+				type: file.type,
+				size: file.size,
+			})) as File[]));
 		}
 
 		resolve(files);
@@ -62,37 +61,23 @@ const getFiles = (file: FileSystemEntry, path?: string): Promise<File[]> => new 
 });
 
 export const dataTransferToEntries = async (fileList: DataTransferItemList): Promise<{ simpleFileEntries?: SimpleFileEntry[], fileEntries?: FileEntry[] }> => {
-	let containsFolders = false;
+	const entries: FileSystemEntry[] = [];
 	for (let i = 0; i < fileList.length; i++) {
-		const file = fileList[i].webkitGetAsEntry();
-		if (!file) continue;
+		if (!fileList[i]) continue;
+		const entry = fileList[i].webkitGetAsEntry();
 
-		if (file.isDirectory) {
-			containsFolders = true;
-			break;
-		}
+		if (!entry) continue;
+		entries.push(entry);
 	}
 
+	let containsFolders = entries.filter(entry => entry.isDirectory).length > 0;
 	if (!containsFolders) {
-		const files: Promise<File>[] = [];
-
-		for (let i = 0; i < fileList.length; i++) {
-			const file = fileList[i].webkitGetAsEntry();
-			if (!file) continue;
-
-			files.push(new Promise(resolve => (file as FileSystemFileEntry).file(file => resolve(file))));
-		}
-
+		const files: Promise<File>[] = entries.map(entry => new Promise(resolve => (entry as FileSystemFileEntry).file(file => resolve(file))));
 		return {simpleFileEntries: filesToEntries(await Promise.all(files))};
 	}
 
 	const files: File[] = [];
-
-	for (let i = 0; i < fileList.length; i++) {
-		const file = fileList[i].webkitGetAsEntry();
-		if (file) files.push(...(await getFiles(file, file.name)));
-	}
-
+	for (let i = 0; i < entries.length; i++) files.push(...(await getFiles(entries[i], entries[i].name)));
 	return {fileEntries: folderToEntries(files)};
 };
 
@@ -177,4 +162,38 @@ export const getFolderByPath = (arr: FolderArrayElement[], path: string): number
 	if (names.length === 1) return start[0].id;
 
 	return getFolderChildren(arr, names, start[0].id, 1);
+};
+
+
+const reverse = (str: string): string => [...str].reverse().join("");
+
+const splitName = (name: string): [string, string | null] => {
+	const cleanName = name.replace(/ \(\d+\)(\..+)?$/, "");
+	const [, ext, filename] = reverse(cleanName).match(/^(\w+\.)?(.+)$/) as [any, string | null, string];
+
+	return [reverse(filename), ext ? reverse(ext) : null];
+};
+
+export const renameToAvoidNamingCollisions = (entries: FileEntry[], parentEntries: FileEntry[]): FileEntry[] | SimpleFileEntry[] => {
+	let folderNames = "";
+	let fileNames = "";
+	parentEntries.forEach(cur => {
+		if (cur.is_directory) folderNames += cur.name;
+		else fileNames += cur.name;
+	});
+
+	return entries.map(entry => {
+		const matches = (entry.is_directory ? folderNames : fileNames).matchAll(new RegExp(`${entry.name}( \\(([0-9]+)\\))?\\.?`, "g"));
+		let max = -1;
+		while (true) {
+			const cur = matches.next();
+			if (cur.done) break;
+
+			max = Math.max(max, cur.value[0] ? Number(cur.value[2] || 0) : -1);
+		}
+		if (max === -1) return entry;
+
+		const [filename, extension] = splitName(entry.name);
+		return {...entry, newName: `${filename} (${max + 1})${extension !== null ? `.${extension}` : ""}`};
+	});
 };
