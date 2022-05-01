@@ -13,8 +13,8 @@ import usePath from "../../hooks/usePath";
 import Inputs from "./Inputs";
 import {useQuery} from "@apollo/client";
 import {GET_FOLDERS_RECURSIVELY_QUERY} from "./index.queries";
-import {getFolderByPath} from "../../services/file";
 import {getData} from "../../services/token";
+import {getFolderByPath} from "../../services/fileResponse";
 
 export const ContextMenuContext = createContext({});
 export const SelectedContext = createContext({});
@@ -22,7 +22,7 @@ export const SidebarContext = createContext({});
 
 let timeout: NodeJS.Timeout | null = null;
 const MainPage = () => {
-	const path = window.location.hash.slice(1);
+	const path = decodeURI(window.location.hash.slice(1));
 
 	const [openContextMenu, setIsContextMenuOpened, ContextMenu] = useContextMenu();
 	const [currentFolderId, setCurrentFolderId] = useState<number | null>(null);

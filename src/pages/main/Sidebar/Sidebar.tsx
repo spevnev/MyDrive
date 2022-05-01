@@ -10,7 +10,7 @@ import folderIcon from "assets/folder.svg";
 import sharedIcon from "assets/users.svg";
 import binIcon from "assets/bin.svg";
 import Entry from "./Entry";
-import {Folder, foldersArrayToObject} from "../../../services/file";
+import {Folder, foldersArrayToObject} from "../../../services/fileResponse";
 
 type SidebarProps = {
 	openCreateContextMenu: (e: MouseEvent) => void;

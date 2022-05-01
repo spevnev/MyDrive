@@ -5,20 +5,10 @@ import {GET_ENTRIES_QUERY, UPLOAD_FILES_AND_FOLDERS_MUTATION, UPLOAD_FILES_MUTAT
 import {Button, Buttons, Container, Header, Hidden, PrimaryButton} from "./Inputs.styles";
 import ModalWindow from "../../components/ModalWindow";
 import Checkbox from "../../components/Checkbox";
-import {
-	dataTransferToEntries,
-	FileEntry,
-	filesToEntries,
-	FolderArrayElement,
-	foldersArrayToPaths,
-	folderToEntries,
-	getFolderByPath,
-	getFolderPath,
-	renameToAvoidNamingCollisions,
-	SimpleFileEntry,
-} from "../../services/file";
+import {dataTransferToEntries, FileEntry, filesToEntries, folderToEntries, renameToAvoidNamingCollisions, SimpleFileEntry} from "../../services/fileRequest";
 import AutoCompleteInput from "../../components/AutoCompleteInput";
 import {Trie} from "../../dataStructures/trie";
+import {FolderArrayElement, foldersArrayToPaths, getFolderByPath, getFolderPath} from "../../services/fileResponse";
 
 type InputsProps = {
 	isDropZoneVisible: boolean;
@@ -54,17 +44,37 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, currentFolderI
 
 	const uploadFiles = async (parent_id: number | null, entries: SimpleFileEntry[]) => {
 		const parentEntries = (await getEntriesQuery({variables: {parent_id}})).data.entries;
-		const result = await uploadFilesMutation({variables: {parent_id, entries: renameToAvoidNamingCollisions(entries as FileEntry[], parentEntries)}});
-		console.log(result);
+		const result = await uploadFilesMutation({
+			variables: {
+				parent_id,
+				entries: renameToAvoidNamingCollisions(entries.map(obj => ({...obj, data: undefined})) as FileEntry[], parentEntries),
+			},
+		});
+		const data = result.data.uploadFilesAndFolders;
+		if (data === null) return;
+		const {url, options} = data;
+		// TODO: upload via Signed URL
 	};
 
 	const uploadFilesAndFolders = async (parent_id: number | null, entries: FileEntry[]) => {
-		// Sorting by shortest path (number of folders in path)
-		entries.sort((a, b) => (a.path || "").split("/").length - (b.path || "").split("/").length);
+		entries.sort((a, b) => {
+			if (!a.path) return -1;
+			if (!b.path) return 1;
+
+			return a.path.split("/").length - b.path.split("/").length;
+		});
 
 		const parentEntries = (await getEntriesQuery({variables: {parent_id}})).data.entries;
-		const result = await uploadFilesAndFoldersMutation({variables: {parent_id, entries: renameToAvoidNamingCollisions(entries, parentEntries)}});
-		console.log(result);
+		const result = await uploadFilesAndFoldersMutation({
+			variables: {
+				parent_id,
+				entries: renameToAvoidNamingCollisions(entries.map(obj => ({...obj, data: undefined})), parentEntries),
+			},
+		});
+		const data = result.data.uploadFilesAndFolders;
+		if (data === null) return;
+		const {url, options} = data;
+		// TODO: upload via Signed URL
 	};
 
 	const getFiles = (e: FormEvent): File[] | null => {
@@ -82,14 +92,14 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, currentFolderI
 		if (!files || !folders || !currentFolderId) return;
 		const included: boolean[] = new Array(files.length).fill(true);
 
-		const onContinue = () => {
+		const onContinue = async () => {
 			if (callbackModalData === null) return;
 			// @ts-ignore
 			const includedFiles = files.filter((_, i) => callbackModalData.included[i]);
 			const parent_id = getFolderByPath(folders, callbackModalData.input || "/");
 
 			setModalData(null);
-			uploadFiles(parent_id, filesToEntries(includedFiles));
+			await uploadFiles(parent_id, await filesToEntries(includedFiles));
 		};
 
 		setModalData({files, included, onContinue, input: getFolderPath(folders, currentFolderId) || "/"});
@@ -100,14 +110,14 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, currentFolderI
 		if (!files || !folders || !currentFolderId) return;
 		const included: boolean[] = new Array(files.length).fill(true);
 
-		const onContinue = () => {
+		const onContinue = async () => {
 			if (callbackModalData === null) return;
 			// @ts-ignore
 			const includedFiles = files.filter((_, i) => callbackModalData.included[i]);
 			const parent_id = getFolderByPath(folders, callbackModalData.input || "/");
 
 			setModalData(null);
-			uploadFilesAndFolders(parent_id, folderToEntries(includedFiles));
+			await uploadFilesAndFolders(parent_id, await folderToEntries(includedFiles));
 		};
 
 		setModalData({files, included, onContinue, input: getFolderPath(folders, currentFolderId) || "/"});
