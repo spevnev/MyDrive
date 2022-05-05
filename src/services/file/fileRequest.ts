@@ -1,15 +1,4 @@
-export type SimpleFileEntry = {
-	newName?: string;
-	data?: ArrayBuffer;
-	name: string;
-	size: number;
-}
-
-export type FileEntry = SimpleFileEntry & {
-	path: string | null;
-	is_directory: boolean;
-}
-
+import {FileEntry, FolderArrayElement, SimpleFileEntry} from "./fileTypes";
 
 export const renameToAvoidNamingCollisions = (entries: FileEntry[], parentEntries: FileEntry[]): FileEntry[] | SimpleFileEntry[] => {
 	const reverse = (str: string): string => [...str].reverse().join("");
@@ -29,17 +18,17 @@ export const renameToAvoidNamingCollisions = (entries: FileEntry[], parentEntrie
 	});
 
 	return entries.map(entry => {
-		const matches = (entry.is_directory ? folderNames : fileNames).matchAll(new RegExp(`${entry.name}( \\(([0-9]+)\\))?\\.?`, "g"));
+		const [filename, extension] = splitName(entry.name);
+		const matches = (entry.is_directory ? folderNames : fileNames).matchAll(new RegExp(`${filename} \\((\\d+)\\)`, "gm"));
 		let max = -1;
 		while (true) {
 			const cur = matches.next();
 			if (cur.done) break;
 
-			max = Math.max(max, cur.value[0] ? Number(cur.value[2] || 0) : -1);
+			max = Math.max(max, cur.value[1] ? Number(cur.value[1] || 0) : -1);
 		}
 		if (max === -1) return entry;
 
-		const [filename, extension] = splitName(entry.name);
 		return {...entry, newName: `${filename} (${max + 1})${extension === null ? "" : extension}`};
 	});
 };
@@ -133,4 +122,35 @@ export const dataTransferToEntries = async (itemList: DataTransferItemList): Pro
 
 	const containsFolders = handles.filter(({kind}) => kind === "directory").length > 0;
 	return containsFolders ? {fileEntries: await folderToEntries(files)} : {simpleFileEntries: await filesToEntries(files)};
+};
+
+
+export const getFolderPath = (arr: FolderArrayElement[], id: number): string | null => {
+	let path = "";
+	let el = arr.filter(el => el.id === id)[0];
+	if (!el) return null;
+
+	while (el.parent_id !== null) {
+		path += "/" + el.name;
+		el = arr.filter((cur: FolderArrayElement) => cur.id === el.parent_id)[0];
+	}
+
+	return path;
+};
+
+export const getFolderByPath = (arr: FolderArrayElement[], path: string): number | null => {
+	const getFolderChildren = (names: string[], id: number, i: number = 1): number => {
+		if (names.length === i) return id;
+
+		const nextId = arr.filter(el => el.name === names[i] && el.parent_id === id)[0].id;
+		return getFolderChildren(names, nextId, i + 1);
+	};
+
+	if (path[0] === "/") path = path.slice(1);
+	const names = path.split("/");
+	const start = arr.filter(el => el.name === names[0]);
+	if (start.length === 0) return null;
+	if (names.length === 1) return start[0].id;
+
+	return getFolderChildren(names, start[0].id);
 };

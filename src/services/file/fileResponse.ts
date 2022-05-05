@@ -1,14 +1,4 @@
-export type FolderArrayElement = {
-	name: string;
-	id: number;
-	parent_id: number;
-}
-
-
-export type Folder = {
-	name: string;
-	children: Folder[];
-}
+import {Folder, FolderArrayElement} from "./fileTypes";
 
 export const foldersArrayToObject = (arr: FolderArrayElement[]): Folder[] => {
 	if (arr.length === 0) return [];
@@ -47,34 +37,4 @@ export const foldersArrayToPaths = (arr: FolderArrayElement[]): string[] => {
 	pathSet.add("/");
 
 	return [...pathSet];
-};
-
-
-export const getFolderPath = (arr: FolderArrayElement[], id: number): string | null => {
-	let path = "";
-	let el = arr.filter(el => el.id === id)[0];
-	if (!el) return null;
-
-	while (el.parent_id !== null) {
-		path += "/" + el.name;
-		el = arr.filter((cur: FolderArrayElement) => cur.id === el.parent_id)[0];
-	}
-
-	return path;
-};
-
-export const getFolderByPath = (arr: FolderArrayElement[], path: string): number | null => {
-	const getFolderChildren = (names: string[], id: number, i: number = 1): number => {
-		if (names.length === i) return id;
-		const nextId = arr.filter(el => el.name === names[i])[0].id;
-		return getFolderChildren(names, nextId, i + 1);
-	};
-
-	if (path[0] === "/") path = path.slice(1);
-	const names = path.split("/");
-	const start = arr.filter(el => el.name === names[0]);
-	if (start.length === 0) return null;
-	if (names.length === 1) return start[0].id;
-
-	return getFolderChildren(names, start[0].id);
 };

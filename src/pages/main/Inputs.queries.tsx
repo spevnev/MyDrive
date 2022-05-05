@@ -2,23 +2,40 @@ import {gql} from "@apollo/client";
 
 export const UPLOAD_FILES_MUTATION = gql`
     mutation uploadFiles($entries: [SimpleFileEntryInput!]!, $parent_id: Int){
-        uploadFiles(entries: $entries, parent_id: $parent_id)
+        uploadFiles(entries: $entries, parent_id: $parent_id){
+            url{
+                url
+                fields{
+                    key
+                    bucket
+                    Policy
+                    Date
+                    Algorithm
+                    Signature
+                    Credential
+                }
+            }
+            path
+        }
     }
 `;
 
 export const UPLOAD_FILES_AND_FOLDERS_MUTATION = gql`
     mutation uploadFilesAndFolders($entries: [FileEntry!]!, $parent_id: Int){
         uploadFilesAndFolders(entries: $entries, parent_id: $parent_id){
-            url
-            options{
-                key
-                bucket
-                Policy
-                Date
-                Algorithm
-                Signature
-                Credential
+            url{
+                url
+                fields{
+                    key
+                    bucket
+                    Policy
+                    Date
+                    Algorithm
+                    Signature
+                    Credential
+                }
             }
+            path
         }
     }
 `;

@@ -14,7 +14,7 @@ import Inputs from "./Inputs";
 import {useQuery} from "@apollo/client";
 import {GET_FOLDERS_RECURSIVELY_QUERY} from "./index.queries";
 import {getData} from "../../services/token";
-import {getFolderByPath} from "../../services/fileResponse";
+import {getFolderByPath} from "../../services/file/fileRequest";
 
 export const ContextMenuContext = createContext({});
 export const SelectedContext = createContext({});
