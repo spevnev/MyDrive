@@ -12,13 +12,12 @@ import useTitle from "hooks/useTitle";
 import usePath from "../../hooks/usePath";
 import Inputs from "./Inputs";
 import {useQuery} from "@apollo/client";
-import {GET_FOLDERS_RECURSIVELY_QUERY} from "./index.queries";
+import {MAIN_QUERY} from "./index.queries";
 import {getData} from "../../services/token";
 import {getFolderByPath} from "../../services/file/fileRequest";
 
 export const ContextMenuContext = createContext({});
 export const SelectedContext = createContext({});
-export const SidebarContext = createContext({});
 
 let timeout: NodeJS.Timeout | null = null;
 const MainPage = () => {
@@ -29,13 +28,14 @@ const MainPage = () => {
 	const [selected, setSelected] = useState<{ [key: string]: boolean[] }>({});
 	const [isSidebarShown, setIsSidebarShown] = useState(false);
 	const [isDropZoneVisible, setIsDropZoneVisible] = useState(false);
-	const {data} = useQuery(GET_FOLDERS_RECURSIVELY_QUERY);
+	const {data} = useQuery(MAIN_QUERY);
 
 	usePath(path || "Drive");
 	useTitle("Drive");
 
 	useEffect(() => {
 		if (!data || !data.folders) return;
+
 		if (path.startsWith("Drive") && path.length > 6) {
 			setCurrentFolderId(getFolderByPath(data.folders, path.slice(6)));
 		} else {
@@ -88,27 +88,30 @@ const MainPage = () => {
 	const selectedNum: number = getSelectedNum();
 	const navigationActionType: EActionType = selectedNum === 0 ? EActionType.HIDDEN : selectedNum === 1 ? EActionType.SINGLE : EActionType.MULTIPLE;
 
+	const space_used = data ? data.user ? data.user.space_used : null : 0;
+	const folders = data ? data.folders : [];
+
 	return (
 		<Page onContextMenu={() => setIsContextMenuOpened(false)} onDragOver={onDragOver}>
-			<Inputs setIsDropZoneVisible={setIsDropZoneVisible} isDropZoneVisible={isDropZoneVisible} currentFolderId={currentFolderId} folders={data ? data.folders : null}/>
+			<Inputs setIsDropZoneVisible={setIsDropZoneVisible} isDropZoneVisible={isDropZoneVisible}
+					currentFolderId={currentFolderId} folders={folders} space_used={space_used}/>
 
 			<Header/>
 			<Row onClick={onClick}>
-				<SidebarContext.Provider value={{isSidebarShown, setIsSidebarShown}}>
-					<Sidebar openCreateContextMenu={openCreateContextMenu}/>
-					<Main>
-						<Navigation path={path} actionType={navigationActionType}/>
-						<Column onContextMenu={openCreateContextMenu}>
-							{ContextMenu}
-							<ContextMenuContext.Provider value={{openContextMenu}}>
-								<SelectedContext.Provider value={{selected, setSelected}}>
-									<Category name="Folders" Element={Folder} data={folderData}/>
-									<Category name="Files" Element={File} data={fileData}/>
-								</SelectedContext.Provider>
-							</ContextMenuContext.Provider>
-						</Column>
-					</Main>
-				</SidebarContext.Provider>
+				<Sidebar openCreateContextMenu={openCreateContextMenu} folders={folders} space_used={space_used}
+						 isSidebarShown={isSidebarShown} setIsSidebarShown={setIsSidebarShown}/>
+				<Main>
+					<Navigation path={path} actionType={navigationActionType} isSidebarShown={isSidebarShown} setIsSidebarShown={setIsSidebarShown}/>
+					<Column onContextMenu={openCreateContextMenu}>
+						{ContextMenu}
+						<ContextMenuContext.Provider value={{openContextMenu}}>
+							<SelectedContext.Provider value={{selected, setSelected}}>
+								<Category name="Folders" Element={Folder} data={folderData}/>
+								<Category name="Files" Element={File} data={fileData}/>
+							</SelectedContext.Provider>
+						</ContextMenuContext.Provider>
+					</Column>
+				</Main>
 			</Row>
 		</Page>
 	);

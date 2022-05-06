@@ -58,3 +58,14 @@ export const PrimaryButton = styled.button`
     background: #3333ff;
   }
 `;
+
+export const DisabledButton = styled.button`
+  background: #d8d8d8;
+  font-size: 18px;
+  font-weight: 300;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 3px 5px;
+  margin: 0 10px;
+  cursor: not-allowed;
+`;

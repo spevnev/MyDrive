@@ -1,9 +1,8 @@
-import React, {MouseEvent, useContext, useEffect} from "react";
+import React, {MouseEvent, useEffect} from "react";
 import addIcon from "assets/add-solid.svg";
 import diskIcon from "assets/drive.svg";
 import ProgressBar from "components/ProgressBar";
 import {Button, Container, Cross, Explorer, Icon, Overlay, ProgressText, Storage, Text} from "./Sidebar.styles";
-import {SidebarContext} from "../index";
 import {useQuery} from "@apollo/client";
 import {SIDEBAR_QUERY} from "./Sidebar.queries";
 import folderIcon from "assets/folder.svg";
@@ -11,19 +10,22 @@ import sharedIcon from "assets/users.svg";
 import binIcon from "assets/bin.svg";
 import Entry from "./Entry";
 import {foldersArrayToObject} from "../../../services/file/fileResponse";
-import {Folder} from "../../../services/file/fileTypes";
+import {Folder, FolderArrayElement} from "../../../services/file/fileTypes";
 
 type SidebarProps = {
 	openCreateContextMenu: (e: MouseEvent) => void;
+	folders: FolderArrayElement[];
+	space_used: number;
+	isSidebarShown: boolean;
+	setIsSidebarShown: (arg: boolean) => void;
 }
 
 const MAX_CAPACITY = 1000; // in Megabytes
-const Sidebar = ({openCreateContextMenu}: SidebarProps) => {
+const Sidebar = ({openCreateContextMenu, folders, space_used, isSidebarShown, setIsSidebarShown}: SidebarProps) => {
 	const {loading, error, data} = useQuery(SIDEBAR_QUERY);
-	const {isSidebarShown, setIsSidebarShown} = useContext<any>(SidebarContext);
 
 	useEffect(() => {
-		if (!loading && !error && !data.user) localStorage.removeItem("JWT");
+		if (space_used === null) localStorage.removeItem("JWT");
 	}, [data]);
 
 
@@ -48,9 +50,9 @@ const Sidebar = ({openCreateContextMenu}: SidebarProps) => {
 	};
 
 
-	const spaceUsedPercentage: number = data ? bytesToMegabytes(data.user.space_used, 2) || 0 : 0;
+	const spaceUsedPercentage: number = space_used ? bytesToMegabytes(space_used, 2) : 0;
 	const sharedFolders = foldersArrayToObject(data ? data.rootSharedFolders || [] : []);
-	const driveFolders = foldersArrayToObject(data ? data.folders || [] : []);
+	const driveFolders = foldersArrayToObject(folders || []);
 
 	return (
 		<Overlay className={isSidebarShown ? "" : "hidden"} onClick={() => setIsSidebarShown(false)}>

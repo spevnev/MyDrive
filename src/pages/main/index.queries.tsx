@@ -1,11 +1,15 @@
 import {gql} from "@apollo/client";
 
-export const GET_FOLDERS_RECURSIVELY_QUERY = gql`
-    query getFoldersRecursively{
+export const MAIN_QUERY = gql`
+    query main{
         folders(recursively: true){
             name
             parent_id
             id
+        }
+
+        user{
+            space_used
         }
     }
 `;

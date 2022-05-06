@@ -2,7 +2,7 @@ import React, {FormEvent, useEffect, useState} from "react";
 import DropZone from "../../components/DropZone";
 import {useLazyQuery, useMutation} from "@apollo/client";
 import {GET_ENTRIES_QUERY, UPLOAD_FILES_AND_FOLDERS_MUTATION, UPLOAD_FILES_MUTATION} from "./Inputs.queries";
-import {Button, Buttons, Container, Header, Hidden, PrimaryButton} from "./Inputs.styles";
+import {Button, Buttons, Container, DisabledButton, Header, Hidden, PrimaryButton} from "./Inputs.styles";
 import ModalWindow from "../../components/ModalWindow";
 import Checkbox from "../../components/Checkbox";
 import {dataTransferToEntries, filesToEntries, folderToEntries, getFolderByPath, getFolderPath, renameToAvoidNamingCollisions} from "../../services/file/fileRequest";
@@ -11,12 +11,15 @@ import {Trie} from "../../dataStructures/trie";
 import {foldersArrayToPaths} from "../../services/file/fileResponse";
 import {FileEntry, FolderArrayElement, SimpleFileEntry} from "../../services/file/fileTypes";
 import {uploadFile} from "../../services/s3";
+import {client} from "../../index";
+import {MAIN_QUERY} from "./index.queries";
 
 type InputsProps = {
 	isDropZoneVisible: boolean;
 	setIsDropZoneVisible: (arg: boolean) => void;
 	currentFolderId: number | null;
 	folders: FolderArrayElement[];
+	space_used: number;
 }
 
 type ModalData = {
@@ -28,7 +31,7 @@ type ModalData = {
 
 const trie = new Trie();
 let callbackModalData: ModalData | null = null;
-const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, currentFolderId, folders}: InputsProps) => {
+const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, currentFolderId, folders, space_used}: InputsProps) => {
 	const [uploadFilesMutation] = useMutation(UPLOAD_FILES_MUTATION);
 	const [uploadFilesAndFoldersMutation] = useMutation(UPLOAD_FILES_AND_FOLDERS_MUTATION);
 	const [getEntriesQuery] = useLazyQuery(GET_ENTRIES_QUERY);
@@ -44,23 +47,50 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, currentFolderI
 	}, [folders, modalData]);
 
 
-	const uploadFiles = async (parent_id: number | null, entries: SimpleFileEntry[]) => {
-		const parentEntries = (await getEntriesQuery({variables: {parent_id}})).data.entries;
-		entries = renameToAvoidNamingCollisions(entries as FileEntry[], parentEntries);
+	const addFolderToCache = (...newFolders: FolderArrayElement[]): void => {
+		client.writeQuery({
+			query: MAIN_QUERY,
+			data: {
+				folders: [
+					...folders,
+					...newFolders,
+				],
+				user: {
+					space_used: 0,
+					__typename: "UserModel",
+				},
+			},
+		});
+	};
 
-		const result = await uploadFilesMutation({variables: {parent_id, entries: entries.map(obj => ({...obj, data: undefined}))}});
-		const data = result.data.uploadFiles;
+	const upload = async (parent_id: number | null, entries: FileEntry[], uploadMethod: (obj: any) => Promise<any>, getResult: (obj: any) => any, entryToKey: (obj: any) => string) => {
+		const parentEntries = (await getEntriesQuery({variables: {parent_id}})).data.entries;
+		entries = renameToAvoidNamingCollisions(entries, parentEntries) as FileEntry[];
+
+		const result = await uploadMethod({variables: {parent_id, entries: entries.map(obj => ({...obj, data: undefined}))}});
+		const data = getResult(result);
 		if (data === null) return;
 
-		const pathToPresignedURL = new Map<string, { url: string, fields: { [key: string]: string } }>();
-		data.forEach((cur: { [key: string]: any }) => pathToPresignedURL.set(cur.path, {...cur.url, __typename: undefined}));
+		const map = new Map<string, any>();
+		data.forEach((cur: { [key: string]: any }) => map.set(cur.path, {...cur, path: undefined}));
 
+		const foldersToBeCached: FolderArrayElement[] = [];
 		entries.forEach(entry => {
-			if (!entry.data || !entry.name) return;
+			if (entry.is_directory) {
+				const {id, parent_id} = map.get(entryToKey(entry));
+				foldersToBeCached.push({name: entry.newName || entry.name, id, parent_id});
+				return;
+			}
+			if (!entry.name || !entry.data) return;
 
-			const {url, fields} = pathToPresignedURL.get(entry.newName || entry.name) || {};
-			uploadFile(url || "", fields || {}, entry.data);
+			const {url, fields} = map.get(entryToKey(entry)).url;
+			uploadFile(url, fields, entry.data);
 		});
+		if (foldersToBeCached.length > 0) addFolderToCache(...foldersToBeCached);
+	};
+
+	const uploadFiles = async (parent_id: number | null, entries: SimpleFileEntry[]) => {
+		await upload(parent_id, entries as FileEntry[], uploadFilesMutation, result => result.data.uploadFiles, entry => entry.newName || entry.name);
 	};
 
 	const uploadFilesAndFolders = async (parent_id: number | null, entries: FileEntry[]) => {
@@ -71,22 +101,7 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, currentFolderI
 			return a.path.split("/").length - b.path.split("/").length;
 		});
 
-		const parentEntries = (await getEntriesQuery({variables: {parent_id}})).data.entries;
-		entries = renameToAvoidNamingCollisions(entries, parentEntries) as FileEntry[];
-
-		const result = await uploadFilesAndFoldersMutation({variables: {parent_id, entries: entries.map(obj => ({...obj, data: undefined}))}});
-		const data = result.data.uploadFilesAndFolders;
-		if (data === null) return;
-
-		const pathToPresignedURL = new Map<string, { url: string, fields: { [key: string]: string } }>();
-		data.forEach((cur: { [key: string]: any }) => pathToPresignedURL.set(cur.path, {...cur.url, __typename: undefined}));
-
-		entries.forEach(entry => {
-			if (!entry.data || !entry.name) return;
-
-			const {url, fields} = pathToPresignedURL.get(`${entry.path}/${entry.name}`) || {};
-			uploadFile(url || "", fields || {}, entry.data);
-		});
+		await upload(parent_id, entries, uploadFilesAndFoldersMutation, result => result.data.uploadFilesAndFolders, entry => entry.path ? `${entry.path}/${entry.name}` : entry.name);
 	};
 
 	const onContinueGenerator = (files: any[], cb: (parent_id: number | null, includedFiles: any[]) => void) => () => {
@@ -151,9 +166,14 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, currentFolderI
 
 	const roundTo = (num: number, digits: number) => Math.floor(num * 10 ** digits) / 10 ** digits;
 
-	const getSizeInString = (files: SimpleFileEntry[]) => {
-		if (!modalData) return;
-		const bytes = files.reduce((sum, {size}, i) => sum + (modalData.included[i] ? size : 0), 0);
+	const getSize = (files: SimpleFileEntry[]): number => {
+		if (!modalData) return 0;
+		return files.reduce((sum, {size}, i) => sum + (modalData.included[i] ? size : 0), 0);
+	};
+
+	const getSizeInString = (files: SimpleFileEntry[]): string => {
+		if (!modalData) return "";
+		const bytes = getSize(files);
 
 		const KB = 2 ** 10;
 		const MB = 2 ** 20;
@@ -168,6 +188,9 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, currentFolderI
 		setModalData({...modalData, included: modalData.files.map(({name}) => includeHidden ? true : !name.startsWith("."))});
 	};
 
+
+	const GB = 2 ** 30;
+	const freeSpace = GB - space_used;
 
 	return (
 		<>
@@ -185,7 +208,10 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, currentFolderI
 						<Checkbox defaultValue={true} onChange={changeIncluded}>Upload hidden files (start with .)</Checkbox>
 						<Buttons>
 							<Button onClick={() => setModalData(null)}>Cancel</Button>
-							<PrimaryButton onClick={() => modalData.onContinue()}>OK</PrimaryButton>
+							{freeSpace > getSize(modalData.files)
+								? <PrimaryButton onClick={() => modalData.onContinue()}>OK</PrimaryButton>
+								: <DisabledButton>Not enough space!</DisabledButton>
+							}
 						</Buttons>
 					</Container>
 				</ModalWindow>

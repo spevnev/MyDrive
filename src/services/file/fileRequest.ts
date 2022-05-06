@@ -19,13 +19,14 @@ export const renameToAvoidNamingCollisions = (entries: FileEntry[], parentEntrie
 
 	return entries.map(entry => {
 		const [filename, extension] = splitName(entry.name);
-		const matches = (entry.is_directory ? folderNames : fileNames).matchAll(new RegExp(`${filename} \\((\\d+)\\)`, "gm"));
+		const matches = (entry.is_directory ? folderNames : fileNames).matchAll(new RegExp(`${filename}(?: \\((\\d+)\\))?`, "gm"));
+
 		let max = -1;
 		while (true) {
 			const cur = matches.next();
 			if (cur.done) break;
 
-			max = Math.max(max, cur.value[1] ? Number(cur.value[1] || 0) : -1);
+			max = Math.max(max, cur.value[1] ? Number(cur.value[1] || 0) : 0);
 		}
 		if (max === -1) return entry;
 

@@ -16,6 +16,8 @@ export const UPLOAD_FILES_MUTATION = gql`
                 }
             }
             path
+            id
+            parent_id
         }
     }
 `;
@@ -36,6 +38,8 @@ export const UPLOAD_FILES_AND_FOLDERS_MUTATION = gql`
                 }
             }
             path
+            id
+            parent_id
         }
     }
 `;

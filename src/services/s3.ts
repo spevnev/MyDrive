@@ -1,4 +1,4 @@
-export const uploadFile = async (url: string, fields: { [key: string]: string }, data: ArrayBuffer): Promise<void> => {
+export const uploadFile = async (url: string, fields: { [key: string]: string }, data: ArrayBuffer): Promise<boolean> => {
 	const body = {
 		"X-Amz-Algorithm": fields.Algorithm,
 		"X-Amz-Credential": fields.Credential,
@@ -13,5 +13,5 @@ export const uploadFile = async (url: string, fields: { [key: string]: string },
 	Object.entries(body).forEach(e => formData.set(...e));
 
 	const response = await fetch(url, {method: "POST", body: formData});
-	console.log(response);
+	return response.status === 204;
 };
