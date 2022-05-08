@@ -13,3 +13,14 @@ export const MAIN_QUERY = gql`
         }
     }
 `;
+
+export const CURRENT_FOLDER_QUERY = gql`
+    query currentFolder($parent_id: Int!){
+        entries(parent_id: $parent_id){
+            name
+            is_directory
+            id
+            parent_id
+        }
+    }
+`;

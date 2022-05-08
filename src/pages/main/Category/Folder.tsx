@@ -3,6 +3,7 @@ import folderImage from "assets/folder.svg";
 import {ContextMenuContext} from "../index";
 import {EContextMenuTypes} from "helpers/contextMenuOptionFactory";
 import {Container, Image, Name} from "./Folder.styles";
+import {useNavigate} from "react-router-dom";
 
 type FolderProps = {
 	name: string;
@@ -12,6 +13,7 @@ type FolderProps = {
 
 const Folder = ({name, isSelected, onClick}: FolderProps) => {
 	const {openContextMenu}: { [key: string]: Function } = useContext(ContextMenuContext);
+	const navigate = useNavigate();
 
 
 	const onDelete = () => console.log(1);
@@ -31,9 +33,11 @@ const Folder = ({name, isSelected, onClick}: FolderProps) => {
 		openContextMenu(e, contextMenuData, EContextMenuTypes.FOLDER);
 	};
 
+	const onDoubleClick = () => navigate(`${document.location.pathname}${document.location.hash + "/" + name}`);
+
 
 	return (
-		<Container className={isSelected ? "selected" : ""} onContextMenuCapture={onContextMenu} onClick={onClick}>
+		<Container className={isSelected ? "selected" : ""} onContextMenuCapture={onContextMenu} onClick={onClick} onDoubleClick={onDoubleClick}>
 			<Image src={folderImage}/>
 			<Name>{name}</Name>
 		</Container>

@@ -1,15 +1,15 @@
 import {FileEntry, FolderArrayElement, SimpleFileEntry} from "./fileTypes";
 
-export const renameToAvoidNamingCollisions = (entries: FileEntry[], parentEntries: FileEntry[]): FileEntry[] | SimpleFileEntry[] => {
+export const splitName = (name: string): [string, string | null] => {
 	const reverse = (str: string): string => [...str].reverse().join("");
 
-	const splitName = (name: string): [string, string | null] => {
-		const cleanName = name.replace(/ \(\d+\)(\..+)?$/, "");
-		const [, ext, filename] = reverse(cleanName).match(/^(\w+\.)?(.+)$/) as [any, string | null, string];
+	const cleanName = name.replace(/ \(\d+\)/, "");
+	const [, ext, filename] = reverse(cleanName).match(/^(\w+\.)?(.+)$/) as [any, string | null, string];
 
-		return [reverse(filename), ext ? reverse(ext) : null];
-	};
+	return [reverse(filename), ext ? reverse(ext) : null];
+};
 
+export const renameToAvoidNamingCollisions = (entries: FileEntry[], parentEntries: FileEntry[]): FileEntry[] | SimpleFileEntry[] => {
 	let folderNames = "";
 	let fileNames = "";
 	parentEntries.forEach(cur => {

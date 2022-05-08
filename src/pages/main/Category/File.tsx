@@ -13,7 +13,7 @@ import {ContextMenuContext} from "../index";
 import {EContextMenuTypes} from "helpers/contextMenuOptionFactory";
 
 const defaultImage: string = emptyFile;
-const images: string[] = [imageFile, textFile, musicFile, pdfFile, videoFile, excelFile, wordFile, compressedFile];
+const images: string[] = [imageFile, textFile, musicFile, pdfFile, videoFile, excelFile, wordFile, compressedFile, emptyFile];
 
 export enum EFileType {
 	IMAGE,
@@ -23,7 +23,8 @@ export enum EFileType {
 	VIDEO,
 	EXCEL,
 	WORD,
-	COMPRESSED
+	COMPRESSED,
+	OTHER
 }
 
 type FileProps = {

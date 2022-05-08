@@ -33,7 +33,6 @@ const CreateFolderModal = ({isOpen = false, setIsOpen, folders, addFoldersToCach
 		setIsOpen(false);
 		setModalData({path: "/", name: "New Folder"});
 
-		const parent_id = getFolderByPath(folders, modalData.path);
 		const result = await createFolderMutation({variables: {name: modalData.name, parent_id}});
 		const data = result.data;
 		if (!data || !data.createFolder) return;
@@ -44,7 +43,8 @@ const CreateFolderModal = ({isOpen = false, setIsOpen, folders, addFoldersToCach
 	};
 
 
-	const folderNames = folders.map(folder => folder.name);
+	const parent_id = getFolderByPath(folders, modalData.path);
+	const folderNames = folders.filter(folder => folder.parent_id === parent_id).map(folder => folder.name);
 
 	return (
 		<ModalWindow isOpen={isOpen}>
