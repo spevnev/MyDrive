@@ -11,6 +11,8 @@ import {Trie} from "../../dataStructures/trie";
 import {foldersArrayToPaths} from "../../services/file/fileResponse";
 import {FileEntry, FolderArrayElement, SimpleFileEntry} from "../../services/file/fileTypes";
 import {uploadFile} from "../../services/s3";
+import {Entry} from "./index";
+import {getData} from "../../services/token";
 
 type InputsProps = {
 	isDropZoneVisible: boolean;
@@ -19,6 +21,7 @@ type InputsProps = {
 	folders: FolderArrayElement[];
 	space_used: number;
 	addFoldersToCache: (...arg: FolderArrayElement[]) => void;
+	addEntriesToCache: (...arg: Entry[]) => void;
 }
 
 type ModalData = {
@@ -30,7 +33,7 @@ type ModalData = {
 
 const trie = new Trie();
 let callbackModalData: ModalData | null = null;
-const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, currentFolderId, folders, space_used, addFoldersToCache}: InputsProps) => {
+const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, currentFolderId, folders, space_used, addFoldersToCache, addEntriesToCache}: InputsProps) => {
 	const [uploadFilesMutation] = useMutation(UPLOAD_FILES_MUTATION);
 	const [uploadFilesAndFoldersMutation] = useMutation(UPLOAD_FILES_AND_FOLDERS_MUTATION);
 	const [getEntriesQuery] = useLazyQuery(GET_ENTRIES_QUERY);
@@ -47,6 +50,9 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, currentFolderI
 
 
 	const upload = async (parent_id: number | null, entries: FileEntry[], uploadMethod: (obj: any) => Promise<any>, getResult: (obj: any) => any, entryToKey: (obj: any) => string) => {
+		const {drive_id} = getData() || {};
+		parent_id = parent_id || drive_id;
+
 		const parentEntries = (await getEntriesQuery({variables: {parent_id}})).data.entries;
 		entries = renameToAvoidNamingCollisions(entries, parentEntries) as FileEntry[];
 
@@ -58,18 +64,20 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, currentFolderI
 		data.forEach((cur: { [key: string]: any }) => map.set(cur.path, {...cur, path: undefined}));
 
 		const foldersToBeCached: FolderArrayElement[] = [];
-		entries.forEach(entry => {
-			if (entry.is_directory) {
-				const {id, parent_id} = map.get(entryToKey(entry));
-				foldersToBeCached.push({name: entry.newName || entry.name, id, parent_id});
-				return;
-			}
-			if (!entry.name || !entry.data) return;
+		const entriesToBeCached: Entry[] = [];
 
-			const {url, fields} = map.get(entryToKey(entry)).url;
-			uploadFile(url, fields, entry.data);
+		entries.forEach(entry => {
+			const {id, parent_id: cur_parent_id, url: uploadCredentials} = map.get(entryToKey(entry));
+			const name = entry.newName || entry.name;
+
+			if (parent_id === cur_parent_id) entriesToBeCached.push({name, id, parent_id: cur_parent_id, is_directory: entry.is_directory});
+
+			if (entry.is_directory) foldersToBeCached.push({name, id, parent_id: cur_parent_id});
+			else if (entry.name && entry.data) uploadFile(uploadCredentials.url, uploadCredentials.fields, entry.data);
 		});
-		if (foldersToBeCached.length > 0) addFoldersToCache(...foldersToBeCached);
+
+		addEntriesToCache(...entriesToBeCached);
+		addFoldersToCache(...foldersToBeCached);
 	};
 
 	const uploadFiles = async (parent_id: number | null, entries: SimpleFileEntry[]) => {
@@ -122,7 +130,7 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, currentFolderI
 		if (!files || !folders || !currentFolderId) return;
 
 		const included: boolean[] = new Array(files.length).fill(true);
-		const onContinue = onContinueGenerator(files, async (parent_id, includedFiles) => await uploadFiles(parent_id, await folderToEntries(includedFiles)));
+		const onContinue = onContinueGenerator(files, async (parent_id, includedFiles) => await uploadFilesAndFolders(parent_id, await folderToEntries(includedFiles)));
 
 		setModalData({files, included, onContinue, input: getFolderPath(folders, currentFolderId) || "/"});
 	};

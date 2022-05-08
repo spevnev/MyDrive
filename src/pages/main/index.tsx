@@ -11,7 +11,7 @@ import {EContextMenuTypes} from "helpers/contextMenuOptionFactory";
 import useTitle from "hooks/useTitle";
 import usePath from "../../hooks/usePath";
 import Inputs from "./Inputs";
-import {useLazyQuery, useQuery} from "@apollo/client";
+import {useQuery} from "@apollo/client";
 import {CURRENT_FOLDER_QUERY, MAIN_QUERY} from "./index.queries";
 import {getData} from "../../services/token";
 import {getFolderByPath, splitName} from "../../services/file/fileRequest";
@@ -24,7 +24,7 @@ import {useLocation} from "react-router-dom";
 export const ContextMenuContext = createContext({});
 export const SelectedContext = createContext({});
 
-type Entry = {
+export type Entry = {
 	id: number;
 	parent_id: number;
 	name: string;
@@ -35,10 +35,11 @@ let timeout: NodeJS.Timeout | null = null;
 let prevPath: string = "";
 const MainPage = () => {
 	const path = decodeURI(window.location.hash.slice(1));
+	const drive_id = (getData() || {}).drive_id;
 
 	const [openContextMenu, setIsContextMenuOpen, ContextMenu] = useContextMenu();
 	const {data} = useQuery(MAIN_QUERY);
-	const [currentFolderDataQuery] = useLazyQuery(CURRENT_FOLDER_QUERY);
+	const {data: currentFolderData, refetch: currentFolderDataQuery} = useQuery(CURRENT_FOLDER_QUERY, {variables: {parent_id: drive_id}});
 
 	const [currentFolderId, setCurrentFolderId] = useState<number | null>(null);
 	const [selected, setSelected] = useState<{ [key: string]: boolean[] }>({});
@@ -52,31 +53,21 @@ const MainPage = () => {
 	useTitle("Drive");
 
 	useEffect(() => {
-		if (!data || !data.folders) return;
-
-		if (path.startsWith("Drive") && path.length > 6) {
-			setCurrentFolderId(getFolderByPath(data.folders, path.slice(6)));
-		} else {
-			const tokenData = getData();
-			if (!tokenData) return;
-			setCurrentFolderId(tokenData.drive_id);
-		}
-	}, [data]);
-
-	useEffect(() => {
 		if (prevPath === path) return;
 		prevPath = path;
+
+		const parent_id = getFolderByPath(folders, path.replace(/^Drive\//, "")) || drive_id;
+
+		currentFolderDataQuery({parent_id});
+
+		setCurrentFolderId(parent_id);
 		setSelected({});
-
-		(async () => {
-			const tokenData = getData() || {};
-			const parent_id = getFolderByPath(folders, path.replace(/^Drive\//, "")) || tokenData.drive_id;
-			const result = await currentFolderDataQuery({variables: {parent_id}});
-			if (!result.data.entries) return;
-
-			setCurrentEntries(result.data.entries);
-		})();
 	}, [location]);
+
+	useEffect(() => {
+		if (!currentFolderData) return;
+		setCurrentEntries(currentFolderData.entries);
+	}, [currentFolderData]);
 
 
 	const clickIfExists = (elementId: string) => {
@@ -131,6 +122,21 @@ const MainPage = () => {
 		});
 	};
 
+	const addEntriesToCache = (...newEntries: Entry[]): void => {
+		client.writeQuery({
+			query: CURRENT_FOLDER_QUERY,
+			data: {
+				entries: [
+					...currentEntries,
+					...newEntries,
+				],
+			},
+			variables: {
+				parent_id: currentFolderId,
+			},
+		});
+	};
+
 
 	const folderData: DataElement[] = currentEntries.filter(entry => entry.is_directory).map(folder => ({name: folder.name, key: String(folder.id)}));
 	const fileData: DataElement[] = currentEntries.filter(entry => !entry.is_directory).map(file => {
@@ -148,7 +154,7 @@ const MainPage = () => {
 	return (
 		<Page onContextMenu={() => setIsContextMenuOpen(false)} onDragOver={onDragOver}>
 			<Inputs setIsDropZoneVisible={setIsDropZoneVisible} isDropZoneVisible={isDropZoneVisible} addFoldersToCache={addFoldersToCache}
-					currentFolderId={currentFolderId} folders={folders} space_used={space_used}/>
+					currentFolderId={currentFolderId} folders={folders} space_used={space_used} addEntriesToCache={addEntriesToCache}/>
 
 			<Header/>
 			<Row onClick={onClick}>
