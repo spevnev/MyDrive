@@ -15,6 +15,9 @@ import {useQuery} from "@apollo/client";
 import {MAIN_QUERY} from "./index.queries";
 import {getData} from "../../services/token";
 import {getFolderByPath} from "../../services/file/fileRequest";
+import CreateFolderModal from "./CreateFolderModal";
+import {FolderArrayElement} from "../../services/file/fileTypes";
+import {client} from "../../index";
 
 export const ContextMenuContext = createContext({});
 export const SelectedContext = createContext({});
@@ -23,12 +26,14 @@ let timeout: NodeJS.Timeout | null = null;
 const MainPage = () => {
 	const path = decodeURI(window.location.hash.slice(1));
 
-	const [openContextMenu, setIsContextMenuOpened, ContextMenu] = useContextMenu();
+	const [openContextMenu, setIsContextMenuOpen, ContextMenu] = useContextMenu();
+	const {data} = useQuery(MAIN_QUERY);
+
 	const [currentFolderId, setCurrentFolderId] = useState<number | null>(null);
 	const [selected, setSelected] = useState<{ [key: string]: boolean[] }>({});
 	const [isSidebarShown, setIsSidebarShown] = useState(false);
 	const [isDropZoneVisible, setIsDropZoneVisible] = useState(false);
-	const {data} = useQuery(MAIN_QUERY);
+	const [isCreateFolderModalOpen, setIsCreateFolderModalOpen] = useState(false);
 
 	usePath(path || "Drive");
 	useTitle("Drive");
@@ -46,18 +51,18 @@ const MainPage = () => {
 	}, [data]);
 
 
-	const onNewFolder = () => console.log(1);
-
 	const clickIfExists = (elementId: string) => {
 		const element: HTMLElement | null = document.getElementById(elementId);
 		if (element) element.click();
 	};
 
+	const onNewFolder = () => setIsCreateFolderModalOpen(true);
+
 	const contextMenuData = {onNewFolder, onUploadFolder: () => clickIfExists("folderUpload"), onUploadFile: () => clickIfExists("fileUpload")};
 	const openCreateContextMenu = (e: MouseEvent) => openContextMenu(e, contextMenuData, EContextMenuTypes.CREATE);
 
 	const onClick = () => {
-		setIsContextMenuOpened(false);
+		setIsContextMenuOpen(false);
 		if (selectedNum > 0) setSelected({});
 	};
 
@@ -82,6 +87,22 @@ const MainPage = () => {
 		}, 0);
 	};
 
+	const addFoldersToCache = (...newFolders: FolderArrayElement[]): void => {
+		client.writeQuery({
+			query: MAIN_QUERY,
+			data: {
+				folders: [
+					...folders,
+					...newFolders,
+				],
+				user: {
+					space_used,
+					__typename: "UserModel",
+				},
+			},
+		});
+	};
+
 
 	const folderData: DataElement[] = [];
 	const fileData: DataElement[] = [];
@@ -92,8 +113,8 @@ const MainPage = () => {
 	const folders = data ? data.folders : [];
 
 	return (
-		<Page onContextMenu={() => setIsContextMenuOpened(false)} onDragOver={onDragOver}>
-			<Inputs setIsDropZoneVisible={setIsDropZoneVisible} isDropZoneVisible={isDropZoneVisible}
+		<Page onContextMenu={() => setIsContextMenuOpen(false)} onDragOver={onDragOver}>
+			<Inputs setIsDropZoneVisible={setIsDropZoneVisible} isDropZoneVisible={isDropZoneVisible} addFoldersToCache={addFoldersToCache}
 					currentFolderId={currentFolderId} folders={folders} space_used={space_used}/>
 
 			<Header/>
@@ -113,6 +134,8 @@ const MainPage = () => {
 					</Column>
 				</Main>
 			</Row>
+
+			<CreateFolderModal isOpen={isCreateFolderModalOpen} setIsOpen={setIsCreateFolderModalOpen} folders={folders} addFoldersToCache={addFoldersToCache}/>
 		</Page>
 	);
 };

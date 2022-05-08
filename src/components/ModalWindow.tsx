@@ -27,12 +27,12 @@ const Container = styled.div`
 `;
 
 type ModalProps = {
-	isOpened: boolean;
+	isOpen: boolean;
 	children: ReactElement | ReactElement[];
 }
 
-const ModalWindow = ({isOpened, children}: ModalProps) => {
-	if (!isOpened) return null;
+const ModalWindow = ({isOpen, children}: ModalProps) => {
+	if (!isOpen) return null;
 	return (
 		<Overlay>
 			<Container>

@@ -1,6 +1,6 @@
 import React, {MouseEvent, useState} from "react";
 import {BR, Container, Icon, Name, Option} from "./useContextMenu.styles";
-import contextMenuOptionsFactory, {EContextMenuTypes} from "../helpers/contextMenuOptionFactory";
+import contextMenuOptionFactory, {EContextMenuTypes} from "../helpers/contextMenuOptionFactory";
 
 export type ContextMenuOption = {
 	name: string;
@@ -15,7 +15,7 @@ export type ContextMenuProps = {
 }
 
 const useContextMenu = (): [Function, Function, JSX.Element | null] => {
-	const [isOpened, setIsOpened] = useState(false);
+	const [isOpen, setIsOpen] = useState(false);
 	const [contextMenuProps, setContextMenuProps] = useState<ContextMenuProps>({options: [], x: 0, y: 0});
 	const {options, x, y} = contextMenuProps;
 
@@ -47,23 +47,23 @@ const useContextMenu = (): [Function, Function, JSX.Element | null] => {
 	};
 
 	const openContextMenu = (e: MouseEvent, contextMenuData: object, contextMenuType: EContextMenuTypes) => {
-		const options: ContextMenuOption[] | null = contextMenuOptionsFactory(contextMenuType, contextMenuData);
+		const options: ContextMenuOption[] | null = contextMenuOptionFactory(contextMenuType, contextMenuData);
 		if (!options) throw new Error("Invalid context menu.svg type!");
 
 		e.preventDefault();
 		e.stopPropagation();
 
 		setContextMenuProps({x: e.pageX, y: e.pageY, options});
-		setIsOpened(true);
+		setIsOpen(true);
 	};
 
 
-	if (!isOpened || !areCoordinatesValid()) return [openContextMenu, setIsOpened, null];
+	if (!isOpen || !areCoordinatesValid()) return [openContextMenu, setIsOpen, null];
 
 	return [
 		openContextMenu as Function,
-		setIsOpened as Function,
-		<Container style={calculateAbsolutePosition()} onClick={() => setIsOpened(false)}>
+		setIsOpen as Function,
+		<Container style={calculateAbsolutePosition()} onClick={() => setIsOpen(false)}>
 			{options.map(({name, icon, callback}: ContextMenuOption, i) =>
 				name === "BR" ?
 					<BR key={i}/>

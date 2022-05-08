@@ -11,8 +11,6 @@ import {Trie} from "../../dataStructures/trie";
 import {foldersArrayToPaths} from "../../services/file/fileResponse";
 import {FileEntry, FolderArrayElement, SimpleFileEntry} from "../../services/file/fileTypes";
 import {uploadFile} from "../../services/s3";
-import {client} from "../../index";
-import {MAIN_QUERY} from "./index.queries";
 
 type InputsProps = {
 	isDropZoneVisible: boolean;
@@ -20,6 +18,7 @@ type InputsProps = {
 	currentFolderId: number | null;
 	folders: FolderArrayElement[];
 	space_used: number;
+	addFoldersToCache: (...arg: FolderArrayElement[]) => void;
 }
 
 type ModalData = {
@@ -31,7 +30,7 @@ type ModalData = {
 
 const trie = new Trie();
 let callbackModalData: ModalData | null = null;
-const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, currentFolderId, folders, space_used}: InputsProps) => {
+const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, currentFolderId, folders, space_used, addFoldersToCache}: InputsProps) => {
 	const [uploadFilesMutation] = useMutation(UPLOAD_FILES_MUTATION);
 	const [uploadFilesAndFoldersMutation] = useMutation(UPLOAD_FILES_AND_FOLDERS_MUTATION);
 	const [getEntriesQuery] = useLazyQuery(GET_ENTRIES_QUERY);
@@ -46,22 +45,6 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, currentFolderI
 		foldersArrayToPaths(folders).forEach(path => trie.add(path));
 	}, [folders, modalData]);
 
-
-	const addFolderToCache = (...newFolders: FolderArrayElement[]): void => {
-		client.writeQuery({
-			query: MAIN_QUERY,
-			data: {
-				folders: [
-					...folders,
-					...newFolders,
-				],
-				user: {
-					space_used: 0,
-					__typename: "UserModel",
-				},
-			},
-		});
-	};
 
 	const upload = async (parent_id: number | null, entries: FileEntry[], uploadMethod: (obj: any) => Promise<any>, getResult: (obj: any) => any, entryToKey: (obj: any) => string) => {
 		const parentEntries = (await getEntriesQuery({variables: {parent_id}})).data.entries;
@@ -86,7 +69,7 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, currentFolderI
 			const {url, fields} = map.get(entryToKey(entry)).url;
 			uploadFile(url, fields, entry.data);
 		});
-		if (foldersToBeCached.length > 0) addFolderToCache(...foldersToBeCached);
+		if (foldersToBeCached.length > 0) addFoldersToCache(...foldersToBeCached);
 	};
 
 	const uploadFiles = async (parent_id: number | null, entries: SimpleFileEntry[]) => {
@@ -201,7 +184,7 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, currentFolderI
 			</Hidden>
 
 			{modalData !== null &&
-				<ModalWindow isOpened={true}>
+				<ModalWindow isOpen={true}>
 					<Container>
 						<Header>Uploading {modalData.included.reduce((sum, cur) => sum + (cur ? 1 : 0), 0)} files, {getSizeInString(modalData.files)}</Header>
 						<AutoCompleteInput placeholder="Path" initialValue={modalData.input} trie={trie} onChange={value => setModalData({...modalData, input: value})}/>
