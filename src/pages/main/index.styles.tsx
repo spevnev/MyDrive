@@ -34,4 +34,8 @@ export const Column = styled.div`
   padding: 0 5px;
   overflow-y: scroll;
   height: 100%;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 `;

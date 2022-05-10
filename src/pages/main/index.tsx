@@ -11,7 +11,7 @@ import {EContextMenuTypes} from "helpers/contextMenuOptionFactory";
 import useTitle from "hooks/useTitle";
 import usePath from "../../hooks/usePath";
 import Inputs from "./Inputs";
-import {useQuery} from "@apollo/client";
+import {useLazyQuery, useQuery} from "@apollo/client";
 import {CURRENT_FOLDER_QUERY, MAIN_QUERY} from "./index.queries";
 import {getData} from "../../services/token";
 import {getFolderByPath, splitName} from "../../services/file/fileRequest";
@@ -38,8 +38,10 @@ const MainPage = () => {
 	const drive_id = (getData() || {}).drive_id;
 
 	const [openContextMenu, setIsContextMenuOpen, ContextMenu] = useContextMenu();
+	const location = useLocation();
+
+	const [currentFolderDataQuery, {data: currentFolderData}] = useLazyQuery(CURRENT_FOLDER_QUERY);
 	const {data} = useQuery(MAIN_QUERY);
-	const {data: currentFolderData, refetch: currentFolderDataQuery} = useQuery(CURRENT_FOLDER_QUERY, {variables: {parent_id: drive_id}});
 
 	const [currentFolderId, setCurrentFolderId] = useState<number | null>(null);
 	const [selected, setSelected] = useState<{ [key: string]: boolean[] }>({});
@@ -47,22 +49,22 @@ const MainPage = () => {
 	const [isDropZoneVisible, setIsDropZoneVisible] = useState(false);
 	const [isCreateFolderModalOpen, setIsCreateFolderModalOpen] = useState(false);
 	const [currentEntries, setCurrentEntries] = useState<Entry[]>([]);
-	const location = useLocation();
+	const [loadingIds, setLoadingIds] = useState(new Set<number>());
 
 	usePath(path || "Drive");
 	useTitle("Drive");
 
 	useEffect(() => {
-		if (prevPath === path) return;
+		if (prevPath === path || folders.length === 0) return;
 		prevPath = path;
 
 		const parent_id = getFolderByPath(folders, path.replace(/^Drive\//, "")) || drive_id;
 
-		currentFolderDataQuery({parent_id});
+		currentFolderDataQuery({variables: {parent_id}});
 
 		setCurrentFolderId(parent_id);
 		setSelected({});
-	}, [location]);
+	}, [location, data]);
 
 	useEffect(() => {
 		if (!currentFolderData) return;
@@ -122,7 +124,9 @@ const MainPage = () => {
 		});
 	};
 
-	const addEntriesToCache = (...newEntries: Entry[]): void => {
+	const addCurrentEntriesToCacheAndSetLoading = (...newEntries: Entry[]): void => {
+		setLoadingIds(new Set([...newEntries.map(e => e.id), ...loadingIds]));
+
 		client.writeQuery({
 			query: CURRENT_FOLDER_QUERY,
 			data: {
@@ -137,13 +141,16 @@ const MainPage = () => {
 		});
 	};
 
+	const stopLoading = (id: number) => setLoadingIds(new Set([...loadingIds].filter(i => i !== id)));
 
-	const folderData: DataElement[] = currentEntries.filter(entry => entry.is_directory).map(folder => ({name: folder.name, key: String(folder.id)}));
+
+	const folderData: DataElement[] = currentEntries.filter(entry => entry.is_directory).map(folder =>
+		({name: folder.name, key: String(folder.id), isLoading: loadingIds.has(folder.id)}));
 	const fileData: DataElement[] = currentEntries.filter(entry => !entry.is_directory).map(file => {
 		const [, extension] = splitName(file.name);
 		const type = extension ? getFileType(extension.slice(1)) : EFileType.OTHER;
 
-		return {key: String(file.id), type, filename: file.name};
+		return {key: String(file.id), type, filename: file.name, isLoading: loadingIds.has(file.id)};
 	});
 	const selectedNum: number = getSelectedNum();
 	const navigationActionType: EActionType = selectedNum === 0 ? EActionType.HIDDEN : selectedNum === 1 ? EActionType.SINGLE : EActionType.MULTIPLE;
@@ -153,8 +160,8 @@ const MainPage = () => {
 
 	return (
 		<Page onContextMenu={() => setIsContextMenuOpen(false)} onDragOver={onDragOver}>
-			<Inputs setIsDropZoneVisible={setIsDropZoneVisible} isDropZoneVisible={isDropZoneVisible} addFoldersToCache={addFoldersToCache}
-					currentFolderId={currentFolderId} folders={folders} space_used={space_used} addEntriesToCache={addEntriesToCache}/>
+			<Inputs setIsDropZoneVisible={setIsDropZoneVisible} isDropZoneVisible={isDropZoneVisible} currentFolderId={currentFolderId} folders={folders} space_used={space_used}
+					addEntriesToCache={addCurrentEntriesToCacheAndSetLoading} addFoldersToCache={addFoldersToCache} stopLoading={stopLoading}/>
 
 			<Header/>
 			<Row onClick={onClick}>
@@ -174,7 +181,8 @@ const MainPage = () => {
 				</Main>
 			</Row>
 
-			<CreateFolderModal isOpen={isCreateFolderModalOpen} setIsOpen={setIsCreateFolderModalOpen} folders={folders} addFoldersToCache={addFoldersToCache}/>
+			<CreateFolderModal currentFolderId={currentFolderId || drive_id} isOpen={isCreateFolderModalOpen} setIsOpen={setIsCreateFolderModalOpen} folders={folders}
+							   addFoldersToCache={addFoldersToCache} addEntriesToCache={addCurrentEntriesToCacheAndSetLoading}/>
 		</Page>
 	);
 };

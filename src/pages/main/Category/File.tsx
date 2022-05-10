@@ -11,6 +11,7 @@ import compressedFile from "assets/file-zip.svg";
 import emptyFile from "assets/file-empty.svg";
 import {ContextMenuContext} from "../index";
 import {EContextMenuTypes} from "helpers/contextMenuOptionFactory";
+import Spinner from "components/Spinner";
 
 const defaultImage: string = emptyFile;
 const images: string[] = [imageFile, textFile, musicFile, pdfFile, videoFile, excelFile, wordFile, compressedFile, emptyFile];
@@ -32,9 +33,10 @@ type FileProps = {
 	type: EFileType | null;
 	isSelected: boolean;
 	onClick: (e: MouseEvent) => void;
+	isLoading: boolean;
 }
 
-const File = ({filename, type, isSelected, onClick}: FileProps) => {
+const File = ({filename, type, isSelected, onClick, isLoading = false}: FileProps) => {
 	const {openContextMenu}: { [key: string]: Function } = useContext(ContextMenuContext);
 
 
@@ -60,7 +62,7 @@ const File = ({filename, type, isSelected, onClick}: FileProps) => {
 
 	return (
 		<Container className={isSelected ? "selected" : ""} onContextMenuCapture={onContextMenu} onClick={onClick}>
-			<FileImage src={type === null ? defaultImage : images[type]}/>
+			{isLoading ? <Spinner/> : <FileImage src={type === null ? defaultImage : images[type]}/>}
 			<Filename>{filename}</Filename>
 		</Container>
 	);

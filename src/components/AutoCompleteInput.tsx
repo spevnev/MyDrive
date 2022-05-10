@@ -94,7 +94,7 @@ const AutoCompleteInput = ({trie, placeholder, onChange, initialValue = ""}: Inp
 	}, [options]);
 
 
-	const isValid = (value: string): boolean => value === "/" || (value.length > 0 && (trie.has(value) || trie.has(`/${value}`)));
+	const isValid = (value: string): boolean => trie.length === 0 || trie.has(value) || trie.has(`/${value}`) || trie.has(`${value}/`);
 
 	const onInput = (e: ChangeEvent) => {
 		const value = (e.target as HTMLInputElement).value;
@@ -106,7 +106,7 @@ const AutoCompleteInput = ({trie, placeholder, onChange, initialValue = ""}: Inp
 	const setChanges = (value: string) => {
 		setValue(value);
 		setOptions(trie.get(value, 5, true));
-		onChange(isValid(value) ? value : null);
+		onChange(value);
 	};
 
 

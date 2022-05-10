@@ -32,8 +32,10 @@ const Form = ({initialFormData, submitForm, inputs, title, buttonText, backgroun
 
 	useKeyboard({
 		key: "Enter", cb: e => {
-			const path = (e as any).path;
-			if (path.indexOf(containerRef.current) === -1) return;
+			const path = e.composedPath();
+			const cur = containerRef.current;
+
+			if (!cur || path.indexOf(cur) === -1) return;
 			onSubmit();
 		},
 	});

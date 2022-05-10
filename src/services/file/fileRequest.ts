@@ -1,4 +1,5 @@
 import {FileEntry, FolderArrayElement, SimpleFileEntry} from "./fileTypes";
+import {getData} from "../token";
 
 export const splitName = (name: string): [string, string | null] => {
 	const reverse = (str: string): string => [...str].reverse().join("");
@@ -18,6 +19,8 @@ export const renameToAvoidNamingCollisions = (entries: FileEntry[], parentEntrie
 	});
 
 	return entries.map(entry => {
+		if (entry.path) return entry;
+
 		const [filename, extension] = splitName(entry.name);
 		const matches = (entry.is_directory ? folderNames : fileNames).matchAll(new RegExp(`${filename}(?: \\((\\d+)\\))?`, "gm"));
 
@@ -127,31 +130,37 @@ export const dataTransferToEntries = async (itemList: DataTransferItemList): Pro
 
 
 export const getFolderPath = (arr: FolderArrayElement[], id: number): string | null => {
-	let path = "";
 	let el = arr.filter(el => el.id === id)[0];
 	if (!el) return null;
 
-	while (el.parent_id !== null) {
-		path += "/" + el.name;
+	const path = [];
+	const drive_id = (getData() || {}).drive_id;
+	while (el.parent_id !== drive_id) {
+		path.push(el.name);
 		el = arr.filter((cur: FolderArrayElement) => cur.id === el.parent_id)[0];
 	}
+	path.push(el.name);
 
-	return path;
+	return "/" + path.reverse().join("/");
 };
 
 export const getFolderByPath = (arr: FolderArrayElement[], path: string): number | null => {
-	const getFolderChildren = (names: string[], id: number, i: number = 1): number => {
+	const getFolderChildren = (names: string[], id: number, i: number = 1): number | null => {
 		if (names.length === i) return id;
 
-		const nextId = arr.filter(el => el.name === names[i] && el.parent_id === id)[0].id;
-		return getFolderChildren(names, nextId, i + 1);
+		const [next] = arr.filter(el => el.name === names[i] && el.parent_id === id);
+		if (!next) return null;
+
+		return getFolderChildren(names, next.id, i + 1);
 	};
 
 	if (path[0] === "/") path = path.slice(1);
 	const names = path.split("/");
+
 	const start = arr.filter(el => el.name === names[0]);
 	if (start.length === 0) return null;
-	if (names.length === 1) return start[0].id;
 
-	return getFolderChildren(names, start[0].id);
+	const startId = start[0].id;
+	if (names.length === 1) return startId;
+	return getFolderChildren(names, startId);
 };

@@ -4,14 +4,16 @@ import {ContextMenuContext} from "../index";
 import {EContextMenuTypes} from "helpers/contextMenuOptionFactory";
 import {Container, Image, Name} from "./Folder.styles";
 import {useNavigate} from "react-router-dom";
+import Spinner from "../../../components/Spinner";
 
 type FolderProps = {
 	name: string;
 	isSelected: boolean;
 	onClick: (e: MouseEvent) => void;
+	isLoading: boolean;
 }
 
-const Folder = ({name, isSelected, onClick}: FolderProps) => {
+const Folder = ({name, isSelected, onClick, isLoading}: FolderProps) => {
 	const {openContextMenu}: { [key: string]: Function } = useContext(ContextMenuContext);
 	const navigate = useNavigate();
 
@@ -38,7 +40,7 @@ const Folder = ({name, isSelected, onClick}: FolderProps) => {
 
 	return (
 		<Container className={isSelected ? "selected" : ""} onContextMenuCapture={onContextMenu} onClick={onClick} onDoubleClick={onDoubleClick}>
-			<Image src={folderImage}/>
+			{isLoading ? <Spinner/> : <Image src={folderImage}/>}
 			<Name>{name}</Name>
 		</Container>
 	);

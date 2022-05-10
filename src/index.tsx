@@ -27,6 +27,7 @@ const requestInterceptor = new ApolloLink((operation, forward) => {
 export const client = new ApolloClient({
 	cache: new InMemoryCache(),
 	link: concat(requestInterceptor, httpLink),
+	connectToDevTools: false,
 });
 
 const root: Element | null = document.getElementById("root");

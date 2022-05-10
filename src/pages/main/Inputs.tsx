@@ -22,6 +22,7 @@ type InputsProps = {
 	space_used: number;
 	addFoldersToCache: (...arg: FolderArrayElement[]) => void;
 	addEntriesToCache: (...arg: Entry[]) => void;
+	stopLoading: (id: number) => void;
 }
 
 type ModalData = {
@@ -33,7 +34,7 @@ type ModalData = {
 
 const trie = new Trie();
 let callbackModalData: ModalData | null = null;
-const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, currentFolderId, folders, space_used, addFoldersToCache, addEntriesToCache}: InputsProps) => {
+const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, currentFolderId, folders, space_used, addFoldersToCache, addEntriesToCache, stopLoading}: InputsProps) => {
 	const [uploadFilesMutation] = useMutation(UPLOAD_FILES_MUTATION);
 	const [uploadFilesAndFoldersMutation] = useMutation(UPLOAD_FILES_AND_FOLDERS_MUTATION);
 	const [getEntriesQuery] = useLazyQuery(GET_ENTRIES_QUERY);
@@ -64,16 +65,16 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, currentFolderI
 		data.forEach((cur: { [key: string]: any }) => map.set(cur.path, {...cur, path: undefined}));
 
 		const foldersToBeCached: FolderArrayElement[] = [];
-		const entriesToBeCached: Entry[] = [];
+		const entriesToBeCached: Entry[] = []; // entries of current folder
 
 		entries.forEach(entry => {
 			const {id, parent_id: cur_parent_id, url: uploadCredentials} = map.get(entryToKey(entry));
 			const name = entry.newName || entry.name;
 
-			if (parent_id === cur_parent_id) entriesToBeCached.push({name, id, parent_id: cur_parent_id, is_directory: entry.is_directory});
+			if (parent_id === cur_parent_id) entriesToBeCached.push({name, id, parent_id: cur_parent_id, is_directory: entry.is_directory || false});
 
 			if (entry.is_directory) foldersToBeCached.push({name, id, parent_id: cur_parent_id});
-			else if (entry.name && entry.data) uploadFile(uploadCredentials.url, uploadCredentials.fields, entry.data);
+			else if (entry.name && entry.data) uploadFile(uploadCredentials.url, uploadCredentials.fields, entry.data).then(() => stopLoading(id));
 		});
 
 		addEntriesToCache(...entriesToBeCached);
