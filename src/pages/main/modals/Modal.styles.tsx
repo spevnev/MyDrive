@@ -1,9 +1,5 @@
 import styled from "styled-components";
 
-export const Hidden = styled.div`
-  display: none;
-`;
-
 export const Container = styled.div`
   width: 400px;
   height: 150px;

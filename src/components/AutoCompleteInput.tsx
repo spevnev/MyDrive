@@ -1,7 +1,7 @@
 import React, {ChangeEvent, useEffect, useState} from "react";
-import {Trie} from "../dataStructures/trie";
+import {Trie} from "dataStructures/trie";
 import styled from "styled-components";
-import useKeyboard from "../hooks/useKeyboard";
+import useKeyboard from "hooks/useKeyboard";
 
 const Container = styled.div`
   position: relative;

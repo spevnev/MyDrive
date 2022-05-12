@@ -5,8 +5,6 @@ const Container = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  height: 100%;
 `;
 
 const loadingAnimation = keyframes`
@@ -19,15 +17,11 @@ const loadingAnimation = keyframes`
   }
 `;
 
-const Loader = styled.div`
-  & {
-    display: inline-block;
-    position: relative;
-    width: 75%;
-    // setting height to width:
-    height: 0;
-    padding-bottom: 75%;
-  }
+const Loader = styled.div<{ size: number }>`
+  display: inline-block;
+  position: relative;
+  width: ${props => props.size}px;
+  height: ${props => props.size}px;
 
   & div {
     box-sizing: border-box;
@@ -37,7 +31,7 @@ const Loader = styled.div`
     height: 100%;
     border-radius: 50%;
     animation: ${loadingAnimation} 1.33s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-    border-width: 7px;
+    border-width: ${props => props.size / 10}px;
     border-style: solid;
     border-color: #000 transparent transparent transparent;
   }
@@ -55,9 +49,14 @@ const Loader = styled.div`
   }
 `;
 
-const Spinner = () => (
-	<Container>
-		<Loader>
+type SpinnerProps = {
+	size: number;
+	margin?: boolean;
+}
+
+const Spinner = ({size, margin = false}: SpinnerProps) => (
+	<Container style={margin ? {height: "100%", width: "100%"} : {}}>
+		<Loader size={size}>
 			<div/>
 			<div/>
 			<div/>

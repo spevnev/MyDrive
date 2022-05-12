@@ -1,6 +1,6 @@
 import React, {useRef, useState} from "react";
 import {Button, Column, Container, ErrorMessage, FormInputs, Input, SubTitle, Title} from "./Form.styles";
-import useKeyboard from "../../hooks/useKeyboard";
+import useKeyboard from "hooks/useKeyboard";
 
 export type FormInput = {
 	name: string;

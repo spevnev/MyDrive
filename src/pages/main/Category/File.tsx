@@ -62,7 +62,7 @@ const File = ({filename, type, isSelected, onClick, isLoading = false}: FileProp
 
 	return (
 		<Container className={isSelected ? "selected" : ""} onContextMenuCapture={onContextMenu} onClick={onClick}>
-			{isLoading ? <Spinner/> : <FileImage src={type === null ? defaultImage : images[type]}/>}
+			{isLoading ? <Spinner size={70} margin={true}/> : <FileImage src={type === null ? defaultImage : images[type]}/>}
 			<Filename>{filename}</Filename>
 		</Container>
 	);

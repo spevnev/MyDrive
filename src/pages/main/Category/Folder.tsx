@@ -4,7 +4,7 @@ import {ContextMenuContext} from "../index";
 import {EContextMenuTypes} from "helpers/contextMenuOptionFactory";
 import {Container, Image, Name} from "./Folder.styles";
 import {useNavigate} from "react-router-dom";
-import Spinner from "../../../components/Spinner";
+import Spinner from "components/Spinner";
 
 type FolderProps = {
 	name: string;
@@ -26,7 +26,9 @@ const Folder = ({name, isSelected, onClick, isLoading}: FolderProps) => {
 
 	const onGetLink = () => console.log(4);
 
-	const onShare = () => console.log(5);
+	const onShare = () => {
+		//	modal
+	};
 
 	const onMoveTo = () => console.log(6);
 
@@ -40,7 +42,7 @@ const Folder = ({name, isSelected, onClick, isLoading}: FolderProps) => {
 
 	return (
 		<Container className={isSelected ? "selected" : ""} onContextMenuCapture={onContextMenu} onClick={onClick} onDoubleClick={onDoubleClick}>
-			{isLoading ? <Spinner/> : <Image src={folderImage}/>}
+			{isLoading ? <Spinner size={32}/> : <Image src={folderImage}/>}
 			<Name>{name}</Name>
 		</Container>
 	);

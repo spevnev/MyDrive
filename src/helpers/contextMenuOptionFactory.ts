@@ -1,8 +1,7 @@
 import {ContextMenuOption} from "hooks/useContextMenu";
 import binIcon from "assets/bin.svg";
 import downloadIcon from "assets/download.svg";
-import shareIcon from "assets/share.svg";
-import linkIcon from "assets/link.svg";
+import shareIcon from "assets/users.svg";
 import moveToIcon from "assets/moveTo.svg";
 import renameIcon from "assets/rename.svg";
 import previewIcon from "assets/eye.svg";
@@ -17,11 +16,10 @@ export enum EContextMenuTypes {
 }
 
 const contextMenuOptionFactory = (type: EContextMenuTypes, data: { [key: string]: any }): ContextMenuOption[] | null => {
-	const defaultContextMenu = [
+	const entryActions = [
 		{name: "Share", icon: shareIcon, callback: data.onShare},
-		{name: "Get link", icon: linkIcon, callback: data.onGetLink},
-		{name: "Move to", icon: moveToIcon, callback: data.onMoveTo},
 		{name: "Rename", icon: renameIcon, callback: data.onRename},
+		{name: "Move to", icon: moveToIcon, callback: data.onMoveTo},
 		{name: "BR", icon: "", callback: () => {}},
 		{name: "Download", icon: downloadIcon, callback: data.onDownload},
 		{name: "Delete", icon: binIcon, callback: data.onDelete},
@@ -34,10 +32,10 @@ const contextMenuOptionFactory = (type: EContextMenuTypes, data: { [key: string]
 					{name: "Preview", icon: previewIcon, callback: data.onPreview},
 					{name: "BR", icon: "", callback: () => {}},
 				] : []),
-				...defaultContextMenu,
+				...entryActions,
 			];
 		case EContextMenuTypes.FOLDER:
-			return defaultContextMenu;
+			return entryActions;
 		case EContextMenuTypes.CREATE:
 			return [
 				{name: "New folder", icon: createFolderIcon, callback: data.onNewFolder},

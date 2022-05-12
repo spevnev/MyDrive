@@ -1,18 +1,20 @@
 import React, {FormEvent, useEffect, useState} from "react";
-import DropZone from "../../components/DropZone";
+import DropZone from "components/DropZone";
 import {useLazyQuery, useMutation} from "@apollo/client";
 import {GET_ENTRIES_QUERY, UPLOAD_FILES_AND_FOLDERS_MUTATION, UPLOAD_FILES_MUTATION} from "./Inputs.queries";
-import {Button, Buttons, Container, DisabledButton, Header, Hidden, PrimaryButton} from "./Inputs.styles";
-import ModalWindow from "../../components/ModalWindow";
-import Checkbox from "../../components/Checkbox";
-import {dataTransferToEntries, filesToEntries, folderToEntries, getFolderByPath, getFolderPath, renameToAvoidNamingCollisions} from "../../services/file/fileRequest";
-import AutoCompleteInput from "../../components/AutoCompleteInput";
-import {Trie} from "../../dataStructures/trie";
-import {foldersArrayToPaths} from "../../services/file/fileResponse";
-import {FileEntry, FolderArrayElement, SimpleFileEntry} from "../../services/file/fileTypes";
-import {uploadFile} from "../../services/s3";
+import {dataTransferToEntries, filesToEntries, folderToEntries, getFolderByPath, getFolderPath, renameToAvoidNamingCollisions} from "services/file/fileRequest";
+import {FileEntry, FolderArrayElement, SimpleFileEntry} from "services/file/fileTypes";
+import {uploadFile} from "services/s3";
 import {Entry} from "./index";
-import {getData} from "../../services/token";
+import {getData} from "services/token";
+import UploadEntriesModal, {ModalData} from "./modals/UploadEntriesModal";
+import {Trie} from "dataStructures/trie";
+import {foldersArrayToPaths} from "services/file/fileResponse";
+import styled from "styled-components";
+
+const Hidden = styled.div`
+  display: none;
+`;
 
 type InputsProps = {
 	isDropZoneVisible: boolean;
@@ -25,15 +27,8 @@ type InputsProps = {
 	stopLoading: (id: number) => void;
 }
 
-type ModalData = {
-	files: File[] | FileEntry[] | SimpleFileEntry[];
-	included: boolean[];
-	input: string | null;
-	onContinue: Function;
-}
-
-const trie = new Trie();
 let callbackModalData: ModalData | null = null;
+const trie = new Trie();
 const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, currentFolderId, folders, space_used, addFoldersToCache, addEntriesToCache, stopLoading}: InputsProps) => {
 	const [uploadFilesMutation] = useMutation(UPLOAD_FILES_MUTATION);
 	const [uploadFilesAndFoldersMutation] = useMutation(UPLOAD_FILES_AND_FOLDERS_MUTATION);
@@ -156,25 +151,6 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, currentFolderI
 		}
 	};
 
-	const roundTo = (num: number, digits: number) => Math.floor(num * 10 ** digits) / 10 ** digits;
-
-	const getSize = (files: SimpleFileEntry[]): number => {
-		if (!modalData) return 0;
-		return files.reduce((sum, {size}, i) => sum + (modalData.included[i] ? size : 0), 0);
-	};
-
-	const getSizeInString = (files: SimpleFileEntry[]): string => {
-		if (!modalData) return "";
-		const bytes = getSize(files);
-
-		const KB = 2 ** 10;
-		const MB = 2 ** 20;
-
-		if (bytes < KB) return "less than a KB";
-		else if (bytes < MB) return `${roundTo(bytes / KB, 2)}KBs`;
-		return `${roundTo(bytes / MB, 2)}MBs`;
-	};
-
 	const changeIncluded = (includeHidden: boolean) => {
 		if (!modalData) return;
 		setModalData({...modalData, included: modalData.files.map(({name}) => includeHidden ? true : !name.startsWith("."))});
@@ -192,22 +168,7 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, currentFolderI
 				<input id="fileUpload" type="file" onInput={onFileInput} multiple/>
 			</Hidden>
 
-			{modalData !== null &&
-				<ModalWindow isOpen={true}>
-					<Container>
-						<Header>Uploading {modalData.included.reduce((sum, cur) => sum + (cur ? 1 : 0), 0)} files, {getSizeInString(modalData.files)}</Header>
-						<AutoCompleteInput placeholder="Path" initialValue={modalData.input} trie={trie} onChange={value => setModalData({...modalData, input: value})}/>
-						<Checkbox defaultValue={true} onChange={changeIncluded}>Upload hidden files (start with .)</Checkbox>
-						<Buttons>
-							<Button onClick={() => setModalData(null)}>Cancel</Button>
-							{freeSpace > getSize(modalData.files)
-								? <PrimaryButton onClick={() => modalData.onContinue()}>OK</PrimaryButton>
-								: <DisabledButton>Not enough space!</DisabledButton>
-							}
-						</Buttons>
-					</Container>
-				</ModalWindow>
-			}
+			{modalData !== null && <UploadEntriesModal trie={trie} modalData={modalData} freeSpace={freeSpace} setModalData={setModalData} changeIncluded={changeIncluded}/>}
 			{isDropZoneVisible && <DropZone onDrop={onDrop}/>}
 		</>
 	);

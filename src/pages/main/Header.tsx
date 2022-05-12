@@ -1,7 +1,7 @@
 import React from "react";
 import {Container, Logo, Title, TitleContainer, Username} from "./Header.styles";
 import {useNavigate} from "react-router-dom";
-import {getData} from "../../services/token";
+import {getData} from "services/token";
 
 const Header = () => {
 	const navigate = useNavigate();

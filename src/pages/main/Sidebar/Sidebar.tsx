@@ -9,8 +9,8 @@ import folderIcon from "assets/folder.svg";
 import sharedIcon from "assets/users.svg";
 import binIcon from "assets/bin.svg";
 import Entry from "./Entry";
-import {foldersArrayToObject} from "../../../services/file/fileResponse";
-import {Folder, FolderArrayElement} from "../../../services/file/fileTypes";
+import {foldersArrayToObject} from "services/file/fileResponse";
+import {Folder, FolderArrayElement} from "services/file/fileTypes";
 
 type SidebarProps = {
 	openCreateContextMenu: (e: MouseEvent) => void;

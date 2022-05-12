@@ -1,16 +1,16 @@
 import React, {useEffect, useState} from "react";
-import ModalWindow from "../../components/ModalWindow";
-import {Button, Buttons, Container, DisabledButton, Header, PrimaryButton} from "./Inputs.styles";
-import {FolderArrayElement} from "../../services/file/fileTypes";
-import StyledInput from "../../components/StyledInput";
+import ModalWindow from "components/ModalWindow";
+import {FolderArrayElement} from "services/file/fileTypes";
+import StyledInput from "components/StyledInput";
 import {useMutation} from "@apollo/client";
 import {CREATE_FOLDER_MUTATION} from "./CreateFolderModal.queries";
-import AutoCompleteInput from "../../components/AutoCompleteInput";
-import {foldersArrayToPaths} from "../../services/file/fileResponse";
-import {Trie} from "../../dataStructures/trie";
-import {getFolderByPath, getFolderPath} from "../../services/file/fileRequest";
-import {getData} from "../../services/token";
-import {Entry} from "./index";
+import AutoCompleteInput from "components/AutoCompleteInput";
+import {foldersArrayToPaths} from "services/file/fileResponse";
+import {Trie} from "dataStructures/trie";
+import {getFolderByPath, getFolderPath} from "services/file/fileRequest";
+import {getData} from "services/token";
+import {Entry} from "../index";
+import {Button, Buttons, Container, DisabledButton, Header, PrimaryButton} from "./Modal.styles";
 
 type CreateFolderModalProps = {
 	isOpen: boolean;

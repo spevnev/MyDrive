@@ -28,7 +28,7 @@ const Container = styled.div`
 
 type ModalProps = {
 	isOpen: boolean;
-	children: ReactElement | ReactElement[];
+	children?: ReactElement | ReactElement[];
 }
 
 const ModalWindow = ({isOpen, children}: ModalProps) => {

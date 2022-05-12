@@ -9,16 +9,16 @@ import useContextMenu from "hooks/useContextMenu";
 import Folder from "./Category/Folder";
 import {EContextMenuTypes} from "helpers/contextMenuOptionFactory";
 import useTitle from "hooks/useTitle";
-import usePath from "../../hooks/usePath";
+import usePath from "hooks/usePath";
 import Inputs from "./Inputs";
 import {useLazyQuery, useQuery} from "@apollo/client";
 import {CURRENT_FOLDER_QUERY, MAIN_QUERY} from "./index.queries";
-import {getData} from "../../services/token";
-import {getFolderByPath, splitName} from "../../services/file/fileRequest";
-import CreateFolderModal from "./CreateFolderModal";
-import {FolderArrayElement} from "../../services/file/fileTypes";
+import {getData} from "services/token";
+import {getFolderByPath, splitName} from "services/file/fileRequest";
+import CreateFolderModal from "./modals/CreateFolderModal";
+import {FolderArrayElement} from "services/file/fileTypes";
 import {client} from "../../index";
-import {getFileType} from "../../helpers/FileType";
+import {getFileType} from "helpers/FileType";
 import {useLocation} from "react-router-dom";
 
 export const ContextMenuContext = createContext({});
@@ -31,6 +31,7 @@ export type Entry = {
 	is_directory: boolean;
 }
 
+// TODO: try to divide into multiple components...
 let timeout: NodeJS.Timeout | null = null;
 let prevPath: string = "";
 const MainPage = () => {
@@ -55,14 +56,13 @@ const MainPage = () => {
 	useTitle("Drive");
 
 	useEffect(() => {
+		const parent_id = getFolderByPath(folders, path.replace(/^Drive\//, "")) || drive_id;
+		setCurrentFolderId(parent_id);
+
 		if (prevPath === path || folders.length === 0) return;
 		prevPath = path;
 
-		const parent_id = getFolderByPath(folders, path.replace(/^Drive\//, "")) || drive_id;
-
 		currentFolderDataQuery({variables: {parent_id}});
-
-		setCurrentFolderId(parent_id);
 		setSelected({});
 	}, [location, data]);
 

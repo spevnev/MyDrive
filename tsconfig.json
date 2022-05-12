@@ -30,6 +30,12 @@
       ],
       "services/": [
         "services"
+      ],
+      "dataStructures/": [
+        "dataStructures"
+      ],
+      "helpers/": [
+        "helpers"
       ]
     }
   },

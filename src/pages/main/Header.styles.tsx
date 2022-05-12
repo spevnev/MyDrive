@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import {ReactComponent as LogoSvg} from "../../assets/logo.svg";
+import {ReactComponent as LogoSvg} from "assets/logo.svg";
 
 export const Container = styled.div`
   width: 100%;
@@ -10,8 +10,8 @@ export const Container = styled.div`
   align-items: center;
   justify-content: space-between;
   padding: 0 30px;
-  
-  @media(max-width: 500px){
+
+  @media (max-width: 500px) {
     padding: 0 20px;
   }
 `;
@@ -20,7 +20,7 @@ export const Logo = styled(LogoSvg)`
   width: 40px;
   height: 40px;
 
-  @media(max-width: 500px){
+  @media (max-width: 500px) {
     width: 30px;
     height: 30px;
   }
@@ -31,7 +31,7 @@ export const Title = styled.p`
   font-weight: 200;
   margin-left: 15px;
 
-  @media(max-width: 500px) {
+  @media (max-width: 500px) {
     margin-left: 8px;
     font-size: 28px;
   }
@@ -49,7 +49,7 @@ export const Username = styled.p`
   letter-spacing: -.5px;
   font-weight: 300;
 
-  @media(max-width: 500px) {
+  @media (max-width: 500px) {
     font-size: 20px;
   }
 `;

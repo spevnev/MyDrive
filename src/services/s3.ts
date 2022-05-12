@@ -14,6 +14,6 @@ export const uploadFile = async (url: string, fields: { [key: string]: string },
 
 	// TODO: disabled due to free tier limitation
 	// const response = await fetch(url, {method: "POST", body: formData});
-	const response = await new Promise(resolve => setTimeout(() => resolve({status: 204}), 200)) as { status: number };
+	const response = await new Promise(resolve => setTimeout(() => resolve({status: 204}), 70)) as { status: number };
 	return response.status === 204;
 };
