@@ -1,4 +1,4 @@
-import React, {MouseEvent, useEffect} from "react";
+import React, {MouseEvent, useContext, useEffect} from "react";
 import addIcon from "assets/add-solid.svg";
 import diskIcon from "assets/drive.svg";
 import ProgressBar from "components/ProgressBar";
@@ -10,19 +10,19 @@ import sharedIcon from "assets/users.svg";
 import binIcon from "assets/bin.svg";
 import Entry from "./Entry";
 import {foldersArrayToObject} from "services/file/fileResponse";
-import {Folder, FolderArrayElement} from "services/file/fileTypes";
+import {Folder} from "services/file/fileTypes";
+import {CurrentDataContext, SidebarContext} from "../index";
 
 type SidebarProps = {
 	openCreateContextMenu: (e: MouseEvent) => void;
-	folders: FolderArrayElement[];
-	space_used: number;
-	isSidebarShown: boolean;
-	setIsSidebarShown: (arg: boolean) => void;
 }
 
 const MAX_CAPACITY = 1000; // in Megabytes
-const Sidebar = ({openCreateContextMenu, folders, space_used, isSidebarShown, setIsSidebarShown}: SidebarProps) => {
-	const {loading, error, data} = useQuery(SIDEBAR_QUERY);
+const Sidebar = ({openCreateContextMenu}: SidebarProps) => {
+	const {isSidebarShown, setIsSidebarShown} = useContext(SidebarContext);
+	const {folders, space_used} = useContext(CurrentDataContext);
+
+	const {data} = useQuery(SIDEBAR_QUERY);
 
 	useEffect(() => {
 		if (space_used === null) localStorage.removeItem("JWT");

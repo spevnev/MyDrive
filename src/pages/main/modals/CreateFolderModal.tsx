@@ -1,6 +1,5 @@
-import React, {useEffect, useState} from "react";
+import React, {useContext, useEffect, useState} from "react";
 import ModalWindow from "components/ModalWindow";
-import {FolderArrayElement} from "services/file/fileTypes";
 import StyledInput from "components/StyledInput";
 import {useMutation} from "@apollo/client";
 import {CREATE_FOLDER_MUTATION} from "./CreateFolderModal.queries";
@@ -9,20 +8,19 @@ import {foldersArrayToPaths} from "services/file/fileResponse";
 import {Trie} from "dataStructures/trie";
 import {getFolderByPath, getFolderPath} from "services/file/fileRequest";
 import {getData} from "services/token";
-import {Entry} from "../index";
+import {CacheContext, CurrentDataContext} from "../index";
 import {Button, Buttons, Container, DisabledButton, Header, PrimaryButton} from "./Modal.styles";
 
 type CreateFolderModalProps = {
 	isOpen: boolean;
 	setIsOpen: (arg: boolean) => void;
-	folders: FolderArrayElement[];
-	addFoldersToCache: (...arg: FolderArrayElement[]) => void;
-	addEntriesToCache: (...arg: Entry[]) => void;
-	currentFolderId: number;
 }
 
 const trie = new Trie();
-const CreateFolderModal = ({isOpen = false, setIsOpen, folders, addFoldersToCache, addEntriesToCache, currentFolderId}: CreateFolderModalProps) => {
+const CreateFolderModal = ({isOpen = false, setIsOpen}: CreateFolderModalProps) => {
+	const {currentFolderId, folders} = useContext(CurrentDataContext);
+	const {addFoldersToCache, addCurrentEntriesToCache} = useContext(CacheContext);
+
 	const initModalData = () => {
 		const path = getFolderPath(folders, currentFolderId) || "/";
 		return {path, name: "New Folder"};
@@ -54,7 +52,7 @@ const CreateFolderModal = ({isOpen = false, setIsOpen, folders, addFoldersToCach
 		const id = data.createFolder;
 
 		addFoldersToCache({name: modalData.name, parent_id: parent_id || tokenData.drive_id, id});
-		addEntriesToCache({name: modalData.name, parent_id: parent_id || tokenData.drive_id, id, is_directory: true});
+		addCurrentEntriesToCache({name: modalData.name, parent_id: parent_id || tokenData.drive_id, id, is_directory: true});
 	};
 
 

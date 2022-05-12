@@ -1,11 +1,11 @@
-import React, {FormEvent, useEffect, useState} from "react";
+import React, {FormEvent, useContext, useEffect, useState} from "react";
 import DropZone from "components/DropZone";
 import {useLazyQuery, useMutation} from "@apollo/client";
 import {GET_ENTRIES_QUERY, UPLOAD_FILES_AND_FOLDERS_MUTATION, UPLOAD_FILES_MUTATION} from "./Inputs.queries";
 import {dataTransferToEntries, filesToEntries, folderToEntries, getFolderByPath, getFolderPath, renameToAvoidNamingCollisions} from "services/file/fileRequest";
 import {FileEntry, FolderArrayElement, SimpleFileEntry} from "services/file/fileTypes";
 import {uploadFile} from "services/s3";
-import {Entry} from "./index";
+import {CacheContext, CurrentDataContext, Entry} from "./index";
 import {getData} from "services/token";
 import UploadEntriesModal, {ModalData} from "./modals/UploadEntriesModal";
 import {Trie} from "dataStructures/trie";
@@ -19,17 +19,15 @@ const Hidden = styled.div`
 type InputsProps = {
 	isDropZoneVisible: boolean;
 	setIsDropZoneVisible: (arg: boolean) => void;
-	currentFolderId: number | null;
-	folders: FolderArrayElement[];
-	space_used: number;
-	addFoldersToCache: (...arg: FolderArrayElement[]) => void;
-	addEntriesToCache: (...arg: Entry[]) => void;
 	stopLoading: (id: number) => void;
 }
 
 let callbackModalData: ModalData | null = null;
 const trie = new Trie();
-const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, currentFolderId, folders, space_used, addFoldersToCache, addEntriesToCache, stopLoading}: InputsProps) => {
+const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, stopLoading}: InputsProps) => {
+	const {currentFolderId, folders, space_used} = useContext(CurrentDataContext);
+	const {addFoldersToCache, addCurrentEntriesToCacheAndSetLoading} = useContext(CacheContext);
+
 	const [uploadFilesMutation] = useMutation(UPLOAD_FILES_MUTATION);
 	const [uploadFilesAndFoldersMutation] = useMutation(UPLOAD_FILES_AND_FOLDERS_MUTATION);
 	const [getEntriesQuery] = useLazyQuery(GET_ENTRIES_QUERY);
@@ -72,7 +70,7 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, currentFolderI
 			else if (entry.name && entry.data) uploadFile(uploadCredentials.url, uploadCredentials.fields, entry.data).then(() => stopLoading(id));
 		});
 
-		addEntriesToCache(...entriesToBeCached);
+		addCurrentEntriesToCacheAndSetLoading(...entriesToBeCached);
 		addFoldersToCache(...foldersToBeCached);
 	};
 

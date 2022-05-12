@@ -1,6 +1,5 @@
-import React, {MouseEvent, useContext, useEffect, useState} from "react";
+import React, {MouseEvent, useEffect, useState} from "react";
 import {Container, Name, Row} from "./Category.styles";
-import {SelectedContext} from "../index";
 
 export type DataElement = {
 	key: string;
@@ -12,10 +11,11 @@ type CategoryProps = {
 	Element: (...args: any) => JSX.Element;
 	data: DataElement[];
 	onDrop?: Function;
+	selected: {[key: string]: boolean[]};
+	setSelected: (arg: {[key: string]: boolean[]}) => void;
 }
 
-const Category = ({Element, name, data}: CategoryProps) => {
-	const {selected, setSelected} = useContext<any>(SelectedContext);
+const Category = ({Element, name, data, selected, setSelected}: CategoryProps) => {
 	const [lastIdx, setLastIdx] = useState(-1);
 	const curSelected = selected[name];
 
@@ -59,9 +59,7 @@ const Category = ({Element, name, data}: CategoryProps) => {
 			<Name>{name}</Name>
 
 			<Row>
-				{data.map((dataEl: DataElement, idx: number) =>
-					<Element {...dataEl} isSelected={curSelected ? curSelected[idx] : false} onClick={(e: MouseEvent) => changeSelection(e, idx)}/>,
-				)}
+				{data.map((dataEl: DataElement, idx: number) => <Element {...dataEl} isSelected={curSelected ? curSelected[idx] : false} onClick={(e: MouseEvent) => changeSelection(e, idx)}/>,)}
 			</Row>
 		</Container>
 	);

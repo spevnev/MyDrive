@@ -14,7 +14,13 @@ export type ContextMenuProps = {
 	options: ContextMenuOption[];
 }
 
-const useContextMenu = (): [Function, Function, JSX.Element | null] => {
+type ContextMenuReturn = [
+	(e: MouseEvent, contextMenuData: object, contextMenuType: EContextMenuTypes) => void,
+	(arg: boolean) => void,
+		JSX.Element | null
+]
+
+const useContextMenu = (): ContextMenuReturn => {
 	const [isOpen, setIsOpen] = useState(false);
 	const [contextMenuProps, setContextMenuProps] = useState<ContextMenuProps>({options: [], x: 0, y: 0});
 	const {options, x, y} = contextMenuProps;
@@ -61,8 +67,8 @@ const useContextMenu = (): [Function, Function, JSX.Element | null] => {
 	if (!isOpen || !areCoordinatesValid()) return [openContextMenu, setIsOpen, null];
 
 	return [
-		openContextMenu as Function,
-		setIsOpen as Function,
+		openContextMenu,
+		setIsOpen,
 		<Container style={calculateAbsolutePosition()} onClick={() => setIsOpen(false)}>
 			{options.map(({name, icon, callback}: ContextMenuOption, i) =>
 				name === "BR" ?
