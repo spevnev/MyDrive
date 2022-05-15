@@ -9,9 +9,9 @@ import folderIcon from "assets/folder.svg";
 import sharedIcon from "assets/users.svg";
 import binIcon from "assets/bin.svg";
 import Entry from "./Entry";
-import {foldersArrayToObject} from "services/file/fileResponse";
 import {Folder} from "services/file/fileTypes";
 import {CurrentDataContext, SidebarContext} from "../index";
+import {foldersArrayToObject} from "../../../services/file/file";
 
 type SidebarProps = {
 	openCreateContextMenu: (e: MouseEvent) => void;
@@ -19,7 +19,7 @@ type SidebarProps = {
 
 const MAX_CAPACITY = 1000; // in Megabytes
 const Sidebar = ({openCreateContextMenu}: SidebarProps) => {
-	const {isSidebarShown, setIsSidebarShown} = useContext(SidebarContext);
+	const {isSidebarOpen, setIsSidebarOpen} = useContext(SidebarContext);
 	const {folders, space_used} = useContext(CurrentDataContext);
 
 	const {data} = useQuery(SIDEBAR_QUERY);
@@ -51,11 +51,11 @@ const Sidebar = ({openCreateContextMenu}: SidebarProps) => {
 
 
 	const spaceUsedPercentage: number = space_used ? bytesToMegabytes(space_used, 2) : 0;
-	const sharedFolders = foldersArrayToObject(data ? data.rootSharedFolders || [] : []);
+	const sharedFolders = foldersArrayToObject(data ? data.sharedFolders || [] : []);
 	const driveFolders = foldersArrayToObject(folders || []);
 
 	return (
-		<Overlay className={isSidebarShown ? "" : "hidden"} onClick={() => setIsSidebarShown(false)}>
+		<Overlay className={isSidebarOpen ? "" : "hidden"} onClick={() => setIsSidebarOpen(false)}>
 			<Container>
 				<Button onClick={onClick}>
 					<Icon src={addIcon}/>

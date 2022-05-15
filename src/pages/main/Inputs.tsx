@@ -2,15 +2,14 @@ import React, {FormEvent, useContext, useEffect, useState} from "react";
 import DropZone from "components/DropZone";
 import {useLazyQuery, useMutation} from "@apollo/client";
 import {GET_ENTRIES_QUERY, UPLOAD_FILES_AND_FOLDERS_MUTATION, UPLOAD_FILES_MUTATION} from "./Inputs.queries";
-import {dataTransferToEntries, filesToEntries, folderToEntries, getFolderByPath, getFolderPath, renameToAvoidNamingCollisions} from "services/file/fileRequest";
 import {FileEntry, FolderArrayElement, SimpleFileEntry} from "services/file/fileTypes";
 import {uploadFile} from "services/s3";
 import {CacheContext, CurrentDataContext, Entry} from "./index";
 import {getData} from "services/token";
 import UploadEntriesModal, {ModalData} from "./modals/UploadEntriesModal";
 import {Trie} from "dataStructures/trie";
-import {foldersArrayToPaths} from "services/file/fileResponse";
 import styled from "styled-components";
+import {dataTransferToEntries, filesToEntries, foldersArrayToPaths, folderToEntries, getFolderByPath, getFolderPath, renameToAvoidNamingCollisions} from "../../services/file/file";
 
 const Hidden = styled.div`
   display: none;
@@ -66,7 +65,7 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, stopLoading}: 
 
 			if (parent_id === cur_parent_id) entriesToBeCached.push({name, id, parent_id: cur_parent_id, is_directory: entry.is_directory || false});
 
-			if (entry.is_directory) foldersToBeCached.push({name, id, parent_id: cur_parent_id});
+			if (entry.is_directory) foldersToBeCached.push({name, id, parent_id: cur_parent_id, share_id: null}); // TODO: share_id = parent.share_id!
 			else if (entry.name && entry.data) uploadFile(uploadCredentials.url, uploadCredentials.fields, entry.data).then(() => stopLoading(id));
 		});
 

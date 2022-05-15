@@ -7,7 +7,7 @@ import {BrowserRouter} from "react-router-dom";
 import {getToken} from "./services/token";
 
 const loading: Element | null = document.getElementById("loading");
-if (loading) setTimeout(() => loading.remove(), 100);
+if (loading) setTimeout(() => loading.remove(), 200);
 
 const httpLink = new HttpLink({uri: "http://127.0.0.1:3001/graphql"});
 const requestInterceptor = new ApolloLink((operation, forward) => {

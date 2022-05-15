@@ -2,7 +2,8 @@ import styled from "styled-components";
 
 export const Container = styled.div`
   width: 400px;
-  height: 150px;
+  min-height: 150px;
+  height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -12,6 +13,7 @@ export const Header = styled.p`
   font-size: 24px;
   font-weight: 200;
   width: 100%;
+  margin-bottom: 8px;
 `;
 
 export const Buttons = styled.div`
@@ -21,6 +23,7 @@ export const Buttons = styled.div`
   height: fit-content;
   align-items: center;
   justify-content: flex-end;
+  margin-top: 8px;
 `;
 
 export const Button = styled.button`

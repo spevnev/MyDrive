@@ -2,11 +2,13 @@ export type FolderArrayElement = {
 	name: string;
 	id: number;
 	parent_id: number;
+	share_id: number | null;
 }
 
 export type Folder = {
 	name: string;
 	children: Folder[];
+	share_id: number | null;
 }
 
 export type SimpleFileEntry = {

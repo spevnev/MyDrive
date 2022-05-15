@@ -12,7 +12,7 @@ export class Trie {
 		this.root = {text: "", children: new Map(), isWord: false};
 	};
 
-	has = (string: string): boolean => { // TODO: check
+	has = (string: string): boolean => {
 		const chars = string.split("");
 
 		let node: Node = this.root;

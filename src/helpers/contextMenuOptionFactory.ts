@@ -1,7 +1,7 @@
 import {ContextMenuOption} from "hooks/useContextMenu";
 import binIcon from "assets/bin.svg";
 import downloadIcon from "assets/download.svg";
-import shareIcon from "assets/users.svg";
+import shareIcon from "assets/share.svg";
 import moveToIcon from "assets/moveTo.svg";
 import renameIcon from "assets/rename.svg";
 import previewIcon from "assets/eye.svg";
@@ -27,13 +27,12 @@ const contextMenuOptionFactory = (type: EContextMenuTypes, data: { [key: string]
 
 	switch (type) {
 		case EContextMenuTypes.FILE:
-			return [
-				...(data.onPreview ? [
-					{name: "Preview", icon: previewIcon, callback: data.onPreview},
-					{name: "BR", icon: "", callback: () => {}},
-				] : []),
-				...entryActions,
-			];
+			if (data.onPreview) entryActions.unshift(
+				{name: "Preview", icon: previewIcon, callback: data.onPreview},
+				{name: "BR", icon: "", callback: () => {}},
+			);
+
+			return entryActions;
 		case EContextMenuTypes.FOLDER:
 			return entryActions;
 		case EContextMenuTypes.CREATE:

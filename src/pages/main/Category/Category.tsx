@@ -1,5 +1,6 @@
-import React, {MouseEvent, useEffect, useState} from "react";
+import React, {MouseEvent, useContext, useEffect, useState} from "react";
 import {Container, Name, Row} from "./Category.styles";
+import {CategoryContext} from "../FileExplorer";
 
 export type DataElement = {
 	key: string;
@@ -9,14 +10,13 @@ export type DataElement = {
 type CategoryProps = {
 	name: string;
 	Element: (...args: any) => JSX.Element;
-	data: DataElement[];
-	onDrop?: Function;
-	selected: {[key: string]: boolean[]};
-	setSelected: (arg: {[key: string]: boolean[]}) => void;
 }
 
-const Category = ({Element, name, data, selected, setSelected}: CategoryProps) => {
+const Category = ({Element, name}: CategoryProps) => {
+	const {dataGetterMap, selected, setSelected} = useContext(CategoryContext);
 	const [lastIdx, setLastIdx] = useState(-1);
+
+	const data = dataGetterMap[name]();
 	const curSelected = selected[name];
 
 	useEffect(() => {
@@ -59,7 +59,9 @@ const Category = ({Element, name, data, selected, setSelected}: CategoryProps) =
 			<Name>{name}</Name>
 
 			<Row>
-				{data.map((dataEl: DataElement, idx: number) => <Element {...dataEl} isSelected={curSelected ? curSelected[idx] : false} onClick={(e: MouseEvent) => changeSelection(e, idx)}/>,)}
+				{data.map((dataEl: DataElement, idx: number) =>
+					<Element {...dataEl} isSelected={curSelected ? curSelected[idx] : false} onClick={(e: MouseEvent) => changeSelection(e, idx)}/>)
+				}
 			</Row>
 		</Container>
 	);

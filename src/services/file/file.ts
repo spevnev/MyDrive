@@ -1,5 +1,46 @@
-import {FileEntry, FolderArrayElement, SimpleFileEntry} from "./fileTypes";
+import {FileEntry, Folder, FolderArrayElement, SimpleFileEntry} from "./fileTypes";
 import {getData} from "../token";
+
+export const foldersArrayToObject = (arr: FolderArrayElement[]): Folder[] => {
+	if (arr.length === 0) return [];
+
+	const idToFolder = new Map<number, Folder>();
+	arr.forEach(({name, id, share_id}) => idToFolder.set(id, {name: name, children: [], share_id} as Folder));
+
+	return arr.map(el => {
+		const cur = idToFolder.get(el.id);
+		if (!cur) return null;
+
+		if (!idToFolder.has(el.parent_id)) return cur;
+
+		const parent = idToFolder.get(el.parent_id);
+		if (!parent) return null;
+		if (parent.share_id !== cur.share_id) return cur;
+
+		parent.children.push(cur);
+		return null;
+	}).filter(cur => cur !== null) as Folder[];
+};
+
+export const foldersArrayToPaths = (arr: FolderArrayElement[]): string[] => {
+	const getPaths = (folder: Folder, path: string = ""): string[] => {
+		const newPath = `${path}/${folder.name}`;
+		if (folder.children.length === 0) return [path, newPath];
+
+		const childPaths: string[] = folder.children.reduce((arr: string[], child) => [...arr, ...getPaths(child, newPath)], []);
+		return [path, ...childPaths];
+	};
+
+	const folders: Folder[] = foldersArrayToObject(arr);
+	const pathSet = new Set<string>();
+
+	folders.forEach(folder => getPaths(folder).forEach(value => pathSet.add(value)));
+
+	pathSet.delete("");
+	pathSet.add("/");
+
+	return [...pathSet];
+};
 
 export const splitName = (name: string): [string, string | null] => {
 	const reverse = (str: string): string => [...str].reverse().join("");
@@ -36,7 +77,6 @@ export const renameToAvoidNamingCollisions = (entries: FileEntry[], parentEntrie
 		return {...entry, newName: `${filename} (${max + 1})${extension === null ? "" : extension}`};
 	});
 };
-
 
 export const filesToEntries = async (files: File[]): Promise<SimpleFileEntry[]> => {
 	const entries: SimpleFileEntry[] = [];
@@ -80,8 +120,6 @@ export const folderToEntries = async (files: File[]): Promise<FileEntry[]> => {
 	return entries;
 };
 
-
-// Type containing only variables and methods which are used, as there is no typescript definition of class
 type FileSystemHandle = {
 	kind: string;
 	name: string;
@@ -127,7 +165,6 @@ export const dataTransferToEntries = async (itemList: DataTransferItemList): Pro
 	const containsFolders = handles.filter(({kind}) => kind === "directory").length > 0;
 	return containsFolders ? {fileEntries: await folderToEntries(files)} : {simpleFileEntries: await filesToEntries(files)};
 };
-
 
 export const getFolderPath = (arr: FolderArrayElement[], id: number): string | null => {
 	let el = arr.filter(el => el.id === id)[0];

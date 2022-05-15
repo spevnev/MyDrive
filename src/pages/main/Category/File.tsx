@@ -9,9 +9,10 @@ import excelFile from "assets/file-excel.svg";
 import wordFile from "assets/file-word.svg";
 import compressedFile from "assets/file-zip.svg";
 import emptyFile from "assets/file-empty.svg";
-import {ContextMenuContext} from "../index";
+import {ContextMenuContext, Entry} from "../index";
 import {EContextMenuTypes} from "helpers/contextMenuOptionFactory";
 import Spinner from "components/Spinner";
+import {EntryActionsContext} from "../FileExplorer";
 
 const defaultImage: string = emptyFile;
 const images: string[] = [imageFile, textFile, musicFile, pdfFile, videoFile, excelFile, wordFile, compressedFile, emptyFile];
@@ -29,33 +30,22 @@ export enum EFileType {
 }
 
 type FileProps = {
-	filename: string;
+	entry: Entry;
 	type: EFileType | null;
 	isSelected: boolean;
 	onClick: (e: MouseEvent) => void;
 	isLoading: boolean;
 }
 
-const File = ({filename, type, isSelected, onClick, isLoading = false}: FileProps) => {
-	const {openContextMenu}: { [key: string]: Function } = useContext(ContextMenuContext);
+const File = ({entry, type, isSelected, onClick, isLoading = false}: FileProps) => {
+	const {openContextMenu} = useContext(ContextMenuContext);
+	const {onDelete, onDownload, onRename, onShare, onMoveTo, onPreview} = useContext(EntryActionsContext);
 
-
-	const onDelete = () => console.log(8);
-
-	const onDownload = () => console.log(7);
-
-	const onRename = () => console.log(6);
-
-	const onGetLink = () => console.log(5);
-
-	const onShare = () => console.log(4);
-
-	const onMoveTo = () => console.log(3);
-
-	const onPreview = type !== EFileType.IMAGE ? undefined : () => console.log(1);
 
 	const onContextMenu = (e: MouseEvent) => {
-		const contextMenuData: object = {onDelete, onDownload, onRename, onGetLink, onShare, onMoveTo, onPreview};
+		const canPreview = type === EFileType.IMAGE;
+		const contextMenuData: object = {onDelete, onDownload, onRename, onShare: () => onShare(entry), onMoveTo, onPreview: canPreview ? onPreview : undefined};
+
 		openContextMenu(e, contextMenuData, EContextMenuTypes.FILE);
 	};
 
@@ -63,7 +53,7 @@ const File = ({filename, type, isSelected, onClick, isLoading = false}: FileProp
 	return (
 		<Container className={isSelected ? "selected" : ""} onContextMenuCapture={onContextMenu} onClick={onClick}>
 			{isLoading ? <Spinner size={70} margin={true}/> : <FileImage src={type === null ? defaultImage : images[type]}/>}
-			<Filename>{filename}</Filename>
+			<Filename>{entry.name}</Filename>
 		</Container>
 	);
 };

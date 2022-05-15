@@ -21,8 +21,8 @@ const Container = styled.div`
   position: absolute;
   top: 50%;
   left: 50%;
-  min-width: 25%;
-  min-height: 20%;
+  min-width: 20%;
+  min-height: 15%;
   transform: translate(-50%, -50%);
 `;
 

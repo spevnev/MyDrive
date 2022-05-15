@@ -4,12 +4,11 @@ import StyledInput from "components/StyledInput";
 import {useMutation} from "@apollo/client";
 import {CREATE_FOLDER_MUTATION} from "./CreateFolderModal.queries";
 import AutoCompleteInput from "components/AutoCompleteInput";
-import {foldersArrayToPaths} from "services/file/fileResponse";
 import {Trie} from "dataStructures/trie";
-import {getFolderByPath, getFolderPath} from "services/file/fileRequest";
 import {getData} from "services/token";
 import {CacheContext, CurrentDataContext} from "../index";
 import {Button, Buttons, Container, DisabledButton, Header, PrimaryButton} from "./Modal.styles";
+import {foldersArrayToPaths, getFolderByPath, getFolderPath} from "../../../services/file/file";
 
 type CreateFolderModalProps = {
 	isOpen: boolean;
@@ -51,7 +50,7 @@ const CreateFolderModal = ({isOpen = false, setIsOpen}: CreateFolderModalProps) 
 		const tokenData = getData() || {};
 		const id = data.createFolder;
 
-		addFoldersToCache({name: modalData.name, parent_id: parent_id || tokenData.drive_id, id});
+		addFoldersToCache({name: modalData.name, parent_id: parent_id || tokenData.drive_id, id, share_id: null}); // TODO: share_id = parent.share_id!
 		addCurrentEntriesToCache({name: modalData.name, parent_id: parent_id || tokenData.drive_id, id, is_directory: true});
 	};
 

@@ -10,20 +10,20 @@ import Inputs from "./Inputs";
 import {useLazyQuery, useQuery} from "@apollo/client";
 import {CURRENT_FOLDER_QUERY, MAIN_QUERY} from "./index.queries";
 import {getData} from "services/token";
-import {getFolderByPath} from "services/file/fileRequest";
 import CreateFolderModal from "./modals/CreateFolderModal";
 import {FolderArrayElement} from "services/file/fileTypes";
 import {client} from "../../index";
 import {useLocation} from "react-router-dom";
 import FileExplorer from "./FileExplorer";
+import {getFolderByPath} from "../../services/file/file";
 
 export const ContextMenuContext = createContext({
 	setIsContextMenuOpen: (arg: boolean) => {},
 	openContextMenu: (e: MouseEvent, contextMenuData: object, contextMenuType: EContextMenuTypes) => {},
 });
 export const SidebarContext = createContext({
-	isSidebarShown: false,
-	setIsSidebarShown: (arg: boolean) => {},
+	isSidebarOpen: false,
+	setIsSidebarOpen: (arg: boolean) => {},
 });
 export const CurrentDataContext = createContext({currentFolderId: 0, space_used: 0, folders: [] as FolderArrayElement[]});
 export const CacheContext = createContext({
@@ -39,7 +39,6 @@ export type Entry = {
 	is_directory: boolean;
 }
 
-// TODO: current entries, folders
 let timeout: NodeJS.Timeout | null = null;
 let prevPath: string = "";
 const MainPage = () => {
@@ -54,9 +53,9 @@ const MainPage = () => {
 	const [currentFolderId, setCurrentFolderId] = useState<number>(drive_id);
 	const [currentEntries, setCurrentEntries] = useState<Entry[]>([]);
 	const [loadingIds, setLoadingIds] = useState(new Set<number>());
-	const [isSidebarShown, setIsSidebarShown] = useState(false);
-	const [isDropZoneVisible, setIsDropZoneVisible] = useState(false);
+	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 	const [isCreateFolderModalOpen, setIsCreateFolderModalOpen] = useState(false);
+	const [isDropZoneVisible, setIsDropZoneVisible] = useState(false);
 
 	const location = useLocation();
 
@@ -155,11 +154,11 @@ const MainPage = () => {
 
 				<Header/>
 				<Row>
-					<SidebarContext.Provider value={{isSidebarShown, setIsSidebarShown}}>
+					<SidebarContext.Provider value={{isSidebarOpen, setIsSidebarOpen}}>
 						<Sidebar openCreateContextMenu={openCreateContextMenu}/>
 
 						<ContextMenuContext.Provider value={{openContextMenu, setIsContextMenuOpen}}>
-							<FileExplorer path={path} openCreateContextMenu={openCreateContextMenu} currentEntries={currentEntries} loadingIds={loadingIds}/>
+							<FileExplorer openCreateContextMenu={openCreateContextMenu} path={path} currentEntries={currentEntries} loadingIds={loadingIds}/>
 						</ContextMenuContext.Provider>
 						{ContextMenu}
 					</SidebarContext.Provider>

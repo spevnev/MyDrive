@@ -2,9 +2,11 @@ import {gql} from "@apollo/client";
 
 export const SIDEBAR_QUERY = gql`
     query sidebar{
-        rootSharedFolders{
+        sharedFolders{
             name
             id
+            parent_id
+            share_id
         }
     }
 `;
