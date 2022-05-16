@@ -1,7 +1,7 @@
 import React, {useContext, useEffect, useState} from "react";
 import ModalWindow from "components/ModalWindow";
 import StyledInput from "components/StyledInput";
-import {useMutation} from "@apollo/client";
+import {useLazyQuery, useMutation} from "@apollo/client";
 import {CREATE_FOLDER_MUTATION} from "./CreateFolderModal.queries";
 import AutoCompleteInput from "components/AutoCompleteInput";
 import {Trie} from "dataStructures/trie";
@@ -9,6 +9,7 @@ import {getData} from "services/token";
 import {CacheContext, CurrentDataContext} from "../index";
 import {Button, Buttons, Container, DisabledButton, Header, PrimaryButton} from "./Modal.styles";
 import {foldersArrayToPaths, getFolderByPath, getFolderPath} from "../../../services/file/file";
+import {GET_ENTRY_QUERY} from "../index.queries";
 
 type CreateFolderModalProps = {
 	isOpen: boolean;
@@ -26,7 +27,9 @@ const CreateFolderModal = ({isOpen = false, setIsOpen}: CreateFolderModalProps) 
 	};
 
 	const [modalData, setModalData] = useState<{ path: string, name: string } | null>(null);
+
 	const [createFolderMutation] = useMutation(CREATE_FOLDER_MUTATION);
+	const [getEntryQuery] = useLazyQuery(GET_ENTRY_QUERY);
 
 	useEffect(() => {
 		trie.reset();
@@ -50,8 +53,13 @@ const CreateFolderModal = ({isOpen = false, setIsOpen}: CreateFolderModalProps) 
 		const tokenData = getData() || {};
 		const id = data.createFolder;
 
-		addFoldersToCache({name: modalData.name, parent_id: parent_id || tokenData.drive_id, id, share_id: null}); // TODO: share_id = parent.share_id!
-		addCurrentEntriesToCache({name: modalData.name, parent_id: parent_id || tokenData.drive_id, id, is_directory: true});
+		const curParentId = parent_id || tokenData.drive_id;
+
+		const {data: {entry}} = await getEntryQuery({variables: {id: curParentId}});
+		const share_id = entry ? entry.share_id : null;
+
+		addFoldersToCache({name: modalData.name, parent_id: curParentId, id, share_id});
+		addCurrentEntriesToCache({name: modalData.name, parent_id: curParentId, id, is_directory: true});
 	};
 
 

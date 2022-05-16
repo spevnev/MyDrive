@@ -3,13 +3,15 @@ import DropZone from "components/DropZone";
 import {useLazyQuery, useMutation} from "@apollo/client";
 import {GET_ENTRIES_QUERY, UPLOAD_FILES_AND_FOLDERS_MUTATION, UPLOAD_FILES_MUTATION} from "./Inputs.queries";
 import {FileEntry, FolderArrayElement, SimpleFileEntry} from "services/file/fileTypes";
-import {uploadFile} from "services/s3";
+import {uploadFileToS3} from "services/s3";
 import {CacheContext, CurrentDataContext, Entry} from "./index";
 import {getData} from "services/token";
 import UploadEntriesModal, {ModalData} from "./modals/UploadEntriesModal";
 import {Trie} from "dataStructures/trie";
 import styled from "styled-components";
 import {dataTransferToEntries, filesToEntries, foldersArrayToPaths, folderToEntries, getFolderByPath, getFolderPath, renameToAvoidNamingCollisions} from "../../services/file/file";
+import imageCompression from "browser-image-compression";
+import {GET_ENTRY_QUERY} from "./index.queries";
 
 const Hidden = styled.div`
   display: none;
@@ -30,6 +32,7 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, stopLoading}: 
 	const [uploadFilesMutation] = useMutation(UPLOAD_FILES_MUTATION);
 	const [uploadFilesAndFoldersMutation] = useMutation(UPLOAD_FILES_AND_FOLDERS_MUTATION);
 	const [getEntriesQuery] = useLazyQuery(GET_ENTRIES_QUERY);
+	const [getEntryQuery] = useLazyQuery(GET_ENTRY_QUERY);
 
 	const [modalData, setModalData] = useState<ModalData | null>(null);
 
@@ -41,6 +44,11 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, stopLoading}: 
 		foldersArrayToPaths(folders).forEach(path => trie.add(path));
 	}, [folders, modalData]);
 
+
+	const isEntryImage = (entry: FileEntry) => {
+		const extensions = [".jpg", ".jpeg", ".png"];
+		return extensions.reduce((res, extension) => res ? true : entry.name.endsWith(extension), false);
+	};
 
 	const upload = async (parent_id: number | null, entries: FileEntry[], uploadMethod: (obj: any) => Promise<any>, getResult: (obj: any) => any, entryToKey: (obj: any) => string) => {
 		const {drive_id} = getData() || {};
@@ -60,13 +68,28 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, stopLoading}: 
 		const entriesToBeCached: Entry[] = []; // entries of current folder
 
 		entries.forEach(entry => {
-			const {id, parent_id: cur_parent_id, url: uploadCredentials} = map.get(entryToKey(entry));
+			const {id, parent_id: cur_parent_id, url: uploadCredentials, additionalUrl} = map.get(entryToKey(entry));
 			const name = entry.newName || entry.name;
 
-			if (parent_id === cur_parent_id) entriesToBeCached.push({name, id, parent_id: cur_parent_id, is_directory: entry.is_directory || false});
+			if (additionalUrl && isEntryImage(entry)) {
+				imageCompression(new File([entry.data as ArrayBuffer], "FILENAME", {type: "image/png"}), {
+					maxSizeMB: 0.01,
+					maxWidthOrHeight: 72,
+					useWebWorker: true,
+				}).then(compressed => {
+					uploadFileToS3(additionalUrl.url, additionalUrl.fields, undefined, compressed);
+					// TODO. Set as preview for cached entries + enable s3 upload, 'cause I can't test without it
+				});
+			}
 
-			if (entry.is_directory) foldersToBeCached.push({name, id, parent_id: cur_parent_id, share_id: null}); // TODO: share_id = parent.share_id!
-			else if (entry.name && entry.data) uploadFile(uploadCredentials.url, uploadCredentials.fields, entry.data).then(() => stopLoading(id));
+			getEntryQuery({variables: {id: parent_id}}).then(({data}) => {
+				const share_id = data.entry ? data.entry.share_id : null;
+
+				if (parent_id === cur_parent_id) entriesToBeCached.push({name, id, parent_id: cur_parent_id, is_directory: entry.is_directory || false});
+
+				if (entry.is_directory) foldersToBeCached.push({name, id, parent_id: cur_parent_id, share_id});
+				else if (entry.name && entry.data) uploadFileToS3(uploadCredentials.url, uploadCredentials.fields, entry.data).then(() => stopLoading(id));
+			});
 		});
 
 		addCurrentEntriesToCacheAndSetLoading(...entriesToBeCached);

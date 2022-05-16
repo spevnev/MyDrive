@@ -24,3 +24,11 @@ export const CURRENT_FOLDER_QUERY = gql`
         }
     }
 `;
+
+export const GET_ENTRY_QUERY = gql`
+    query getEntry($id: Int!){
+        entry(id: $id){
+            share_id
+        }
+    }
+`;

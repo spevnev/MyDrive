@@ -15,6 +15,18 @@ export const UPLOAD_FILES_MUTATION = gql`
                     Credential
                 }
             }
+            additionalUrl{
+                url
+                fields{
+                    key
+                    bucket
+                    Policy
+                    Date
+                    Algorithm
+                    Signature
+                    Credential
+                }
+            }
             path
             id
             parent_id
@@ -26,6 +38,18 @@ export const UPLOAD_FILES_AND_FOLDERS_MUTATION = gql`
     mutation uploadFilesAndFolders($entries: [FileEntry!]!, $parent_id: Int){
         uploadFilesAndFolders(entries: $entries, parent_id: $parent_id){
             url{
+                url
+                fields{
+                    key
+                    bucket
+                    Policy
+                    Date
+                    Algorithm
+                    Signature
+                    Credential
+                }
+            }
+            additionalUrl{
                 url
                 fields{
                     key

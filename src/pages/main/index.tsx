@@ -13,7 +13,7 @@ import {getData} from "services/token";
 import CreateFolderModal from "./modals/CreateFolderModal";
 import {FolderArrayElement} from "services/file/fileTypes";
 import {client} from "../../index";
-import {useLocation} from "react-router-dom";
+import {useLocation, useNavigate} from "react-router-dom";
 import FileExplorer from "./FileExplorer";
 import {getFolderByPath} from "../../services/file/file";
 
@@ -48,7 +48,10 @@ const MainPage = () => {
 	const [openContextMenu, setIsContextMenuOpen, ContextMenu] = useContextMenu();
 
 	const [currentFolderDataQuery, {data: currentFolderData}] = useLazyQuery(CURRENT_FOLDER_QUERY);
+
 	const {data} = useQuery(MAIN_QUERY);
+	const space_used = data ? data.user ? data.user.space_used : null : 0;
+	const folders: FolderArrayElement[] = data ? data.folders : [];
 
 	const [currentFolderId, setCurrentFolderId] = useState<number>(drive_id);
 	const [currentEntries, setCurrentEntries] = useState<Entry[]>([]);
@@ -58,6 +61,7 @@ const MainPage = () => {
 	const [isDropZoneVisible, setIsDropZoneVisible] = useState(false);
 
 	const location = useLocation();
+	const navigate = useNavigate();
 
 	usePath(path || "Drive");
 	useTitle("Drive");
@@ -66,14 +70,19 @@ const MainPage = () => {
 		const parent_id = getFolderByPath(folders, path.replace(/^Drive\//, "")) || drive_id;
 		setCurrentFolderId(parent_id);
 
-		if (prevPath === path || folders.length === 0) return;
 		prevPath = path;
+		if (prevPath === path && folders.length === 0) return;
 
 		currentFolderDataQuery({variables: {parent_id}});
-	}, [location, data]);
+	}, [location, folders]);
 
 	useEffect(() => {
 		if (!currentFolderData) return;
+
+		const drivePath = path.replace(/^Drive\/?/, "");
+		const parent_id = getFolderByPath(folders, drivePath);
+		if (drivePath.length > 0 && parent_id === null && folders.length > 0) navigate("/");
+
 		setCurrentEntries(currentFolderData.entries);
 	}, [currentFolderData]);
 
@@ -140,9 +149,6 @@ const MainPage = () => {
 
 	const stopLoading = (id: number) => setLoadingIds(new Set([...loadingIds].filter(i => i !== id)));
 
-
-	const space_used = data ? data.user ? data.user.space_used : null : 0;
-	const folders: FolderArrayElement[] = data ? data.folders : [];
 
 	return (
 		<Page onContextMenu={() => setIsContextMenuOpen(false)} onDragOver={onDragOver}>

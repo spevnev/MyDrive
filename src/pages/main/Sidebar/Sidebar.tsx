@@ -46,11 +46,13 @@ const Sidebar = ({openCreateContextMenu}: SidebarProps) => {
 	const bytesToMegabytes = (bytes: number, decimalPlaces: number): number => {
 		const MB = 2 ** 20;
 		const megabytes = bytes / MB;
-		return Math.floor(megabytes * 10 ** decimalPlaces) / 10 ** decimalPlaces;
+
+		const temp = 10 ** decimalPlaces;
+		return Math.floor(megabytes * temp) / temp;
 	};
 
 
-	const spaceUsedPercentage: number = space_used ? bytesToMegabytes(space_used, 2) : 0;
+	const spaceUsed = space_used ? bytesToMegabytes(space_used, 2) : 0;
 	const sharedFolders = foldersArrayToObject(data ? data.sharedFolders || [] : []);
 	const driveFolders = foldersArrayToObject(folders || []);
 
@@ -73,8 +75,8 @@ const Sidebar = ({openCreateContextMenu}: SidebarProps) => {
 				</Explorer>
 
 				<Storage>
-					<ProgressBar fillPercent={spaceUsedPercentage}/>
-					<ProgressText>{Math.floor(MAX_CAPACITY * spaceUsedPercentage / 100 * 10) / 10}MBs of {MAX_CAPACITY / 1000}GB used</ProgressText>
+					<ProgressBar fillPercent={spaceUsed / MAX_CAPACITY * 100}/>
+					<ProgressText>{spaceUsed}MBs of {MAX_CAPACITY / 1000}GB used</ProgressText>
 				</Storage>
 			</Container>
 
