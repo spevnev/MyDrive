@@ -19,7 +19,7 @@ type CreateFolderModalProps = {
 const trie = new Trie();
 const CreateFolderModal = ({isOpen = false, setIsOpen}: CreateFolderModalProps) => {
 	const {currentFolderId, folders} = useContext(CurrentDataContext);
-	const {addFoldersToCache, addCurrentEntriesToCache} = useContext(CacheContext);
+	const {cacheFolders, cacheCurrentEntries} = useContext(CacheContext);
 
 	const initModalData = () => {
 		const path = getFolderPath(folders, currentFolderId) || "/";
@@ -58,8 +58,8 @@ const CreateFolderModal = ({isOpen = false, setIsOpen}: CreateFolderModalProps) 
 		const {data: {entry}} = await getEntryQuery({variables: {id: curParentId}});
 		const share_id = entry ? entry.share_id : null;
 
-		addFoldersToCache({name: modalData.name, parent_id: curParentId, id, share_id});
-		addCurrentEntriesToCache({name: modalData.name, parent_id: curParentId, id, is_directory: true});
+		cacheFolders({name: modalData.name, parent_id: curParentId, id, share_id});
+		cacheCurrentEntries({name: modalData.name, parent_id: curParentId, id, is_directory: true, preview: null});
 	};
 
 

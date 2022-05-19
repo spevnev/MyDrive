@@ -16,11 +16,12 @@ export const MAIN_QUERY = gql`
 
 export const CURRENT_FOLDER_QUERY = gql`
     query currentFolder($parent_id: Int!){
-        entries(parent_id: $parent_id){
+        entries(parent_id: $parent_id, include_previews: true){
             name
             is_directory
             id
             parent_id
+            preview
         }
     }
 `;

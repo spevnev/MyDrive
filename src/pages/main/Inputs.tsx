@@ -1,4 +1,4 @@
-import React, {FormEvent, useContext, useEffect, useState} from "react";
+import React, {FormEvent, useContext, useEffect, useRef, useState} from "react";
 import DropZone from "components/DropZone";
 import {useLazyQuery, useMutation} from "@apollo/client";
 import {GET_ENTRIES_QUERY, UPLOAD_FILES_AND_FOLDERS_MUTATION, UPLOAD_FILES_MUTATION} from "./Inputs.queries";
@@ -9,9 +9,18 @@ import {getData} from "services/token";
 import UploadEntriesModal, {ModalData} from "./modals/UploadEntriesModal";
 import {Trie} from "dataStructures/trie";
 import styled from "styled-components";
-import {dataTransferToEntries, filesToEntries, foldersArrayToPaths, folderToEntries, getFolderByPath, getFolderPath, renameToAvoidNamingCollisions} from "../../services/file/file";
+import {
+	dataTransferToEntries,
+	filesToEntries,
+	foldersArrayToPaths,
+	folderToEntries,
+	getFolderByPath,
+	getFolderPath,
+	renameToAvoidNamingCollisions,
+} from "../../services/file/file";
 import imageCompression from "browser-image-compression";
 import {GET_ENTRY_QUERY} from "./index.queries";
+import useDebounce from "../../hooks/useDebounce";
 
 const Hidden = styled.div`
   display: none;
@@ -20,14 +29,15 @@ const Hidden = styled.div`
 type InputsProps = {
 	isDropZoneVisible: boolean;
 	setIsDropZoneVisible: (arg: boolean) => void;
-	stopLoading: (id: number) => void;
+	setLoading: (id: number, change: number) => void;
 }
 
-let callbackModalData: ModalData | null = null;
 const trie = new Trie();
-const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, stopLoading}: InputsProps) => {
+const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, setLoading}: InputsProps) => {
+	const drive_id = (getData() || {}).drive_id;
+
 	const {currentFolderId, folders, space_used} = useContext(CurrentDataContext);
-	const {addFoldersToCache, addCurrentEntriesToCacheAndSetLoading} = useContext(CacheContext);
+	const {cacheCurrentEntries, cacheFolders, cacheImagePreviews} = useContext(CacheContext);
 
 	const [uploadFilesMutation] = useMutation(UPLOAD_FILES_MUTATION);
 	const [uploadFilesAndFoldersMutation] = useMutation(UPLOAD_FILES_AND_FOLDERS_MUTATION);
@@ -35,9 +45,12 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, stopLoading}: 
 	const [getEntryQuery] = useLazyQuery(GET_ENTRY_QUERY);
 
 	const [modalData, setModalData] = useState<ModalData | null>(null);
+	const modalDataRef = useRef<ModalData | null>(null);
+	modalDataRef.current = modalData;
+
+	const debounce = useDebounce();
 
 	useEffect(() => {
-		callbackModalData = modalData;
 		if (modalData === null) return;
 
 		trie.reset();
@@ -50,6 +63,7 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, stopLoading}: 
 		return extensions.reduce((res, extension) => res ? true : entry.name.endsWith(extension), false);
 	};
 
+	// TODO. Split method?
 	const upload = async (parent_id: number | null, entries: FileEntry[], uploadMethod: (obj: any) => Promise<any>, getResult: (obj: any) => any, entryToKey: (obj: any) => string) => {
 		const {drive_id} = getData() || {};
 		parent_id = parent_id || drive_id;
@@ -64,8 +78,14 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, stopLoading}: 
 		const map = new Map<string, any>();
 		data.forEach((cur: { [key: string]: any }) => map.set(cur.path, {...cur, path: undefined}));
 
-		const foldersToBeCached: FolderArrayElement[] = [];
-		const entriesToBeCached: Entry[] = []; // entries of current folder
+		const {data: {entry}} = await getEntryQuery({variables: {id: parent_id}});
+		const share_id = entry ? entry.share_id : null;
+
+		const changeCachedEntries = debounce(50, (data: Entry[] | null) => cacheCurrentEntries(...(data || [])));
+		const cacheEntry = (entry: Entry) => changeCachedEntries((entries) => [...(entries || []), entry]);
+
+		const changeCachedFolders = debounce(50, (data: FolderArrayElement[] | null) => cacheFolders(...(data || [])));
+		const cacheFolder = (folder: FolderArrayElement) => changeCachedFolders((folders) => [...(folders || []), folder]);
 
 		entries.forEach(entry => {
 			const {id, parent_id: cur_parent_id, url: uploadCredentials, additionalUrl} = map.get(entryToKey(entry));
@@ -74,26 +94,27 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, stopLoading}: 
 			if (additionalUrl && isEntryImage(entry)) {
 				imageCompression(new File([entry.data as ArrayBuffer], "FILENAME", {type: "image/png"}), {
 					maxSizeMB: 0.01,
-					maxWidthOrHeight: 72,
+					maxWidthOrHeight: 90,
 					useWebWorker: true,
 				}).then(compressed => {
 					uploadFileToS3(additionalUrl.url, additionalUrl.fields, undefined, compressed);
-					// TODO. Set as preview for cached entries + enable s3 upload, 'cause I can't test without it
+					cacheImagePreviews(id, compressed);
 				});
 			}
 
-			getEntryQuery({variables: {id: parent_id}}).then(({data}) => {
-				const share_id = data.entry ? data.entry.share_id : null;
+			if (entry.is_directory) cacheFolder({name, id, parent_id: cur_parent_id, share_id});
+			if (parent_id === cur_parent_id) cacheEntry({name, id, parent_id: cur_parent_id, is_directory: entry.is_directory || false, preview: null});
 
-				if (parent_id === cur_parent_id) entriesToBeCached.push({name, id, parent_id: cur_parent_id, is_directory: entry.is_directory || false});
+			if (!entry.is_directory) {
+				if (parent_id !== cur_parent_id) setLoading(cur_parent_id, 1);
+				setLoading(id, 1);
+			}
 
-				if (entry.is_directory) foldersToBeCached.push({name, id, parent_id: cur_parent_id, share_id});
-				else if (entry.name && entry.data) uploadFileToS3(uploadCredentials.url, uploadCredentials.fields, entry.data).then(() => stopLoading(id));
+			if (entry.name && entry.data) uploadFileToS3(uploadCredentials.url, uploadCredentials.fields, entry.data).then(() => {
+				setLoading(id, -1);
+				setLoading(cur_parent_id, -1);
 			});
 		});
-
-		addCurrentEntriesToCacheAndSetLoading(...entriesToBeCached);
-		addFoldersToCache(...foldersToBeCached);
 	};
 
 	const uploadFiles = async (parent_id: number | null, entries: SimpleFileEntry[]) => {
@@ -112,10 +133,10 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, stopLoading}: 
 	};
 
 	const onContinueGenerator = (files: any[], cb: (parent_id: number | null, includedFiles: any[]) => void) => () => {
-		if (callbackModalData === null) return;
+		if (modalDataRef.current === null) return;
 		// @ts-ignore
-		const includedFiles = files.filter((_, i) => callbackModalData.included[i]);
-		const parent_id = getFolderByPath(folders, callbackModalData.input || "/");
+		const includedFiles = files.filter((_, i) => modalDataRef.current.included[i]);
+		const parent_id = getFolderByPath(folders, modalDataRef.current.input || "") || drive_id;
 
 		setModalData(null);
 		cb(parent_id, includedFiles);
@@ -127,7 +148,7 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, stopLoading}: 
 
 		const list: FileList | null = target.files;
 		if (list === null) return null;
-		target.files = new DataTransfer().files; // empty FileList to reset input
+		target.files = new DataTransfer().files; // creating empty FileList to reset the file input
 		return [...list].filter(file => file.name !== ".DS_Store");
 	};
 

@@ -1,5 +1,5 @@
 import React, {MouseEvent, useContext} from "react";
-import {Container, FileImage, Filename} from "./File.styles";
+import {Container, FileIcon, FileImage, Filename} from "./File.styles";
 import imageFile from "assets/file-picture.svg";
 import textFile from "assets/file-text.svg";
 import musicFile from "assets/file-music.svg";
@@ -35,9 +35,10 @@ type FileProps = {
 	isSelected: boolean;
 	onClick: (e: MouseEvent) => void;
 	isLoading: boolean;
+	imagePreview: Blob | null;
 }
 
-const File = ({entry, type, isSelected, onClick, isLoading = false}: FileProps) => {
+const File = ({entry, type, isSelected, onClick, isLoading = false, imagePreview = null}: FileProps) => {
 	const {openContextMenu} = useContext(ContextMenuContext);
 	const {onDelete, onDownload, onRename, onShare, onMoveTo, onPreview} = useContext(EntryActionsContext);
 
@@ -52,7 +53,12 @@ const File = ({entry, type, isSelected, onClick, isLoading = false}: FileProps) 
 
 	return (
 		<Container className={isSelected ? "selected" : ""} onContextMenuCapture={onContextMenu} onClick={onClick}>
-			{isLoading ? <Spinner size={70} margin={true}/> : <FileImage src={type === null ? defaultImage : images[type]}/>}
+			{isLoading ?
+				<Spinner size={70} margin={true}/> :
+				imagePreview === null ?
+					<FileIcon src={type === null ? defaultImage : images[type]}/> :
+					<FileImage src={URL.createObjectURL(imagePreview)}/>
+			}
 			<Filename>{entry.name}</Filename>
 		</Container>
 	);

@@ -57,7 +57,7 @@ export const SidebarMenu = styled.img`
     }
   }
 
-  @media (min-width: 800px) {
+  @media (min-width: 801px) {
     display: none;
   }
 `;

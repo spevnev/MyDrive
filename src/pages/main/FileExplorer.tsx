@@ -29,10 +29,11 @@ type FileExplorerProps = {
 	path: string;
 	openCreateContextMenu: (e: MouseEvent) => any;
 	currentEntries: Entry[];
-	loadingIds: Set<number>;
+	loadingIds: Map<number, number>;
+	imagePreviews: { [key: number]: Blob };
 }
 
-const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds}: FileExplorerProps) => {
+const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, imagePreviews}: FileExplorerProps) => {
 	const {setIsContextMenuOpen} = useContext(ContextMenuContext);
 
 	const [shareEntriesModalData, setShareEntriesModalData] = useState<ModalData>(null);
@@ -46,17 +47,18 @@ const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds}:
 
 
 	const getFolderData = (): DataElement[] => {
-		return currentEntries.filter(entry => entry.is_directory).map(folder => {
-			return {entry: folder, key: String(folder.id), isLoading: loadingIds.has(folder.id)};
-		}).sort((a, b) => a.entry.name.localeCompare(b.entry.name));
+		return currentEntries.filter(entry => entry.is_directory).map(folder => (
+			{entry: folder, key: String(folder.id), isLoading: (loadingIds.get(folder.id) || 0) > 0}
+		)).sort((a, b) => a.entry.name.localeCompare(b.entry.name));
 	};
 
 	const getFileData = (): DataElement[] => {
 		return currentEntries.filter(entry => !entry.is_directory).map(file => {
 			const [, extension] = splitName(file.name);
 			const type = extension ? getFileType(extension.slice(1)) : EFileType.OTHER;
+			const imagePreview = type === EFileType.IMAGE ? imagePreviews[file.id] : null;
 
-			return {entry: file, key: String(file.id), type, isLoading: loadingIds.has(file.id)};
+			return {entry: file, key: String(file.id), type, isLoading: (loadingIds.get(file.id) || 0) > 0, imagePreview};
 		}).sort((a, b) => a.entry.name.localeCompare(b.entry.name));
 	};
 

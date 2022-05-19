@@ -118,7 +118,7 @@ export const Cross = styled(CrossIcon)`
     color: #b8b8b8;
   }
 
-  @media (min-width: 800px) {
+  @media (min-width: 801px) {
     display: none;
   }
 `;

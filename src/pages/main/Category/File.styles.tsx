@@ -32,7 +32,7 @@ export const Container = styled.div`
   }
 `;
 
-export const FileImage = styled.img`
+export const FileIcon = styled.img`
   width: 80px;
   height: 80px;
 
@@ -40,6 +40,12 @@ export const FileImage = styled.img`
     width: 90px;
     height: 90px;
   }
+`;
+
+export const FileImage = styled.img`
+  border-radius: 1px;
+  width: 90px;
+  height: 90px;
 `;
 
 export const Filename = styled.p`
