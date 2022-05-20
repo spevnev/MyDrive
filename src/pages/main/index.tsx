@@ -164,7 +164,9 @@ const MainPage = () => {
 		});
 	};
 
-	const cacheImagePreviews = (id: number, data: Blob) => setImagePreviews({...imagePreviews, [String(id)]: data});
+	const changeImagePreviews = debounce(30, (data: null | { [key: string]: Blob }) => setImagePreviews(data || {}));
+	const cacheImagePreviews = (id: number, imageData: Blob) =>
+		changeImagePreviews((data: null | { [key: string]: Blob }) => ({...(data || imagePreviews), [String(id)]: imageData}));
 
 	const changeLoadingData = debounce(30, (data: null | [number, number][]) => {
 		const map = new Map<number, number>();

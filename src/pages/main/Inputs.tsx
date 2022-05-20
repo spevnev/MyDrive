@@ -63,7 +63,6 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, setLoading}: I
 		return extensions.reduce((res, extension) => res ? true : entry.name.endsWith(extension), false);
 	};
 
-	// TODO. Split method?
 	const upload = async (parent_id: number | null, entries: FileEntry[], uploadMethod: (obj: any) => Promise<any>, getResult: (obj: any) => any, entryToKey: (obj: any) => string) => {
 		const {drive_id} = getData() || {};
 		parent_id = parent_id || drive_id;
@@ -81,11 +80,11 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, setLoading}: I
 		const {data: {entry}} = await getEntryQuery({variables: {id: parent_id}});
 		const share_id = entry ? entry.share_id : null;
 
-		const changeCachedEntries = debounce(50, (data: Entry[] | null) => cacheCurrentEntries(...(data || [])));
-		const cacheEntry = (entry: Entry) => changeCachedEntries((entries) => [...(entries || []), entry]);
+		const changeCachedEntries = debounce(30, (data: Entry[] | null) => cacheCurrentEntries(...(data || [])));
+		const cacheEntry = (entry: Entry) => changeCachedEntries(entries => [...(entries || []), entry]);
 
-		const changeCachedFolders = debounce(50, (data: FolderArrayElement[] | null) => cacheFolders(...(data || [])));
-		const cacheFolder = (folder: FolderArrayElement) => changeCachedFolders((folders) => [...(folders || []), folder]);
+		const changeCachedFolders = debounce(30, (data: FolderArrayElement[] | null) => cacheFolders(...(data || [])));
+		const cacheFolder = (folder: FolderArrayElement) => changeCachedFolders(folders => [...(folders || []), folder]);
 
 		entries.forEach(entry => {
 			const {id, parent_id: cur_parent_id, url: uploadCredentials, additionalUrl} = map.get(entryToKey(entry));
@@ -103,12 +102,13 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, setLoading}: I
 			}
 
 			if (entry.is_directory) cacheFolder({name, id, parent_id: cur_parent_id, share_id});
-			if (parent_id === cur_parent_id) cacheEntry({name, id, parent_id: cur_parent_id, is_directory: entry.is_directory || false, preview: null});
+			if (cur_parent_id === currentFolderId && parent_id === cur_parent_id)
+				cacheEntry({name, id, parent_id: cur_parent_id, is_directory: entry.is_directory || false, preview: null});
 
 			if (entry.name && entry.data) {
 				if (parent_id !== cur_parent_id) setLoading(cur_parent_id, 1);
 				setLoading(id, 1);
-				
+
 				uploadFileToS3(uploadCredentials.url, uploadCredentials.fields, entry.data).then(() => {
 					if (parent_id !== cur_parent_id) setLoading(cur_parent_id, -1);
 					setLoading(id, -1);

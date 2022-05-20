@@ -11,7 +11,7 @@ import binIcon from "assets/bin.svg";
 import Entry from "./Entry";
 import {Folder} from "services/file/fileTypes";
 import {CurrentDataContext, SidebarContext} from "../index";
-import {foldersArrayToObject} from "../../../services/file/file";
+import {foldersArrayToObject, groupFoldersByUsername} from "../../../services/file/file";
 
 type SidebarProps = {
 	openCreateContextMenu: (e: MouseEvent) => void;
@@ -37,7 +37,7 @@ const Sidebar = ({openCreateContextMenu}: SidebarProps) => {
 		openCreateContextMenu(e);
 	};
 
-	const folderToEntries = ({name, children}: Folder, depth: number = 0): JSX.Element => (
+	const folderToEntries = ({name, children, username}: Folder, depth: number = 0): JSX.Element => (
 		<Entry icon={folderIcon} path={name} key={name} text={name} hasChildren={children.length > 0} depth={depth + 1}>
 			{children.map(folder => folderToEntries(folder, depth + 1))}
 		</Entry>
@@ -53,7 +53,7 @@ const Sidebar = ({openCreateContextMenu}: SidebarProps) => {
 
 
 	const spaceUsed = space_used ? bytesToMegabytes(space_used, 2) : 0;
-	const sharedFolders = foldersArrayToObject(data ? data.sharedFolders || [] : []);
+	const sharedFolders = groupFoldersByUsername(foldersArrayToObject(data ? data.sharedFolders || [] : []));
 	const driveFolders = foldersArrayToObject(folders || []);
 
 	return (

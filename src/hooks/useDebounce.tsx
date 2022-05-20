@@ -1,16 +1,11 @@
-import {useEffect, useState} from "react";
-
-let ids = 0;
+let idCount = 0;
 const data: { [key: number]: [NodeJS.Timeout | null, any] } = {};
-const useDebounce = () => {
-	const [id] = useState(++ids);
 
-	useEffect(() => {
-		data[id] = [null, null];
-		return () => {delete data[id];};
-	});
+const useDebounce = () => (timeoutMs: number, callback: (data: any) => void) => {
+	const id = ++idCount;
+	data[id] = [null, null];
 
-	return (timeoutMs: number, callback: (data: any) => void) => (changeData: (data: any) => any) => {
+	return (changeData: (data: any) => any) => {
 		const [curTimeout, curData] = data[id];
 		if (curTimeout !== null) clearTimeout(curTimeout);
 

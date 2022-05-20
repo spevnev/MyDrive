@@ -5,7 +5,7 @@ export const foldersArrayToObject = (arr: FolderArrayElement[]): Folder[] => {
 	if (arr.length === 0) return [];
 
 	const idToFolder = new Map<number, Folder>();
-	arr.forEach(({name, id, share_id}) => idToFolder.set(id, {name: name, children: [], share_id} as Folder));
+	arr.forEach(({name, id, share_id, username}) => idToFolder.set(id, {name: name, children: [], share_id, username} as Folder));
 
 	return arr.map(el => {
 		const cur = idToFolder.get(el.id);
@@ -20,6 +20,25 @@ export const foldersArrayToObject = (arr: FolderArrayElement[]): Folder[] => {
 		parent.children.push(cur);
 		return null;
 	}).filter(cur => cur !== null) as Folder[];
+};
+
+export const groupFoldersByUsername = (folders: Folder[]): Folder[] => {
+	const usernames = new Set<string>();
+	folders.forEach(({username}) => username && usernames.add(username));
+
+	const usernameToFolder = new Map<string, Folder>();
+	[...usernames].forEach(username => usernameToFolder.set(username, {name: username, children: [], share_id: null}));
+
+	folders.forEach(folder => {
+		if (folder.username === undefined) {
+			console.log(folder);
+			return;
+		}
+
+		usernameToFolder.get(folder.username)?.children.push(folder);
+	});
+
+	return [...usernameToFolder.values()] as Folder[];
 };
 
 export const foldersArrayToPaths = (arr: FolderArrayElement[]): string[] => {
