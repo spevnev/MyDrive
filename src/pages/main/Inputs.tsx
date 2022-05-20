@@ -105,15 +105,15 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, setLoading}: I
 			if (entry.is_directory) cacheFolder({name, id, parent_id: cur_parent_id, share_id});
 			if (parent_id === cur_parent_id) cacheEntry({name, id, parent_id: cur_parent_id, is_directory: entry.is_directory || false, preview: null});
 
-			if (!entry.is_directory) {
+			if (entry.name && entry.data) {
 				if (parent_id !== cur_parent_id) setLoading(cur_parent_id, 1);
 				setLoading(id, 1);
+				
+				uploadFileToS3(uploadCredentials.url, uploadCredentials.fields, entry.data).then(() => {
+					if (parent_id !== cur_parent_id) setLoading(cur_parent_id, -1);
+					setLoading(id, -1);
+				});
 			}
-
-			if (entry.name && entry.data) uploadFileToS3(uploadCredentials.url, uploadCredentials.fields, entry.data).then(() => {
-				setLoading(id, -1);
-				setLoading(cur_parent_id, -1);
-			});
 		});
 	};
 

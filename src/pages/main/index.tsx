@@ -166,7 +166,7 @@ const MainPage = () => {
 
 	const cacheImagePreviews = (id: number, data: Blob) => setImagePreviews({...imagePreviews, [String(id)]: data});
 
-	const changeLoadingData = debounce(50, (data: null | [number, number][]) => {
+	const changeLoadingData = debounce(30, (data: null | [number, number][]) => {
 		const map = new Map<number, number>();
 		data?.forEach(([k, v]) => map.set(k, v));
 		setLoadingIds(map);

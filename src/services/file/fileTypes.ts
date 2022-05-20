@@ -22,3 +22,11 @@ export type FileEntry = SimpleFileEntry & {
 	path: string | null;
 	is_directory: boolean;
 }
+
+export type FileSystemHandle = {
+	kind: string;
+	name: string;
+
+	getFile: () => Promise<File>;
+	values: () => Promise<Iterator<any>>
+};

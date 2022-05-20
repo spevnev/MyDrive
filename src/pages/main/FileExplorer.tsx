@@ -46,10 +46,25 @@ const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, 
 	}, [location]);
 
 
+	const sortEntries = (a: { entry: Entry }, b: { entry: Entry }): number => {
+		const getNumAndName = (name: string): [string, number] => {
+			const numOpt = name.match(/\((\d+)\)(?:\..*)?/);
+			const num = numOpt === null ? null : Number(numOpt[1]);
+			const [cleanName, cleanExt] = splitName(name);
+
+			return [cleanExt ? `${cleanName}.${cleanExt}` : cleanName, num || 0];
+		};
+
+		const [aName, aNum] = getNumAndName(a.entry.name);
+		const [bName, bNum] = getNumAndName(b.entry.name);
+
+		return aName.localeCompare(bName) || aNum - bNum;
+	};
+
 	const getFolderData = (): DataElement[] => {
 		return currentEntries.filter(entry => entry.is_directory).map(folder => (
 			{entry: folder, key: String(folder.id), isLoading: (loadingIds.get(folder.id) || 0) > 0}
-		)).sort((a, b) => a.entry.name.localeCompare(b.entry.name));
+		)).sort(sortEntries);
 	};
 
 	const getFileData = (): DataElement[] => {
@@ -59,7 +74,7 @@ const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, 
 			const imagePreview = type === EFileType.IMAGE ? imagePreviews[file.id] : null;
 
 			return {entry: file, key: String(file.id), type, isLoading: (loadingIds.get(file.id) || 0) > 0, imagePreview};
-		}).sort((a, b) => a.entry.name.localeCompare(b.entry.name));
+		}).sort(sortEntries);
 	};
 
 	const categoryNameToDataGetter = {

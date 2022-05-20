@@ -1,4 +1,4 @@
-import {FileEntry, Folder, FolderArrayElement, SimpleFileEntry} from "./fileTypes";
+import {FileEntry, FileSystemHandle, Folder, FolderArrayElement, SimpleFileEntry} from "./fileTypes";
 import {getData} from "../token";
 
 export const foldersArrayToObject = (arr: FolderArrayElement[]): Folder[] => {
@@ -118,14 +118,6 @@ export const folderToEntries = async (files: File[]): Promise<FileEntry[]> => {
 	}
 
 	return entries;
-};
-
-type FileSystemHandle = {
-	kind: string;
-	name: string;
-
-	getFile: () => Promise<File>;
-	values: () => Promise<Iterator<any>>
 };
 
 export const dataTransferToEntries = async (itemList: DataTransferItemList): Promise<{ simpleFileEntries?: SimpleFileEntry[], fileEntries?: FileEntry[] }> => {
