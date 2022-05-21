@@ -27,7 +27,7 @@ const Entry = ({hasChildren = false, depth = 0, icon, text, children, path}: Ent
 		if (React.isValidElement(child)) {
 			const props = child.props as any;
 			if (!props || !props.path) return child;
-			const updatedPath = path === "" ? props.path : `${path}/${props.path}`;
+			const updatedPath = `${path}/${props.path}`;
 			const updatedDepth = depth + 1;
 			// @ts-ignore
 			return React.cloneElement(child, {path: updatedPath, depth: updatedDepth});
@@ -38,7 +38,7 @@ const Entry = ({hasChildren = false, depth = 0, icon, text, children, path}: Ent
 
 	return (
 		<>
-			<EntryContainer onClick={() => navigate(`${document.location.pathname}#${path}`)}>
+			<EntryContainer onClick={() => path && navigate(`${document.location.pathname}#${path}`)}>
 				{new Array(depth).fill(0).map((_: any, i: number) => <DepthPadding key={i}/>)}
 
 				<DropDownIcon style={{transform: areChildrenShow ? "" : "rotate(-90deg)", opacity: hasChildren ? 1 : 0}} src={dropDownIcon} onClick={onDropDown}/>

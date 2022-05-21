@@ -34,7 +34,7 @@ type InputsProps = {
 
 const trie = new Trie();
 const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, setLoading}: InputsProps) => {
-	const drive_id = (getData() || {}).drive_id;
+	const drive_id = getData()?.drive_id;
 
 	const {currentFolderId, folders, space_used} = useContext(CurrentDataContext);
 	const {cacheCurrentEntries, cacheFolders, cacheImagePreviews} = useContext(CacheContext);
@@ -64,7 +64,7 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, setLoading}: I
 	};
 
 	const upload = async (parent_id: number | null, entries: FileEntry[], uploadMethod: (obj: any) => Promise<any>, getResult: (obj: any) => any, entryToKey: (obj: any) => string) => {
-		const {drive_id} = getData() || {};
+		const drive_id = getData()?.drive_id;
 		parent_id = parent_id || drive_id;
 
 		const parentEntries = (await getEntriesQuery({variables: {parent_id}})).data.entries;

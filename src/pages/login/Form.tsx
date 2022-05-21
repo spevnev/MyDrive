@@ -43,6 +43,7 @@ const Form = ({initialFormData, submitForm, inputs, title, buttonText, backgroun
 
 	const showError = (errorNumber: number, text?: string) => {
 		setShownError(errorNumber);
+
 		if (text) setErrorText(text);
 		else setErrorText(null);
 	};

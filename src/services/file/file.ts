@@ -30,11 +30,7 @@ export const groupFoldersByUsername = (folders: Folder[]): Folder[] => {
 	[...usernames].forEach(username => usernameToFolder.set(username, {name: username, children: [], share_id: null}));
 
 	folders.forEach(folder => {
-		if (folder.username === undefined) {
-			console.log(folder);
-			return;
-		}
-
+		if (folder.username === undefined) return;
 		usernameToFolder.get(folder.username)?.children.push(folder);
 	});
 
@@ -182,7 +178,7 @@ export const getFolderPath = (arr: FolderArrayElement[], id: number): string | n
 	if (!el) return null;
 
 	const path = [];
-	const drive_id = (getData() || {}).drive_id;
+	const drive_id = getData()?.drive_id;
 	while (el.parent_id !== drive_id) {
 		path.push(el.name);
 		el = arr.filter((cur: FolderArrayElement) => cur.id === el.parent_id)[0];

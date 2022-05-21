@@ -71,7 +71,7 @@ const ShareEntriesModal = ({setModalData, modalData}: ShareEntriesModalProps) =>
 		const username = input.value;
 		if (!username) return;
 
-		const currentUsername = (getData() || {}).username;
+		const currentUsername = getData()?.username;
 		if (username === currentUsername) return;
 		if (modalData.users.filter(user => user.username === username).length === 1) return;
 

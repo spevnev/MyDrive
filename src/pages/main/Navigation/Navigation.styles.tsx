@@ -20,6 +20,11 @@ export const Row = styled.div`
   flex-direction: row;
   align-items: center;
   width: 90%;
+  overflow-x: scroll;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 `;
 
 export const Icons = styled.div`

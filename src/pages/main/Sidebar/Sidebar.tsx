@@ -1,10 +1,8 @@
-import React, {MouseEvent, useContext, useEffect} from "react";
+import React, {MouseEvent, useContext} from "react";
 import addIcon from "assets/add-solid.svg";
 import diskIcon from "assets/drive.svg";
 import ProgressBar from "components/ProgressBar";
 import {Button, Container, Cross, Explorer, Icon, Overlay, ProgressText, Storage, Text} from "./Sidebar.styles";
-import {useQuery} from "@apollo/client";
-import {SIDEBAR_QUERY} from "./Sidebar.queries";
 import folderIcon from "assets/folder.svg";
 import sharedIcon from "assets/users.svg";
 import binIcon from "assets/bin.svg";
@@ -20,13 +18,7 @@ type SidebarProps = {
 const MAX_CAPACITY = 1000; // in Megabytes
 const Sidebar = ({openCreateContextMenu}: SidebarProps) => {
 	const {isSidebarOpen, setIsSidebarOpen} = useContext(SidebarContext);
-	const {folders, space_used} = useContext(CurrentDataContext);
-
-	const {data} = useQuery(SIDEBAR_QUERY);
-
-	useEffect(() => {
-		if (space_used === null) localStorage.removeItem("JWT");
-	}, [data]);
+	const {sharedFolders, folders, space_used} = useContext(CurrentDataContext);
 
 
 	const onClick = (e: MouseEvent) => {
@@ -53,7 +45,7 @@ const Sidebar = ({openCreateContextMenu}: SidebarProps) => {
 
 
 	const spaceUsed = space_used ? bytesToMegabytes(space_used, 2) : 0;
-	const sharedFolders = groupFoldersByUsername(foldersArrayToObject(data ? data.sharedFolders || [] : []));
+	const sharedFoldersObjects = groupFoldersByUsername(foldersArrayToObject(sharedFolders || []));
 	const driveFolders = foldersArrayToObject(folders || []);
 
 	return (
@@ -68,8 +60,8 @@ const Sidebar = ({openCreateContextMenu}: SidebarProps) => {
 					<Entry icon={diskIcon} text="Drive" path="Drive" hasChildren={driveFolders.length > 0}>
 						{driveFolders.map(folder => folderToEntries(folder))}
 					</Entry>
-					<Entry icon={sharedIcon} text="Shared" path="" hasChildren={sharedFolders.length > 0}>
-						{sharedFolders.map(folder => folderToEntries(folder))}
+					<Entry icon={sharedIcon} text="Shared" path="Shared" hasChildren={sharedFoldersObjects.length > 0}>
+						{sharedFoldersObjects.map(folder => folderToEntries(folder))}
 					</Entry>
 					<Entry icon={binIcon} text="Bin" path="Bin"/>
 				</Explorer>

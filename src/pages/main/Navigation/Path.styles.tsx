@@ -11,12 +11,7 @@ export const PathElement = styled.div`
 export const PathContainer = styled.div`
   font-size: 24px;
   font-weight: 300;
-  overflow: scroll;
   white-space: nowrap;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
 
   & a, ${PathElement} {
     text-decoration: none;

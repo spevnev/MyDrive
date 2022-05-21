@@ -50,10 +50,10 @@ const CreateFolderModal = ({isOpen = false, setIsOpen}: CreateFolderModalProps) 
 		const data = result.data;
 		if (!data || !data.createFolder) return;
 
-		const tokenData = getData() || {};
+		const drive_id = getData()?.drive_id;
 		const id = data.createFolder;
 
-		const curParentId = parent_id || tokenData.drive_id;
+		const curParentId = parent_id || drive_id;
 
 		const {data: {entry}} = await getEntryQuery({variables: {id: curParentId}});
 		const share_id = entry ? entry.share_id : null;
@@ -65,8 +65,8 @@ const CreateFolderModal = ({isOpen = false, setIsOpen}: CreateFolderModalProps) 
 
 	if (!modalData) return null;
 
-	const tokenData = getData() || {};
-	const parent_id = getFolderByPath(folders, modalData.path) || tokenData.drive_id;
+	const drive_id = getData()?.drive_id;
+	const parent_id = getFolderByPath(folders, modalData.path) || drive_id;
 	const folderNames = folders.filter(folder => folder.parent_id === parent_id).map(folder => folder.name);
 
 	return (

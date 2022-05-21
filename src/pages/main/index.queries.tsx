@@ -2,6 +2,14 @@ import {gql} from "@apollo/client";
 
 export const MAIN_QUERY = gql`
     query main{
+        sharedFolders(include_owners: true){
+            name
+            id
+            parent_id
+            share_id
+            username
+        }
+
         folders(recursively: true){
             name
             parent_id
@@ -22,6 +30,23 @@ export const CURRENT_FOLDER_QUERY = gql`
             id
             parent_id
             preview
+        }
+    }
+`;
+
+export const USERNAMES_WHO_SHARE_WITH_ME_QUERY = gql`
+    query usernames{
+        usernamesWhoShareWithMe
+    }
+`;
+
+export const USERS_SHARED_ENTRIES_QUERY = gql`
+    query usersSharedEntries($username: String!) {
+        usersSharedEntries(username: $username){
+            name
+            parent_id
+            id
+            is_directory
         }
     }
 `;

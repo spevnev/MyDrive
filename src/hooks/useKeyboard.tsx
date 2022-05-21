@@ -30,9 +30,7 @@ const useKeyboard = ({key, cb, priority = 0}: UseKeyboardProps) => {
 };
 
 window.onkeydown = e => {
-	for (let i = 0; i < keys.length; i++) {
-		if (keys[i].key === e.key) keys[i].cb(e);
-	}
+	for (let i = 0; i < keys.length; i++) if (keys[i].key === e.key) keys[i].cb(e);
 };
 
 export default useKeyboard;
