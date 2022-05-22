@@ -6,7 +6,7 @@ import useContextMenu from "hooks/useContextMenu";
 import {EContextMenuTypes} from "helpers/contextMenuOptionFactory";
 import useTitle from "hooks/useTitle";
 import usePath from "hooks/usePath";
-import Inputs from "./Inputs";
+import FileInputs from "./FileInputs";
 import {useLazyQuery, useQuery} from "@apollo/client";
 import {CURRENT_FOLDER_QUERY, MAIN_QUERY, USERNAMES_WHO_SHARE_WITH_ME_QUERY, USERS_SHARED_ENTRIES_QUERY} from "./index.queries";
 import {getData} from "services/token";
@@ -92,7 +92,8 @@ const MainPage = () => {
 		});
 	};
 
-	const driveDirectory = async () => {
+
+	const driveDirectoryEntries = async () => {
 		const cleanPath = path.replace(/^Drive\/?/, "");
 		let parent_id: number | null = getFolderByPath(folders, cleanPath);
 
@@ -111,7 +112,7 @@ const MainPage = () => {
 		loadPreviews(entries);
 	};
 
-	const sharedDirectory = async () => {
+	const sharedDirectoryEntries = async () => {
 		const cleanPath = path.replace(/^Shared\/?/, "");
 
 		if (prevPath === path) return;
@@ -154,16 +155,16 @@ const MainPage = () => {
 		}
 	};
 
-	const binDirectory = async () => {
+	const binDirectoryEntries = async () => {
 
 	};
 
 	useEffect(() => {
 		if (folders.length === 0 && sharedFolders.length === 0) return;
 
-		if (path.startsWith("Drive")) void driveDirectory();
-		else if (path.startsWith("Shared")) void sharedDirectory();
-		else if (path.startsWith("Bin")) void binDirectory();
+		if (path.startsWith("Drive")) void driveDirectoryEntries();
+		else if (path.startsWith("Shared")) void sharedDirectoryEntries();
+		else if (path.startsWith("Bin")) void binDirectoryEntries();
 	}, [location, folders]);
 
 
@@ -191,7 +192,7 @@ const MainPage = () => {
 		}, 200);
 	};
 
-	const cacheFolders = (...newFolders: FolderArrayElement[]): void => {
+	const writeFoldersToCache = (...newFolders: FolderArrayElement[]): void => {
 		client.writeQuery({
 			query: MAIN_QUERY,
 			data: {
@@ -199,38 +200,34 @@ const MainPage = () => {
 					...folders,
 					...newFolders,
 				],
-				user: {
-					space_used,
-					__typename: "UserModel",
-				},
+				sharedFolders: [...sharedFolders],
+				user: {space_used, __typename: "UserModel"},
 			},
 		});
 	};
 
-	const cacheCurrentEntries = (...newEntries: Entry[]): void => {
+	const writeEntriesToCache = (...newEntries: Entry[]): void => {
+		const entries = [...currentEntries, ...newEntries];
+
 		client.writeQuery({
 			query: CURRENT_FOLDER_QUERY,
-			data: {
-				entries: [
-					...currentEntries,
-					...newEntries,
-				],
-			},
-			variables: {
-				parent_id: currentFolderId,
-			},
+			data: {entries},
+			variables: {parent_id: currentFolderId},
 		});
+		setCurrentEntries(entries);
 	};
 
-	const changeImagePreviews = debounce(30, (data: null | { [key: string]: Blob }) => setImagePreviews(data || {}));
-	const cacheImagePreviews = (id: number, imageData: Blob) =>
-		changeImagePreviews((data: null | { [key: string]: Blob }) => ({...(data || imagePreviews), [String(id)]: imageData}));
 
-	const changeLoadingData = debounce(30, (data: null | [number, number][]) => {
-		const map = new Map<number, number>();
-		data?.forEach(([k, v]) => map.set(k, v));
-		setLoadingIds(map);
-	});
+	const changeCachedFolders = debounce(30, (data: FolderArrayElement[] | null) => writeFoldersToCache(...(data || [])));
+	const cacheFolders = (...newFolders: FolderArrayElement[]) => changeCachedFolders(folders => [...(folders || []), ...newFolders]);
+
+	const changeCachedEntries = debounce(30, (data: Entry[] | null) => writeEntriesToCache(...(data || [])));
+	const cacheCurrentEntries = (...newEntries: Entry[]) => changeCachedEntries(entries => [...(entries || []), ...newEntries]);
+
+	const changeImagePreviews = debounce(30, (data: null | { [key: string]: Blob }) => setImagePreviews(data || {}));
+	const cacheImagePreviews = (id: number, image: Blob) => changeImagePreviews((data: null | { [key: string]: Blob }) => ({...(data || imagePreviews), [String(id)]: image}));
+
+	const changeLoadingData = debounce(30, (data: null | [number, number][]) => setLoadingIds(new Map(data)));
 	const setLoading = (id: number, value: number) => changeLoadingData((data: null | [number, number][]) => {
 		const arr = [...(data || loadingRef.current.entries())];
 		const [kvPair] = arr.filter(([k]) => k === id) as [[number, number]?];
@@ -240,11 +237,12 @@ const MainPage = () => {
 		return [...arr.filter(([k]) => k !== key), [key || id, (curValue || 0) + value]];
 	});
 
+
 	return (
 		<Page onContextMenu={() => setIsContextMenuOpen(false)} onDragOver={onDragOver}>
 			<CurrentDataContext.Provider value={{folders, sharedFolders, currentFolderId, space_used}}>
 				<CacheContext.Provider value={{cacheCurrentEntries, cacheFolders, cacheImagePreviews}}>
-					<Inputs setIsDropZoneVisible={setIsDropZoneVisible} isDropZoneVisible={isDropZoneVisible} setLoading={setLoading}/>
+					<FileInputs setIsDropZoneVisible={setIsDropZoneVisible} isDropZoneVisible={isDropZoneVisible} setLoading={setLoading}/>
 					<CreateFolderModal isOpen={isCreateFolderModalOpen} setIsOpen={setIsCreateFolderModalOpen}/>
 				</CacheContext.Provider>
 

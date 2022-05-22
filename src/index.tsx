@@ -1,7 +1,8 @@
 import React from "react";
 import App from "./App";
 import GlobalStyles from "./index.styles";
-import * as ReactDOMClient from "react-dom/client";
+// @ts-ignore
+import {createRoot} from "react-dom/client";
 import {ApolloClient, ApolloLink, ApolloProvider, concat, HttpLink, InMemoryCache} from "@apollo/client";
 import {BrowserRouter} from "react-router-dom";
 import {getToken} from "./services/token";
@@ -25,14 +26,25 @@ const requestInterceptor = new ApolloLink((operation, forward) => {
 });
 
 export const client = new ApolloClient({
-	cache: new InMemoryCache(),
+	cache: new InMemoryCache({
+		typePolicies: {
+			Query: {
+				fields: {
+					entries: {
+						read: _ => _,
+					},
+				},
+			},
+		},
+	}),
 	link: concat(requestInterceptor, httpLink),
 	connectToDevTools: false,
+
 });
 
 const root: Element | null = document.getElementById("root");
 if (!root) throw new Error("Couldn't mount app - no element matched the selector!");
-const app = ReactDOMClient.createRoot(root);
+const app = createRoot(root);
 
 app.render(
 	<BrowserRouter>

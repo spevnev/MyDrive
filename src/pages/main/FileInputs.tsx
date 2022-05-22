@@ -1,10 +1,10 @@
 import React, {FormEvent, useContext, useEffect, useRef, useState} from "react";
 import DropZone from "components/DropZone";
 import {useLazyQuery, useMutation} from "@apollo/client";
-import {GET_ENTRIES_QUERY, UPLOAD_FILES_AND_FOLDERS_MUTATION, UPLOAD_FILES_MUTATION} from "./Inputs.queries";
-import {FileEntry, FolderArrayElement, SimpleFileEntry} from "services/file/fileTypes";
+import {GET_ENTRIES_QUERY, UPLOAD_FILES_AND_FOLDERS_MUTATION, UPLOAD_FILES_MUTATION} from "./FileInputs.queries";
+import {FileEntry, SimpleFileEntry} from "services/file/fileTypes";
 import {uploadFileToS3} from "services/s3";
-import {CacheContext, CurrentDataContext, Entry} from "./index";
+import {CacheContext, CurrentDataContext} from "./index";
 import {getData} from "services/token";
 import UploadEntriesModal, {ModalData} from "./modals/UploadEntriesModal";
 import {Trie} from "dataStructures/trie";
@@ -26,14 +26,14 @@ const Hidden = styled.div`
   display: none;
 `;
 
-type InputsProps = {
+type FileInputsProps = {
 	isDropZoneVisible: boolean;
 	setIsDropZoneVisible: (arg: boolean) => void;
 	setLoading: (id: number, change: number) => void;
 }
 
 const trie = new Trie();
-const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, setLoading}: InputsProps) => {
+const FileInputs = ({setIsDropZoneVisible, isDropZoneVisible = false, setLoading}: FileInputsProps) => {
 	const drive_id = getData()?.drive_id;
 
 	const {currentFolderId, folders, space_used} = useContext(CurrentDataContext);
@@ -80,12 +80,6 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, setLoading}: I
 		const {data: {entry}} = await getEntryQuery({variables: {id: parent_id}});
 		const share_id = entry ? entry.share_id : null;
 
-		const changeCachedEntries = debounce(30, (data: Entry[] | null) => cacheCurrentEntries(...(data || [])));
-		const cacheEntry = (entry: Entry) => changeCachedEntries(entries => [...(entries || []), entry]);
-
-		const changeCachedFolders = debounce(30, (data: FolderArrayElement[] | null) => cacheFolders(...(data || [])));
-		const cacheFolder = (folder: FolderArrayElement) => changeCachedFolders(folders => [...(folders || []), folder]);
-
 		entries.forEach(entry => {
 			const {id, parent_id: cur_parent_id, url: uploadCredentials, additionalUrl} = map.get(entryToKey(entry));
 			const name = entry.newName || entry.name;
@@ -101,9 +95,9 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, setLoading}: I
 				});
 			}
 
-			if (entry.is_directory) cacheFolder({name, id, parent_id: cur_parent_id, share_id});
+			if (entry.is_directory) cacheFolders({name, id, parent_id: cur_parent_id, share_id});
 			if (cur_parent_id === currentFolderId && parent_id === cur_parent_id)
-				cacheEntry({name, id, parent_id: cur_parent_id, is_directory: entry.is_directory || false, preview: null});
+				cacheCurrentEntries({name, id, parent_id: cur_parent_id, is_directory: entry.is_directory || false, preview: null});
 
 			if (entry.name && entry.data) {
 				if (parent_id !== cur_parent_id) setLoading(cur_parent_id, 1);
@@ -215,4 +209,4 @@ const Inputs = ({setIsDropZoneVisible, isDropZoneVisible = false, setLoading}: I
 	);
 };
 
-export default Inputs;
+export default FileInputs;
