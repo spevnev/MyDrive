@@ -32,6 +32,7 @@ export const client = new ApolloClient({
 				fields: {
 					entries: {
 						read: _ => _,
+						merge: (_, incoming) => _ ? incoming : _,
 					},
 				},
 			},

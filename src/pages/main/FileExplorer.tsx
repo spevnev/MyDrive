@@ -6,16 +6,17 @@ import Folder from "./Category/Folder";
 import File, {EFileType} from "./Category/File";
 import {getFileType} from "../../helpers/FileType";
 import {useLocation} from "react-router-dom";
-import {ContextMenuContext, Entry} from "./index";
-import ShareEntriesModal, {ModalData} from "./modals/ShareEntriesModal";
-import {splitName} from "../../services/file/file";
+import {ContextMenuContext, CurrentDataContext, Entry} from "./index";
+import ShareEntriesModal, {ShareEntriesModalData} from "./modals/ShareEntriesModal";
+import {getFolderPath, splitName} from "../../services/file/file";
+import MoveEntriesModal, {MoveEntriesModalData} from "./modals/MoveEntriesModal";
 
 export const EntryActionsContext = createContext({
 	onDelete: () => {},
 	onDownload: () => {},
 	onRename: () => {},
 	onShare: (arg?: Entry) => {},
-	onMoveTo: () => {},
+	onMoveTo: (arg?: Entry) => {},
 	onPreview: () => {},
 });
 
@@ -31,12 +32,16 @@ type FileExplorerProps = {
 	currentEntries: Entry[];
 	loadingIds: Map<number, number>;
 	imagePreviews: { [key: number]: Blob };
+	setCurrentEntries: (entries: Entry[]) => void;
 }
 
-const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, imagePreviews}: FileExplorerProps) => {
+const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, imagePreviews, setCurrentEntries}: FileExplorerProps) => {
 	const {setIsContextMenuOpen} = useContext(ContextMenuContext);
+	const {folders, currentFolderId} = useContext(CurrentDataContext);
 
-	const [shareEntriesModalData, setShareEntriesModalData] = useState<ModalData>(null);
+	const [shareEntriesModalData, setShareEntriesModalData] = useState<ShareEntriesModalData>(null);
+	const [moveEntriesModalData, setMoveEntriesModalData] = useState<MoveEntriesModalData>(null);
+
 	const [selected, setSelected] = useState<{ [key: string]: boolean[] }>({});
 
 	const location = useLocation();
@@ -120,21 +125,23 @@ const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, 
 		return currentEntries.filter(({id}) => ids.includes(id));
 	};
 
-	const onDelete = () => {};
-
-	const onDownload = () => {};
-
-	const onRename = () => {};
-
-	const onShare = (entry?: Entry) => {
+	const getEntries = (entry?: Entry): Entry[] => {
 		const selectedEntries = getSelectedEntries();
-		if (!selectedEntries && !entry) return;
+		if (selectedEntries.length === 0 && !entry) return [];
 
-		const entries = selectedEntries.length <= 0 ? [entry as Entry] : selectedEntries;
-		setShareEntriesModalData({entries, users: []});
+		return selectedEntries.length === 0 ? [entry as Entry] : selectedEntries;
 	};
 
-	const onMoveTo = () => {};
+
+	const onDelete = () => {}; //
+
+	const onDownload = () => {}; // file - easy, folder - need to create a zip/rar
+
+	const onRename = () => {}; // easy
+
+	const onShare = (entry?: Entry) => setShareEntriesModalData({entries: getEntries(entry), users: []});
+
+	const onMoveTo = (entry?: Entry) => setMoveEntriesModalData({entries: getEntries(entry), input: getFolderPath(folders, currentFolderId) || "/"});
 
 	const onPreview = () => {};
 
@@ -142,6 +149,8 @@ const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, 
 	return (
 		<Main onClick={onClick}>
 			<ShareEntriesModal setModalData={setShareEntriesModalData as any} modalData={shareEntriesModalData}/>
+			<MoveEntriesModal setModalData={setMoveEntriesModalData as any} modalData={moveEntriesModalData}
+							  setCurrentEntries={setCurrentEntries} currentEntries={currentEntries}/>
 
 			<EntryActionsContext.Provider value={{onDelete, onDownload, onRename, onShare, onMoveTo, onPreview}}>
 				<Navigation path={path} actionType={getNavigationActionType()}/>

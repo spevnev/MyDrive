@@ -13,14 +13,14 @@ type User = {
 	canEdit: boolean;
 }
 
-export type ModalData = null | {
+export type ShareEntriesModalData = null | {
 	entries: Entry[];
 	users: User[];
 };
 
 type ShareEntriesModalProps = {
-	modalData: ModalData | null
-	setModalData: (arg: ModalData | null) => void;
+	modalData: ShareEntriesModalData | null
+	setModalData: (arg: ShareEntriesModalData | null) => void;
 }
 
 const ShareEntriesModal = ({setModalData, modalData}: ShareEntriesModalProps) => {

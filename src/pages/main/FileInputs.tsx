@@ -20,7 +20,6 @@ import {
 } from "../../services/file/file";
 import imageCompression from "browser-image-compression";
 import {GET_ENTRY_QUERY} from "./index.queries";
-import useDebounce from "../../hooks/useDebounce";
 
 const Hidden = styled.div`
   display: none;
@@ -47,8 +46,6 @@ const FileInputs = ({setIsDropZoneVisible, isDropZoneVisible = false, setLoading
 	const [modalData, setModalData] = useState<ModalData | null>(null);
 	const modalDataRef = useRef<ModalData | null>(null);
 	modalDataRef.current = modalData;
-
-	const debounce = useDebounce();
 
 	useEffect(() => {
 		if (modalData === null) return;

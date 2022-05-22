@@ -252,7 +252,7 @@ const MainPage = () => {
 						<Sidebar openCreateContextMenu={openCreateContextMenu}/>
 
 						<ContextMenuContext.Provider value={{openContextMenu, setIsContextMenuOpen}}>
-							<FileExplorer openCreateContextMenu={openCreateContextMenu} currentEntries={currentEntries}
+							<FileExplorer openCreateContextMenu={openCreateContextMenu} currentEntries={currentEntries} setCurrentEntries={setCurrentEntries}
 										  loadingIds={loadingIds} path={path} imagePreviews={imagePreviews}/>
 						</ContextMenuContext.Provider>
 						{ContextMenu}
