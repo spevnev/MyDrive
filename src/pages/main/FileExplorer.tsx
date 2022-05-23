@@ -10,11 +10,12 @@ import {ContextMenuContext, CurrentDataContext, Entry} from "./index";
 import ShareEntriesModal, {ShareEntriesModalData} from "./modals/ShareEntriesModal";
 import {getFolderPath, splitName} from "../../services/file/file";
 import MoveEntriesModal, {MoveEntriesModalData} from "./modals/MoveEntriesModal";
+import RenameEntryModal, {RenameEntryModalData} from "./modals/RenameEntryModal";
 
 export const EntryActionsContext = createContext({
 	onDelete: () => {},
 	onDownload: () => {},
-	onRename: () => {},
+	onRename: (arg?: Entry) => {},
 	onShare: (arg?: Entry) => {},
 	onMoveTo: (arg?: Entry) => {},
 	onPreview: () => {},
@@ -41,6 +42,7 @@ const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, 
 
 	const [shareEntriesModalData, setShareEntriesModalData] = useState<ShareEntriesModalData>(null);
 	const [moveEntriesModalData, setMoveEntriesModalData] = useState<MoveEntriesModalData>(null);
+	const [renameEntryModalData, setRenameEntryModalData] = useState<RenameEntryModalData>(null);
 
 	const [selected, setSelected] = useState<{ [key: string]: boolean[] }>({});
 
@@ -133,11 +135,11 @@ const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, 
 	};
 
 
-	const onDelete = () => {}; //
+	const onDelete = () => {};
 
-	const onDownload = () => {}; // file - easy, folder - need to create a zip/rar
+	const onDownload = () => {};
 
-	const onRename = () => {}; // easy
+	const onRename = (entry?: Entry) => setRenameEntryModalData({entry: getEntries(entry)[0], input: null});
 
 	const onShare = (entry?: Entry) => setShareEntriesModalData({entries: getEntries(entry), users: []});
 
@@ -150,6 +152,8 @@ const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, 
 		<Main onClick={onClick}>
 			<ShareEntriesModal setModalData={setShareEntriesModalData as any} modalData={shareEntriesModalData}/>
 			<MoveEntriesModal setModalData={setMoveEntriesModalData as any} modalData={moveEntriesModalData}
+							  setCurrentEntries={setCurrentEntries} currentEntries={currentEntries}/>
+			<RenameEntryModal setModalData={setRenameEntryModalData as any} modalData={renameEntryModalData}
 							  setCurrentEntries={setCurrentEntries} currentEntries={currentEntries}/>
 
 			<EntryActionsContext.Provider value={{onDelete, onDownload, onRename, onShare, onMoveTo, onPreview}}>

@@ -48,7 +48,7 @@ const File = ({entry, type, isSelected, onClick, isLoading = false, imagePreview
 		const contextMenuData: object = {
 			onDelete,
 			onDownload,
-			onRename,
+			onRename: () => onRename(entry),
 			onShare: () => onShare(entry),
 			onMoveTo: () => onMoveTo(entry),
 			onPreview: canPreview ? onPreview : undefined,

@@ -11,7 +11,7 @@ import {GET_ENTRIES_QUERY} from "../FileInputs.queries";
 import {getData} from "../../../services/token";
 import {FileEntry} from "../../../services/file/fileTypes";
 import {client} from "../../../index";
-import {CURRENT_FOLDER_QUERY} from "../index.queries";
+import {CURRENT_FOLDER_QUERY, MAIN_QUERY} from "../index.queries";
 
 export type MoveEntriesModalData = {
 	entries: Entry[] | null;
@@ -28,7 +28,7 @@ type UploadEntriesModalProps = {
 const trie = new Trie();
 const MoveEntriesModal = ({modalData, setModalData, setCurrentEntries, currentEntries}: UploadEntriesModalProps) => {
 	const path = decodeURI(window.location.hash.slice(1)).replace(/^\/?Drive/, "");
-	const {folders, currentFolderId} = useContext(CurrentDataContext);
+	const {folders, currentFolderId, sharedFolders, space_used} = useContext(CurrentDataContext);
 
 	const [moveEntriesMutation] = useMutation(MOVE_ENTRIES_MUTATION);
 	const [getEntriesQuery] = useLazyQuery(GET_ENTRIES_QUERY);
@@ -42,6 +42,17 @@ const MoveEntriesModal = ({modalData, setModalData, setCurrentEntries, currentEn
 
 
 	const updateCache = (movedEntries: Entry[], parent_id: number) => {
+		const idToEntry = new Map<number, Entry>(movedEntries.reduce((arr: [number, Entry][], cur) => [...arr, [cur.id, {...cur, parent_id}]], []));
+
+		client.writeQuery({
+			query: MAIN_QUERY,
+			data: {
+				folders: folders.map(folder => idToEntry.get(folder.id) || folder),
+				sharedFolders: [...sharedFolders],
+				user: {space_used, __typename: "UserModel"},
+			},
+		});
+
 		const movedIds = movedEntries.map(entry => entry.id);
 		const remainingEntries = currentEntries.filter(entry => !movedIds.includes(entry.id));
 
