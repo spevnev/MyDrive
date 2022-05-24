@@ -12,7 +12,7 @@ import emptyFile from "assets/file-empty.svg";
 import {ContextMenuContext, Entry} from "../index";
 import {EContextMenuTypes} from "helpers/contextMenuOptionFactory";
 import Spinner from "components/Spinner";
-import {EntryActionsContext} from "../FileExplorer";
+import {EntryActionsContext} from "../FileExplorer/FileExplorer";
 
 const defaultImage: string = emptyFile;
 const images: string[] = [imageFile, textFile, musicFile, pdfFile, videoFile, excelFile, wordFile, compressedFile, emptyFile];
@@ -51,7 +51,7 @@ const File = ({entry, type, isSelected, onClick, isLoading = false, imagePreview
 			onRename: () => onRename(entry),
 			onShare: () => onShare(entry),
 			onMoveTo: () => onMoveTo(entry),
-			onPreview: canPreview ? onPreview : undefined,
+			onPreview: canPreview ? () => onPreview(entry) : undefined,
 		};
 
 		openContextMenu(e, contextMenuData, EContextMenuTypes.FILE);

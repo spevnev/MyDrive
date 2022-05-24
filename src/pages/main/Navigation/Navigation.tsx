@@ -9,7 +9,7 @@ import {ReactComponent as MoveIcon} from "assets/moveTo.svg";
 import menuIcon from "assets/menu.svg";
 import Path from "./Path";
 import {ContextMenuContext, SidebarContext} from "../index";
-import {EntryActionsContext} from "../FileExplorer";
+import {EntryActionsContext} from "../FileExplorer/FileExplorer";
 
 export enum EActionType {
 	HIDDEN,

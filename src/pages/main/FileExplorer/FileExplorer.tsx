@@ -1,24 +1,25 @@
 import React, {createContext, MouseEvent, useContext, useEffect, useState} from "react";
-import Navigation, {EActionType} from "./Navigation/Navigation";
+import PreviewOverlay from "./PreviewOverlay";
+import Navigation, {EActionType} from "../Navigation/Navigation";
 import {Column, Main} from "./FileExplorer.styles";
-import Category, {DataElement} from "./Category/Category";
-import Folder from "./Category/Folder";
-import File, {EFileType} from "./Category/File";
-import {getFileType} from "../../helpers/FileType";
+import Category, {DataElement} from "../Category/Category";
+import Folder from "../Category/Folder";
+import File, {EFileType} from "../Category/File";
+import {getFileType} from "helpers/FileType";
 import {useLocation} from "react-router-dom";
-import {ContextMenuContext, CurrentDataContext, Entry} from "./index";
-import ShareEntriesModal, {ShareEntriesModalData} from "./modals/ShareEntriesModal";
-import {getFolderPath, splitName} from "../../services/file/file";
-import MoveEntriesModal, {MoveEntriesModalData} from "./modals/MoveEntriesModal";
-import RenameEntryModal, {RenameEntryModalData} from "./modals/RenameEntryModal";
+import {ContextMenuContext, CurrentDataContext, Entry} from "../index";
+import ShareEntriesModal, {ShareEntriesModalData} from "../modals/ShareEntriesModal";
+import {getFolderPath, splitName} from "services/file/file";
+import MoveEntriesModal, {MoveEntriesModalData} from "../modals/MoveEntriesModal";
+import RenameEntryModal, {RenameEntryModalData} from "../modals/RenameEntryModal";
 
 export const EntryActionsContext = createContext({
-	onDelete: () => {},
-	onDownload: () => {},
+	onDelete: (arg?: Entry) => {},
+	onDownload: (arg?: Entry) => {},
 	onRename: (arg?: Entry) => {},
 	onShare: (arg?: Entry) => {},
 	onMoveTo: (arg?: Entry) => {},
-	onPreview: () => {},
+	onPreview: (arg?: Entry) => {},
 });
 
 export const CategoryContext = createContext({
@@ -43,6 +44,7 @@ const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, 
 	const [shareEntriesModalData, setShareEntriesModalData] = useState<ShareEntriesModalData>(null);
 	const [moveEntriesModalData, setMoveEntriesModalData] = useState<MoveEntriesModalData>(null);
 	const [renameEntryModalData, setRenameEntryModalData] = useState<RenameEntryModalData>(null);
+	const [imagePreviewData, setImagePreviewData] = useState<Entry | null>(null);
 
 	const [selected, setSelected] = useState<{ [key: string]: boolean[] }>({});
 
@@ -145,8 +147,7 @@ const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, 
 
 	const onMoveTo = (entry?: Entry) => setMoveEntriesModalData({entries: getEntries(entry), input: getFolderPath(folders, currentFolderId) || "/"});
 
-	const onPreview = () => {};
-
+	const onPreview = (entry?: Entry) => setImagePreviewData(getEntries(entry)[0]);
 
 	return (
 		<Main onClick={onClick}>
@@ -155,6 +156,7 @@ const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, 
 							  setCurrentEntries={setCurrentEntries} currentEntries={currentEntries}/>
 			<RenameEntryModal setModalData={setRenameEntryModalData as any} modalData={renameEntryModalData}
 							  setCurrentEntries={setCurrentEntries} currentEntries={currentEntries}/>
+			<PreviewOverlay setIsOpen={setImagePreviewData as any} data={imagePreviewData}/>
 
 			<EntryActionsContext.Provider value={{onDelete, onDownload, onRename, onShare, onMoveTo, onPreview}}>
 				<Navigation path={path} actionType={getNavigationActionType()}/>

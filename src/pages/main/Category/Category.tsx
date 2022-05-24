@@ -1,6 +1,6 @@
 import React, {MouseEvent, useContext, useEffect, useState} from "react";
 import {Container, Name, Row} from "./Category.styles";
-import {CategoryContext} from "../FileExplorer";
+import {CategoryContext} from "../FileExplorer/FileExplorer";
 
 export type DataElement = {
 	key: string;

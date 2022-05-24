@@ -14,7 +14,7 @@ import CreateFolderModal from "./modals/CreateFolderModal";
 import {FolderArrayElement} from "services/file/fileTypes";
 import {client} from "../../index";
 import {useLocation, useNavigate} from "react-router-dom";
-import FileExplorer from "./FileExplorer";
+import FileExplorer from "./FileExplorer/FileExplorer";
 import {getFolderByPath} from "../../services/file/file";
 import useDebounce from "../../hooks/useDebounce";
 
@@ -80,15 +80,13 @@ const MainPage = () => {
 
 	const loadPreviews = (entries: Entry[]) => {
 		entries.forEach(async ({id, preview}) => {
-			if (!preview) return;
+			if (!preview || imagePreviews[String(id)]) return;
 
-			try {
-				const result = await fetch(preview);
-				if (result.status !== 200) return;
+			const result = await fetch(preview);
+			if (result.status !== 200) return;
 
-				const blob = await result.blob();
-				cacheImagePreviews(id, blob);
-			} catch (e) {}
+			const blob = await result.blob();
+			cacheImagePreviews(id, blob);
 		});
 	};
 
@@ -117,6 +115,8 @@ const MainPage = () => {
 
 		if (prevPath === path) return;
 		prevPath = path;
+
+		if (sharedFolders.length === 0) return;
 
 		if (cleanPath.length === 0) { // root shared
 			const {data} = await usernamesWhoShareWithMeQuery();
@@ -160,8 +160,6 @@ const MainPage = () => {
 	};
 
 	useEffect(() => {
-		if (folders.length === 0 && sharedFolders.length === 0) return;
-
 		if (path.startsWith("Drive")) void driveDirectoryEntries();
 		else if (path.startsWith("Shared")) void sharedDirectoryEntries();
 		else if (path.startsWith("Bin")) void binDirectoryEntries();

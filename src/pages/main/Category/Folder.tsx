@@ -5,7 +5,7 @@ import {EContextMenuTypes} from "helpers/contextMenuOptionFactory";
 import {Container, Image, Name} from "./Folder.styles";
 import {useNavigate} from "react-router-dom";
 import Spinner from "components/Spinner";
-import {EntryActionsContext} from "../FileExplorer";
+import {EntryActionsContext} from "../FileExplorer/FileExplorer";
 
 type FolderProps = {
 	entry: Entry;
@@ -27,7 +27,7 @@ const Folder = ({entry, isSelected, onClick, isLoading}: FolderProps) => {
 			onDownload,
 			onRename: () => onRename(entry),
 			onShare: () => onShare(entry),
-			onMoveTo: () => onMoveTo(entry)
+			onMoveTo: () => onMoveTo(entry),
 		};
 		openContextMenu(e, contextMenuData, EContextMenuTypes.FOLDER);
 	};
