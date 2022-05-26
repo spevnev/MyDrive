@@ -12,6 +12,10 @@ import ShareEntriesModal, {ShareEntriesModalData} from "../modals/ShareEntriesMo
 import {getFolderPath, splitName} from "services/file/file";
 import MoveEntriesModal, {MoveEntriesModalData} from "../modals/MoveEntriesModal";
 import RenameEntryModal, {RenameEntryModalData} from "../modals/RenameEntryModal";
+import {useLazyQuery} from "@apollo/client";
+import {GET_PRESIGNED_URLS_QUERY} from "./FileExplorer.queries";
+import {downloadFile} from "../../../services/download";
+import JSZip from "jszip";
 
 export const EntryActionsContext = createContext({
 	onDelete: (arg?: Entry) => {},
@@ -40,6 +44,8 @@ type FileExplorerProps = {
 const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, imagePreviews, setCurrentEntries}: FileExplorerProps) => {
 	const {setIsContextMenuOpen} = useContext(ContextMenuContext);
 	const {folders, currentFolderId} = useContext(CurrentDataContext);
+
+	const [getPresignedUrlsQuery] = useLazyQuery(GET_PRESIGNED_URLS_QUERY);
 
 	const [shareEntriesModalData, setShareEntriesModalData] = useState<ShareEntriesModalData>(null);
 	const [moveEntriesModalData, setMoveEntriesModalData] = useState<MoveEntriesModalData>(null);
@@ -139,7 +145,50 @@ const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, 
 
 	const onDelete = () => {};
 
-	const onDownload = () => {};
+	const onDownload = async (entry?: Entry) => {
+		const entries = getEntries(entry);
+		const {data} = await getPresignedUrlsQuery({variables: {file_ids: entries.map(entry => entry.id)}});
+		if (!data) return;
+
+		const results = data.entriesPresignedUrls as ({ file_id: number, url: string, name: string, parent_id: number, is_directory: boolean }[] | null);
+		if (!results || results.length === 0) return;
+
+		if (results.length === 1 && !entries[0].is_directory) {
+			const res = await fetch(results[0].url);
+			if (res.status !== 200) return;
+
+			const blob = await res.blob();
+			downloadFile(blob, entries[0].name);
+
+			return;
+		}
+
+		const zip = new JSZip();
+		const idToFolder = new Map<number, JSZip>();
+
+		await Promise.all(
+			results.map(async ({file_id, is_directory, name, parent_id, url}) => {
+				const parent = idToFolder.get(parent_id) || zip;
+
+				if (!is_directory) {
+					const res = await fetch(url);
+					if (res.status !== 200) return;
+
+					const data = await res.blob();
+					parent.file(name, data);
+
+					return;
+				}
+
+				const folder = parent.folder(name);
+				if (folder === null) return;
+
+				idToFolder.set(file_id, folder);
+			}));
+
+		const blob = await zip.generateAsync({type: "blob"});
+		downloadFile(blob, "Files");
+	};
 
 	const onRename = (entry?: Entry) => setRenameEntryModalData({entry: getEntries(entry)[0], input: null});
 

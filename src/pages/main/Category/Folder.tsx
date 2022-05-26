@@ -23,8 +23,8 @@ const Folder = ({entry, isSelected, onClick, isLoading}: FolderProps) => {
 
 	const onContextMenu = (e: MouseEvent) => {
 		const contextMenuData: object = {
-			onDelete,
-			onDownload,
+			onDelete: () => onDelete(entry),
+			onDownload: () => onDownload(entry),
 			onRename: () => onRename(entry),
 			onShare: () => onShare(entry),
 			onMoveTo: () => onMoveTo(entry),

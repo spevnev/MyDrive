@@ -46,8 +46,8 @@ const File = ({entry, type, isSelected, onClick, isLoading = false, imagePreview
 	const onContextMenu = (e: MouseEvent) => {
 		const canPreview = type === EFileType.IMAGE;
 		const contextMenuData: object = {
-			onDelete,
-			onDownload,
+			onDelete: () => onDelete(entry),
+			onDownload: () => onDownload(entry),
 			onRename: () => onRename(entry),
 			onShare: () => onShare(entry),
 			onMoveTo: () => onMoveTo(entry),
