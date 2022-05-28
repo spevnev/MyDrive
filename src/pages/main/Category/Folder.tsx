@@ -1,6 +1,6 @@
 import React, {MouseEvent, useContext} from "react";
 import folderImage from "assets/folder.svg";
-import {ContextMenuContext, Entry} from "../index";
+import {BinData, ContextMenuContext, Entry} from "../index";
 import {EContextMenuTypes} from "helpers/contextMenuOptionFactory";
 import {Container, Image, Name} from "./Folder.styles";
 import {useNavigate} from "react-router-dom";
@@ -12,9 +12,10 @@ type FolderProps = {
 	isSelected: boolean;
 	onClick: (e: MouseEvent) => void;
 	isLoading: boolean;
+	binData: BinData | null;
 }
 
-const Folder = ({entry, isSelected, onClick, isLoading}: FolderProps) => {
+const Folder = ({entry, isSelected, onClick, isLoading, binData}: FolderProps) => {
 	const {openContextMenu} = useContext(ContextMenuContext);
 	const {onDelete, onDownload, onRename, onShare, onMoveTo} = useContext(EntryActionsContext);
 

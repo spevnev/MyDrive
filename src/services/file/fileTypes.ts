@@ -1,9 +1,12 @@
+import {BinData} from "../../pages/main";
+
 export type FolderArrayElement = {
 	name: string;
 	id: number;
 	parent_id: number;
 	share_id: number | null;
 	username?: string;
+	bin_data: BinData | null;
 }
 
 export type Folder = {

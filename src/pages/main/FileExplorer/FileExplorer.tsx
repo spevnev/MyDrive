@@ -12,10 +12,13 @@ import ShareEntriesModal, {ShareEntriesModalData} from "../modals/ShareEntriesMo
 import {getFolderPath, splitName} from "services/file/file";
 import MoveEntriesModal, {MoveEntriesModalData} from "../modals/MoveEntriesModal";
 import RenameEntryModal, {RenameEntryModalData} from "../modals/RenameEntryModal";
-import {useLazyQuery} from "@apollo/client";
-import {GET_PRESIGNED_URLS_QUERY} from "./FileExplorer.queries";
+import {useLazyQuery, useMutation} from "@apollo/client";
+import {GET_PRESIGNED_URLS_QUERY, PUT_ENTRIES_IN_BIN_MUTATION} from "./FileExplorer.queries";
 import {downloadFile} from "../../../services/download";
 import JSZip from "jszip";
+import {client} from "../../../index";
+import {CURRENT_FOLDER_QUERY} from "../index.queries";
+import {getData} from "../../../services/token";
 
 export const EntryActionsContext = createContext({
 	onDelete: (arg?: Entry) => {},
@@ -46,6 +49,7 @@ const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, 
 	const {folders, currentFolderId} = useContext(CurrentDataContext);
 
 	const [getPresignedUrlsQuery] = useLazyQuery(GET_PRESIGNED_URLS_QUERY);
+	const [putEntriesInBinMutation] = useMutation(PUT_ENTRIES_IN_BIN_MUTATION);
 
 	const [shareEntriesModalData, setShareEntriesModalData] = useState<ShareEntriesModalData>(null);
 	const [moveEntriesModalData, setMoveEntriesModalData] = useState<MoveEntriesModalData>(null);
@@ -78,7 +82,7 @@ const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, 
 
 	const getFolderData = (): DataElement[] => {
 		return currentEntries.filter(entry => entry.is_directory).map(folder => (
-			{entry: folder, key: String(folder.id), isLoading: (loadingIds.get(folder.id) || 0) > 0}
+			{entry: folder, key: String(folder.id), isLoading: (loadingIds.get(folder.id) || 0) > 0, binData: folder.bin_data || null}
 		)).sort(sortEntries);
 	};
 
@@ -88,7 +92,7 @@ const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, 
 			const type = extension ? getFileType(extension.slice(1)) : EFileType.OTHER;
 			const imagePreview = type === EFileType.IMAGE ? imagePreviews[file.id] : null;
 
-			return {entry: file, key: String(file.id), type, isLoading: (loadingIds.get(file.id) || 0) > 0, imagePreview};
+			return {entry: file, key: String(file.id), type, isLoading: (loadingIds.get(file.id) || 0) > 0, imagePreview, binData: file.bin_data || null};
 		}).sort(sortEntries);
 	};
 
@@ -143,7 +147,29 @@ const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, 
 	};
 
 
-	const onDelete = () => {};
+	const onDelete = async (entry?: Entry) => {
+		const entries = getEntries(entry);
+
+		const {data} = await putEntriesInBinMutation({variables: {entries: entries.map(entry => ({id: entry.id, parent_id: entry.parent_id, name: entry.name}))}});
+		if (!data || !data.putEntriesInBin) return;
+
+		const removedIds = entries.map(entry => entry.id);
+		const remainingEntries = currentEntries.filter(entry => !removedIds.includes(entry.id));
+
+		setCurrentEntries(remainingEntries);
+		client.writeQuery({
+			query: CURRENT_FOLDER_QUERY,
+			data: {entries: remainingEntries},
+			variables: {parent_id: currentFolderId},
+		});
+
+		const bin_id = getData()?.bin_id;
+		client.writeQuery({
+			query: CURRENT_FOLDER_QUERY,
+			data: {entries},
+			variables: {parent_id: bin_id},
+		});
+	};
 
 	const onDownload = async (entry?: Entry) => {
 		const entries = getEntries(entry);

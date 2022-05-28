@@ -9,7 +9,7 @@ import excelFile from "assets/file-excel.svg";
 import wordFile from "assets/file-word.svg";
 import compressedFile from "assets/file-zip.svg";
 import emptyFile from "assets/file-empty.svg";
-import {ContextMenuContext, Entry} from "../index";
+import {BinData, ContextMenuContext, Entry} from "../index";
 import {EContextMenuTypes} from "helpers/contextMenuOptionFactory";
 import Spinner from "components/Spinner";
 import {EntryActionsContext} from "../FileExplorer/FileExplorer";
@@ -36,9 +36,10 @@ type FileProps = {
 	onClick: (e: MouseEvent) => void;
 	isLoading: boolean;
 	imagePreview: Blob | null;
+	binData: BinData | null;
 }
 
-const File = ({entry, type, isSelected, onClick, isLoading = false, imagePreview = null}: FileProps) => {
+const File = ({entry, type, isSelected, onClick, isLoading = false, imagePreview = null, binData}: FileProps) => {
 	const {openContextMenu} = useContext(ContextMenuContext);
 	const {onDelete, onDownload, onRename, onShare, onMoveTo, onPreview} = useContext(EntryActionsContext);
 

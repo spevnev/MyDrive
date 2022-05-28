@@ -33,12 +33,18 @@ export const CacheContext = createContext({
 	cacheImagePreviews: (id: number, data: Blob) => {},
 });
 
+export type BinData = {
+	put_at: number;
+	prev_parent_id: number;
+}
+
 export type Entry = {
 	id: number;
 	parent_id: number;
 	name: string;
 	is_directory: boolean;
 	preview: string | null;
+	bin_data: BinData | null;
 }
 
 let dropzoneTimeout: NodeJS.Timeout | null = null;
@@ -80,7 +86,7 @@ const MainPage = () => {
 
 	const loadPreviews = (entries: Entry[]) => {
 		entries.forEach(async ({id, preview}) => {
-			if (!preview || imagePreviews[String(id)]) return;
+			if (!preview || imagePreviews[String(id)] || loadingRef.current[id]) return;
 
 			const result = await fetch(preview);
 			if (result.status !== 200) return;
@@ -129,17 +135,20 @@ const MainPage = () => {
 				if (usernames.has(username)) return;
 
 				usernames.add(username);
-				entries.push({name: username, id: ++maxId, parent_id: 0, is_directory: true, preview: null});
+				entries.push({name: username, id: ++maxId, parent_id: 0, is_directory: true, preview: null, bin_data: null});
 			});
 
 			setCurrentEntries(entries);
+			loadPreviews(entries);
 		} else if (cleanPath.split("/").length === 1) {
 			const username = cleanPath.split("/")[0];
 			const {data} = await usersSharedEntriesQuery({variables: {username}});
 			const entries = data.usersSharedEntries;
 
 			if (entries.length === 0) navigate("/");
+
 			setCurrentEntries(entries);
+			loadPreviews(entries);
 		} else {
 			const username = cleanPath.split("/")[0];
 			const pathWithoutUsername = cleanPath.split("/").slice(1).join("/");
@@ -152,11 +161,23 @@ const MainPage = () => {
 			const entries = data.entries || [];
 
 			setCurrentEntries(entries);
+			loadPreviews(entries);
 		}
 	};
 
 	const binDirectoryEntries = async () => {
+		const cleanPath = path.replace(/^Bin/, "");
+		if (cleanPath.length > 0) navigate("/");
 
+		if (currentFolderId !== bin_id) setCurrentFolderId(bin_id);
+
+		if (prevPath === path && folders.length === 0 && currentEntries.length === 0) return;
+		prevPath = path;
+
+		const {data} = await currentFolderDataQuery({variables: {parent_id: bin_id}});
+		const entries = data.entries || [];
+
+		setCurrentEntries(entries);
 	};
 
 	useEffect(() => {
@@ -237,7 +258,7 @@ const MainPage = () => {
 
 
 	return (
-		<Page onContextMenu={() => setIsContextMenuOpen(false)} onDragOver={onDragOver}>
+		<Page onContextMenu={() => setIsContextMenuOpen(false)} onClick={() => setIsContextMenuOpen(false)} onDragOver={onDragOver}>
 			<CurrentDataContext.Provider value={{folders, sharedFolders, currentFolderId, space_used}}>
 				<CacheContext.Provider value={{cacheCurrentEntries, cacheFolders, cacheImagePreviews}}>
 					<FileInputs setIsDropZoneVisible={setIsDropZoneVisible} isDropZoneVisible={isDropZoneVisible} setLoading={setLoading}/>

@@ -30,6 +30,10 @@ export const CURRENT_FOLDER_QUERY = gql`
             id
             parent_id
             preview
+            bin_data {
+                put_at
+                prev_parent_id
+            }
         }
     }
 `;
@@ -51,7 +55,7 @@ export const USERS_SHARED_ENTRIES_QUERY = gql`
     }
 `;
 
-export const GET_ENTRY_QUERY = gql`
+export const GET_ENTRY_SHARE_ID_QUERY = gql`
     query getEntry($id: Int!){
         entry(id: $id){
             share_id

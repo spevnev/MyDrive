@@ -19,7 +19,7 @@ import {
 	renameToAvoidNamingCollisions,
 } from "../../services/file/file";
 import imageCompression from "browser-image-compression";
-import {GET_ENTRY_QUERY} from "./index.queries";
+import {GET_ENTRY_SHARE_ID_QUERY} from "./index.queries";
 
 const Hidden = styled.div`
   display: none;
@@ -41,7 +41,7 @@ const FileInputs = ({setIsDropZoneVisible, isDropZoneVisible = false, setLoading
 	const [uploadFilesMutation] = useMutation(UPLOAD_FILES_MUTATION);
 	const [uploadFilesAndFoldersMutation] = useMutation(UPLOAD_FILES_AND_FOLDERS_MUTATION);
 	const [getEntriesQuery] = useLazyQuery(GET_ENTRIES_QUERY);
-	const [getEntryQuery] = useLazyQuery(GET_ENTRY_QUERY);
+	const [getEntryShareIdQuery] = useLazyQuery(GET_ENTRY_SHARE_ID_QUERY);
 
 	const [modalData, setModalData] = useState<ModalData | null>(null);
 	const modalDataRef = useRef<ModalData | null>(null);
@@ -74,7 +74,7 @@ const FileInputs = ({setIsDropZoneVisible, isDropZoneVisible = false, setLoading
 		const map = new Map<string, any>();
 		data.forEach((cur: { [key: string]: any }) => map.set(cur.path, {...cur, path: undefined}));
 
-		const {data: {entry}} = await getEntryQuery({variables: {id: parent_id}});
+		const {data: {entry}} = await getEntryShareIdQuery({variables: {id: parent_id}});
 		const share_id = entry ? entry.share_id : null;
 
 		entries.forEach(entry => {
@@ -92,9 +92,9 @@ const FileInputs = ({setIsDropZoneVisible, isDropZoneVisible = false, setLoading
 				});
 			}
 
-			if (entry.is_directory) cacheFolders({name, id, parent_id: cur_parent_id, share_id});
+			if (entry.is_directory) cacheFolders({name, id, parent_id: cur_parent_id, share_id, bin_data: null});
 			if (cur_parent_id === currentFolderId && parent_id === cur_parent_id)
-				cacheCurrentEntries({name, id, parent_id: cur_parent_id, is_directory: entry.is_directory || false, preview: null});
+				cacheCurrentEntries({name, id, parent_id: cur_parent_id, is_directory: entry.is_directory || false, preview: null, bin_data: null});
 
 			if (entry.name && entry.data) {
 				if (parent_id !== cur_parent_id) setLoading(cur_parent_id, 1);

@@ -9,7 +9,7 @@ import {getData} from "services/token";
 import {CacheContext, CurrentDataContext} from "../index";
 import {Button, Buttons, Container, DisabledButton, Header, PrimaryButton} from "./Modal.styles";
 import {foldersArrayToPaths, getFolderByPath, getFolderPath} from "../../../services/file/file";
-import {GET_ENTRY_QUERY} from "../index.queries";
+import {GET_ENTRY_SHARE_ID_QUERY} from "../index.queries";
 
 type CreateFolderModalProps = {
 	isOpen: boolean;
@@ -29,7 +29,7 @@ const CreateFolderModal = ({isOpen = false, setIsOpen}: CreateFolderModalProps) 
 	const [modalData, setModalData] = useState<{ path: string, name: string } | null>(null);
 
 	const [createFolderMutation] = useMutation(CREATE_FOLDER_MUTATION);
-	const [getEntryQuery] = useLazyQuery(GET_ENTRY_QUERY);
+	const [getEntryShareIdQuery] = useLazyQuery(GET_ENTRY_SHARE_ID_QUERY);
 
 	useEffect(() => {
 		trie.reset();
@@ -55,11 +55,11 @@ const CreateFolderModal = ({isOpen = false, setIsOpen}: CreateFolderModalProps) 
 
 		const curParentId = parent_id || drive_id;
 
-		const {data: {entry}} = await getEntryQuery({variables: {id: curParentId}});
+		const {data: {entry}} = await getEntryShareIdQuery({variables: {id: curParentId}});
 		const share_id = entry ? entry.share_id : null;
 
-		cacheFolders({name: modalData.name, parent_id: curParentId, id, share_id});
-		cacheCurrentEntries({name: modalData.name, parent_id: curParentId, id, is_directory: true, preview: null});
+		cacheFolders({name: modalData.name, parent_id: curParentId, id, share_id, bin_data: null});
+		cacheCurrentEntries({name: modalData.name, parent_id: curParentId, id, is_directory: true, preview: null, bin_data: null});
 	};
 
 

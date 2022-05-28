@@ -11,3 +11,9 @@ export const GET_PRESIGNED_URLS_QUERY = gql`
         }
     }
 `;
+
+export const PUT_ENTRIES_IN_BIN_MUTATION = gql`
+    mutation putEntriesInBin($entries: [MoveEntriesEntry!]!){
+        putEntriesInBin(entries: $entries)
+    }
+`;
