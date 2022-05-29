@@ -17,12 +17,23 @@ type FolderProps = {
 
 const Folder = ({entry, isSelected, onClick, isLoading, binData}: FolderProps) => {
 	const {openContextMenu} = useContext(ContextMenuContext);
-	const {onDelete, onDownload, onRename, onShare, onMoveTo} = useContext(EntryActionsContext);
+	const {onDelete, onDownload, onRename, onShare, onMoveTo, onRestore, onInfo, onFullyDelete} = useContext(EntryActionsContext);
 
 	const navigate = useNavigate();
 
 
 	const onContextMenu = (e: MouseEvent) => {
+		if (binData) {
+			const contextMenuData: object = {
+				onRestore: () => onRestore(entry),
+				onInfo: () => onInfo(entry),
+				onFullyDelete: () => onFullyDelete(entry),
+			};
+
+			openContextMenu(e, contextMenuData, EContextMenuTypes.DELETED);
+			return;
+		}
+
 		const contextMenuData: object = {
 			onDelete: () => onDelete(entry),
 			onDownload: () => onDownload(entry),
@@ -33,7 +44,10 @@ const Folder = ({entry, isSelected, onClick, isLoading, binData}: FolderProps) =
 		openContextMenu(e, contextMenuData, EContextMenuTypes.FOLDER);
 	};
 
-	const onDoubleClick = () => navigate(`${document.location.pathname}${document.location.hash + "/" + entry.name}`);
+	const onDoubleClick = () => {
+		if (binData) return;
+		navigate(`${document.location.pathname}${document.location.hash + "/" + entry.name}`);
+	};
 
 
 	return (

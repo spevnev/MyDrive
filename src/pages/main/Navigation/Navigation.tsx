@@ -6,6 +6,9 @@ import {ReactComponent as BinIcon} from "assets/bin.svg";
 import {ReactComponent as PreviewIcon} from "assets/eye.svg";
 import {ReactComponent as RenameIcon} from "assets/rename.svg";
 import {ReactComponent as MoveIcon} from "assets/moveTo.svg";
+import {ReactComponent as InfoIcon} from "assets/info.svg";
+import {ReactComponent as FireIcon} from "assets/fire.svg";
+import {ReactComponent as ReloadIcon} from "assets/reload.svg";
 import menuIcon from "assets/menu.svg";
 import Path from "./Path";
 import {ContextMenuContext, SidebarContext} from "../index";
@@ -20,12 +23,13 @@ export enum EActionType {
 type NavigationProps = {
 	path: string;
 	actionType: EActionType;
+	inBin: boolean;
 }
 
-const Navigation = ({path = "", actionType = EActionType.HIDDEN}: NavigationProps) => {
+const Navigation = ({path = "", actionType = EActionType.HIDDEN, inBin = false}: NavigationProps) => {
 	const {setIsContextMenuOpen} = useContext(ContextMenuContext);
 	const {isSidebarOpen, setIsSidebarOpen} = useContext(SidebarContext);
-	const {onDelete, onDownload, onRename, onShare, onPreview, onMoveTo} = useContext(EntryActionsContext);
+	const {onDelete, onDownload, onRename, onShare, onPreview, onMoveTo, onFullyDelete, onRestore, onInfo} = useContext(EntryActionsContext);
 
 
 	const onClick = (e: MouseEvent) => {
@@ -41,16 +45,27 @@ const Navigation = ({path = "", actionType = EActionType.HIDDEN}: NavigationProp
 				<Path path={path}/>
 			</Row>
 
-			{actionType !== 0 &&
+			{actionType !== EActionType.HIDDEN &&
 				<Icons onClick={onClick}>
-					{actionType === 1 && <>
-						<PreviewIcon onClick={() => onPreview()}/>
-						<RenameIcon onClick={() => onRename()}/>
-					</>}
-					<MoveIcon onClick={() => onMoveTo()}/>
-					<ShareIcon onClick={() => onShare()}/>
-					<DownloadIcon onClick={() => onDownload()}/>
-					<BinIcon onClick={() => onDelete()}/>
+					{inBin ? (
+						<>
+							{actionType === EActionType.SINGLE && <InfoIcon onClick={() => onInfo()}/>}
+							<FireIcon onClick={() => onFullyDelete()}/>
+							<ReloadIcon onClick={() => onRestore()}/>
+						</>
+					) : (
+						<>
+							{actionType === EActionType.SINGLE && <>
+								<PreviewIcon onClick={() => onPreview()}/>
+								<RenameIcon onClick={() => onRename()}/>
+							</>}
+							<MoveIcon onClick={() => onMoveTo()}/>
+							<ShareIcon onClick={() => onShare()}/>
+							<DownloadIcon onClick={() => onDownload()}/>
+							<BinIcon onClick={() => onDelete()}/>
+						</>
+					)
+					}
 				</Icons>
 			}
 		</Container>

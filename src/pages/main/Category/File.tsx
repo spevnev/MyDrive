@@ -41,10 +41,21 @@ type FileProps = {
 
 const File = ({entry, type, isSelected, onClick, isLoading = false, imagePreview = null, binData}: FileProps) => {
 	const {openContextMenu} = useContext(ContextMenuContext);
-	const {onDelete, onDownload, onRename, onShare, onMoveTo, onPreview} = useContext(EntryActionsContext);
+	const {onDelete, onDownload, onRename, onShare, onMoveTo, onPreview, onRestore, onInfo, onFullyDelete} = useContext(EntryActionsContext);
 
 
 	const onContextMenu = (e: MouseEvent) => {
+		if (binData) {
+			const contextMenuData: object = {
+				onRestore: () => onRestore(entry),
+				onInfo: () => onInfo(entry),
+				onFullyDelete: () => onFullyDelete(entry),
+			};
+
+			openContextMenu(e, contextMenuData, EContextMenuTypes.DELETED);
+			return;
+		}
+
 		const canPreview = type === EFileType.IMAGE;
 		const contextMenuData: object = {
 			onDelete: () => onDelete(entry),

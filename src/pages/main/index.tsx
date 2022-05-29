@@ -57,8 +57,8 @@ const MainPage = () => {
 	const [openContextMenu, setIsContextMenuOpen, ContextMenu] = useContextMenu();
 
 	const [currentFolderDataQuery] = useLazyQuery(CURRENT_FOLDER_QUERY);
-	const [usernamesWhoShareWithMeQuery] = useLazyQuery(USERNAMES_WHO_SHARE_WITH_ME_QUERY);
 	const [usersSharedEntriesQuery] = useLazyQuery(USERS_SHARED_ENTRIES_QUERY);
+	const [usernamesWhoShareWithMeQuery] = useLazyQuery(USERNAMES_WHO_SHARE_WITH_ME_QUERY);
 
 	const {data} = useQuery(MAIN_QUERY);
 	const space_used = data ? data.user ? data.user.space_used : null : 0;

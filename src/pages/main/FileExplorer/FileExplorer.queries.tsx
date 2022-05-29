@@ -17,3 +17,11 @@ export const PUT_ENTRIES_IN_BIN_MUTATION = gql`
         putEntriesInBin(entries: $entries)
     }
 `;
+
+export const GET_ENTRY_QUERY = gql`
+    query getEntry($id: Int!) {
+        entry(id: $id) {
+            name
+        }
+    }
+`;

@@ -63,14 +63,14 @@ const CreateFolderModal = ({isOpen = false, setIsOpen}: CreateFolderModalProps) 
 	};
 
 
-	if (!modalData) return null;
+	if (!modalData || !isOpen) return null;
 
 	const drive_id = getData()?.drive_id;
 	const parent_id = getFolderByPath(folders, modalData.path) || drive_id;
 	const folderNames = folders.filter(folder => folder.parent_id === parent_id).map(folder => folder.name);
 
 	return (
-		<ModalWindow isOpen={isOpen}>
+		<ModalWindow>
 			<Container>
 				<Header>Folder creation</Header>
 

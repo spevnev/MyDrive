@@ -6,7 +6,7 @@ export type ContextMenuOption = {
 	name: string;
 	icon: string;
 	callback: Function;
-};
+} | "BR";
 
 export type ContextMenuProps = {
 	x: number;
@@ -31,7 +31,7 @@ const useContextMenu = (): ContextMenuReturn => {
 	const countOptions = () => {
 		return options.reduce((prev, cur) => {
 			const temp = prev;
-			temp[cur.name === "BR" ? 1 : 0]++;
+			temp[cur === "BR" ? 1 : 0]++;
 			return temp;
 		}, [0, 0]);
 	};
@@ -70,15 +70,17 @@ const useContextMenu = (): ContextMenuReturn => {
 		openContextMenu,
 		setIsOpen,
 		<Container style={calculateAbsolutePosition()} onClick={() => setIsOpen(false)}>
-			{options.map(({name, icon, callback}: ContextMenuOption, i) =>
-				name === "BR" ?
-					<BR key={i}/>
-					:
-					<Option key={icon} onClick={() => callback()}>
+			{options.map((option: ContextMenuOption, i) => {
+				if (option === "BR") return <BR key={i}/>;
+
+				const {name, icon, callback} = option;
+				return (
+					<Option key={`${name}/${icon}`} onClick={() => callback()}>
 						<Icon src={icon}/>
 						<Name>{name}</Name>
-					</Option>,
-			)}
+					</Option>
+				);
+			})}
 		</Container>,
 	];
 };

@@ -58,7 +58,7 @@ const RenameEntryModal = ({modalData, setModalData, currentEntries, setCurrentEn
 	if (!modalData) return null;
 
 	return (
-		<ModalWindow isOpen={true}>
+		<ModalWindow>
 			<Container>
 				<Header>Rename "{modalData.entry?.name}"</Header>
 

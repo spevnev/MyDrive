@@ -13,12 +13,15 @@ import {getFolderPath, splitName} from "services/file/file";
 import MoveEntriesModal, {MoveEntriesModalData} from "../modals/MoveEntriesModal";
 import RenameEntryModal, {RenameEntryModalData} from "../modals/RenameEntryModal";
 import {useLazyQuery, useMutation} from "@apollo/client";
-import {GET_PRESIGNED_URLS_QUERY, PUT_ENTRIES_IN_BIN_MUTATION} from "./FileExplorer.queries";
+import {GET_ENTRY_QUERY, GET_PRESIGNED_URLS_QUERY, PUT_ENTRIES_IN_BIN_MUTATION} from "./FileExplorer.queries";
 import {downloadFile} from "../../../services/download";
 import JSZip from "jszip";
 import {client} from "../../../index";
 import {CURRENT_FOLDER_QUERY} from "../index.queries";
 import {getData} from "../../../services/token";
+import ConfirmModal, {ConfirmModalData} from "../modals/ConfirmModal";
+import InfoModal, {InfoModalData} from "../modals/InfoModal";
+import timestamp from "time-stamp";
 
 export const EntryActionsContext = createContext({
 	onDelete: (arg?: Entry) => {},
@@ -27,6 +30,9 @@ export const EntryActionsContext = createContext({
 	onShare: (arg?: Entry) => {},
 	onMoveTo: (arg?: Entry) => {},
 	onPreview: (arg?: Entry) => {},
+	onRestore: (arg?: Entry) => {},
+	onFullyDelete: (arg?: Entry) => {},
+	onInfo: (arg?: Entry) => {},
 });
 
 export const CategoryContext = createContext({
@@ -49,13 +55,16 @@ const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, 
 	const {folders, currentFolderId} = useContext(CurrentDataContext);
 
 	const [getPresignedUrlsQuery] = useLazyQuery(GET_PRESIGNED_URLS_QUERY);
+	const [getEntryQuery] = useLazyQuery(GET_ENTRY_QUERY);
 	const [putEntriesInBinMutation] = useMutation(PUT_ENTRIES_IN_BIN_MUTATION);
 
 	const [shareEntriesModalData, setShareEntriesModalData] = useState<ShareEntriesModalData>(null);
 	const [moveEntriesModalData, setMoveEntriesModalData] = useState<MoveEntriesModalData>(null);
 	const [renameEntryModalData, setRenameEntryModalData] = useState<RenameEntryModalData>(null);
-	const [imagePreviewData, setImagePreviewData] = useState<Entry | null>(null);
+	const [confirmModalData, setConfirmModalData] = useState<ConfirmModalData | null>(null);
+	const [infoModalData, setInfoModalData] = useState<InfoModalData | null>(null);
 
+	const [imagePreviewData, setImagePreviewData] = useState<Entry | null>(null);
 	const [selected, setSelected] = useState<{ [key: string]: boolean[] }>({});
 
 	const location = useLocation();
@@ -146,29 +155,38 @@ const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, 
 		return selectedEntries.length === 0 ? [entry as Entry] : selectedEntries;
 	};
 
+	const timestampToDate = (timestampMs: number): string => timestamp("HH:MM DD/MM/YYYY", new Date(timestampMs));
 
-	const onDelete = async (entry?: Entry) => {
-		const entries = getEntries(entry);
 
-		const {data} = await putEntriesInBinMutation({variables: {entries: entries.map(entry => ({id: entry.id, parent_id: entry.parent_id, name: entry.name}))}});
-		if (!data || !data.putEntriesInBin) return;
+	const onDelete = (entry?: Entry) => {
+		const onAction = async (isConfirmed: boolean) => {
+			setConfirmModalData(null);
+			if (!isConfirmed) return;
 
-		const removedIds = entries.map(entry => entry.id);
-		const remainingEntries = currentEntries.filter(entry => !removedIds.includes(entry.id));
+			const entries = getEntries(entry);
 
-		setCurrentEntries(remainingEntries);
-		client.writeQuery({
-			query: CURRENT_FOLDER_QUERY,
-			data: {entries: remainingEntries},
-			variables: {parent_id: currentFolderId},
-		});
+			const {data} = await putEntriesInBinMutation({variables: {entries: entries.map(entry => ({id: entry.id, parent_id: entry.parent_id, name: entry.name}))}});
+			if (!data || !data.putEntriesInBin) return;
 
-		const bin_id = getData()?.bin_id;
-		client.writeQuery({
-			query: CURRENT_FOLDER_QUERY,
-			data: {entries},
-			variables: {parent_id: bin_id},
-		});
+			const removedIds = entries.map(entry => entry.id);
+			const remainingEntries = currentEntries.filter(entry => !removedIds.includes(entry.id));
+
+			setCurrentEntries(remainingEntries);
+			client.writeQuery({
+				query: CURRENT_FOLDER_QUERY,
+				data: {entries: remainingEntries},
+				variables: {parent_id: currentFolderId},
+			});
+
+			const bin_id = getData()?.bin_id;
+			client.writeQuery({
+				query: CURRENT_FOLDER_QUERY,
+				data: {entries},
+				variables: {parent_id: bin_id},
+			});
+		};
+
+		setConfirmModalData({title: "Are you sure you want to delete?", info: "Files will be moved to bin and deleted in 3 days.", onAction});
 	};
 
 	const onDownload = async (entry?: Entry) => {
@@ -224,6 +242,36 @@ const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, 
 
 	const onPreview = (entry?: Entry) => setImagePreviewData(getEntries(entry)[0]);
 
+	const onFullyDelete = (entry?: Entry) => {
+		const entries = getEntries(entry);
+		
+	};
+
+	const onRestore = (entry?: Entry) => {
+		const entries = getEntries(entry);
+	};
+
+	const onInfo = async (entry?: Entry) => {
+		const entries = getEntries(entry);
+		if (entries.length !== 1) return;
+
+		const {name, bin_data} = entries[0];
+		if (!bin_data) return;
+		const {put_at, prev_parent_id} = bin_data;
+		const deletionTimestamp = Number(put_at) + 3 * 24 * 60 * 60 * 1000;
+		const parentFolder = prev_parent_id === getData()?.drive_id ? "Drive" : (await getEntryQuery({variables: {id: prev_parent_id}})).data?.entry?.name;
+
+		setInfoModalData({
+			title: `"${name}" info`,
+			list: {
+				"Put in bin at": timestampToDate(Number(put_at)),
+				"Will be deleted at": timestampToDate(deletionTimestamp),
+				"Parent folder": parentFolder,
+			},
+		});
+	};
+
+
 	return (
 		<Main onClick={onClick}>
 			<ShareEntriesModal setModalData={setShareEntriesModalData as any} modalData={shareEntriesModalData}/>
@@ -231,10 +279,12 @@ const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, 
 							  setCurrentEntries={setCurrentEntries} currentEntries={currentEntries}/>
 			<RenameEntryModal setModalData={setRenameEntryModalData as any} modalData={renameEntryModalData}
 							  setCurrentEntries={setCurrentEntries} currentEntries={currentEntries}/>
+			<ConfirmModal modalData={confirmModalData}/>
+			<InfoModal modalData={infoModalData} setModalData={setInfoModalData}/>
 			<PreviewOverlay setIsOpen={setImagePreviewData as any} data={imagePreviewData}/>
 
-			<EntryActionsContext.Provider value={{onDelete, onDownload, onRename, onShare, onMoveTo, onPreview}}>
-				<Navigation path={path} actionType={getNavigationActionType()}/>
+			<EntryActionsContext.Provider value={{onDelete, onDownload, onRename, onShare, onMoveTo, onPreview, onFullyDelete, onRestore, onInfo}}>
+				<Navigation path={path} actionType={getNavigationActionType()} inBin={path === "Bin"}/>
 				<Column onContextMenu={openCreateContextMenu}>
 					<CategoryContext.Provider value={{dataGetterMap: categoryNameToDataGetter, selected, setSelected}}>
 						<Category name="Folders" Element={Folder}/>

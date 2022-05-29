@@ -8,19 +8,23 @@ import previewIcon from "assets/eye.svg";
 import createFolderIcon from "assets/add-folder.svg";
 import uploadFolderIcon from "assets/upload-folder.svg";
 import uploadFileIcon from "assets/upload-file.svg";
+import reloadIcon from "assets/reload.svg";
+import fireIcon from "assets/fire.svg";
+import infoIcon from "assets/info.svg";
 
 export enum EContextMenuTypes {
 	FILE,
 	FOLDER,
-	CREATE
+	CREATE,
+	DELETED
 }
 
 const contextMenuOptionFactory = (type: EContextMenuTypes, data: { [key: string]: any }): ContextMenuOption[] | null => {
-	const entryActions = [
+	const entryActions: ContextMenuOption[] = [
 		{name: "Share", icon: shareIcon, callback: data.onShare},
 		{name: "Rename", icon: renameIcon, callback: data.onRename},
 		{name: "Move to", icon: moveToIcon, callback: data.onMoveTo},
-		{name: "BR", icon: "", callback: () => {}},
+		"BR",
 		{name: "Download", icon: downloadIcon, callback: data.onDownload},
 		{name: "Delete", icon: binIcon, callback: data.onDelete},
 	];
@@ -29,7 +33,7 @@ const contextMenuOptionFactory = (type: EContextMenuTypes, data: { [key: string]
 		case EContextMenuTypes.FILE:
 			if (data.onPreview) entryActions.unshift(
 				{name: "Preview", icon: previewIcon, callback: data.onPreview},
-				{name: "BR", icon: "", callback: () => {}},
+				"BR",
 			);
 
 			return entryActions;
@@ -40,6 +44,13 @@ const contextMenuOptionFactory = (type: EContextMenuTypes, data: { [key: string]
 				{name: "New folder", icon: createFolderIcon, callback: data.onNewFolder},
 				{name: "Upload folder", icon: uploadFolderIcon, callback: data.onUploadFolder},
 				{name: "Upload files", icon: uploadFileIcon, callback: data.onUploadFile},
+			];
+		case EContextMenuTypes.DELETED:
+			return [
+				{name: "Restore file", icon: reloadIcon, callback: data.onRestore},
+				{name: "Fully delete", icon: fireIcon, callback: data.onFullyDelete},
+				"BR",
+				{name: "Info", icon: infoIcon, callback: data.onInfo},
 			];
 		default:
 			return null;

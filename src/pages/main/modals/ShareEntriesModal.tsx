@@ -93,7 +93,7 @@ const ShareEntriesModal = ({setModalData, modalData}: ShareEntriesModalProps) =>
 	const options = [{text: "Editor", value: true}, {text: "Reader", value: false}];
 
 	return (
-		<ModalWindow isOpen={true}>
+		<ModalWindow>
 			<Container style={{minHeight: 0}}>
 				<Header>Share "{modalData.entries.map(({name}) => name).join(", ")}":</Header>
 

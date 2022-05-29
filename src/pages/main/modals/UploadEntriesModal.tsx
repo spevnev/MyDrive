@@ -43,7 +43,7 @@ const UploadEntriesModal = ({modalData, setModalData, freeSpace, changeIncluded,
 
 
 	return (
-		<ModalWindow isOpen={true}>
+		<ModalWindow>
 			<Container>
 				<Header>Uploading {modalData.included.reduce((sum, cur) => sum + (cur ? 1 : 0), 0)} files, {getSizeInString(modalData.files)}</Header>
 

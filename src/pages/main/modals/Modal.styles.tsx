@@ -1,8 +1,12 @@
 import styled from "styled-components";
 
-export const Container = styled.div`
+type ContainerProps = {
+	height?: number;
+}
+
+export const Container = styled.div<ContainerProps>`
   width: 400px;
-  min-height: 150px;
+  min-height: ${props => props.height || 150}px;
   height: 100%;
   display: flex;
   flex-direction: column;

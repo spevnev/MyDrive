@@ -98,7 +98,7 @@ const MoveEntriesModal = ({modalData, setModalData, setCurrentEntries, currentEn
 	const canBeMovedTo = ((modalData.input === "" || modalData.input === "/") || getFolderByPath(folders, modalData.input || "") !== null) && modalData.input !== path;
 
 	return (
-		<ModalWindow isOpen={true}>
+		<ModalWindow>
 			<Container>
 				<Header>Moving {modalData.entries?.length || 0} files</Header>
 
