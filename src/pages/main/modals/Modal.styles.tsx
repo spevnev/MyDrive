@@ -5,7 +5,7 @@ type ContainerProps = {
 }
 
 export const Container = styled.div<ContainerProps>`
-  width: 400px;
+  min-width: 400px;
   min-height: ${props => props.height || 150}px;
   height: 100%;
   display: flex;
@@ -16,8 +16,11 @@ export const Container = styled.div<ContainerProps>`
 export const Header = styled.p`
   font-size: 24px;
   font-weight: 200;
-  width: 100%;
   margin-bottom: 8px;
+
+  @media (min-width: 800px) {
+    white-space: nowrap;
+  }
 `;
 
 export const Buttons = styled.div`

@@ -25,3 +25,15 @@ export const GET_ENTRY_QUERY = gql`
         }
     }
 `;
+
+export const RESTORE_ENTRIES_MUTATION = gql`
+    mutation restoreEntries($entry_ids: [Int!]!, $restore_to_drive: Boolean!) {
+        restoreEntries(entry_ids: $entry_ids, restore_to_drive: $restore_to_drive)
+    }
+`;
+
+export const FULLY_DELETE_ENTRIES_MUTATION = gql`
+    mutation fullyDeleteEntries($entry_ids: [Int!]!) {
+        fullyDeleteEntries(entry_ids: $entry_ids)
+    }
+`;

@@ -164,7 +164,8 @@ export const dataTransferToEntries = async (itemList: DataTransferItemList): Pro
 	};
 
 	// @ts-ignore
-	const handles: FileSystemHandle[] = await Promise.all([...itemList].map(item => item.getAsFileSystemHandle()));
+	const handles: FileSystemHandle[] = (await Promise.all([...itemList].map(item => item.getAsFileSystemHandle()))).filter(handle => !!handle);
+	if (handles.length === 0) return {};
 
 	const filesPromises = handles.map(handle => getFiles(handle, handle.name));
 	const files: File[] = (await Promise.all(filesPromises)).reduce((arr: File[], cur) => [...arr, ...cur], []);

@@ -117,13 +117,10 @@ const MainPage = () => {
 	};
 
 	const sharedDirectoryEntries = async () => {
-		const cleanPath = path.replace(/^Shared\/?/, "");
-
-		if (prevPath === path) return;
+		if (prevPath === path || sharedFolders.length === 0) return;
 		prevPath = path;
 
-		if (sharedFolders.length === 0) return;
-
+		const cleanPath = path.replace(/^Shared\/?/, "");
 		if (cleanPath.length === 0) { // root shared
 			const {data} = await usernamesWhoShareWithMeQuery();
 

@@ -13,13 +13,13 @@ import {getFolderPath, splitName} from "services/file/file";
 import MoveEntriesModal, {MoveEntriesModalData} from "../modals/MoveEntriesModal";
 import RenameEntryModal, {RenameEntryModalData} from "../modals/RenameEntryModal";
 import {useLazyQuery, useMutation} from "@apollo/client";
-import {GET_ENTRY_QUERY, GET_PRESIGNED_URLS_QUERY, PUT_ENTRIES_IN_BIN_MUTATION} from "./FileExplorer.queries";
+import {FULLY_DELETE_ENTRIES_MUTATION, GET_ENTRY_QUERY, GET_PRESIGNED_URLS_QUERY, PUT_ENTRIES_IN_BIN_MUTATION, RESTORE_ENTRIES_MUTATION} from "./FileExplorer.queries";
 import {downloadFile} from "../../../services/download";
 import JSZip from "jszip";
 import {client} from "../../../index";
 import {CURRENT_FOLDER_QUERY} from "../index.queries";
 import {getData} from "../../../services/token";
-import ConfirmModal, {ConfirmModalData} from "../modals/ConfirmModal";
+import SimpleModal, {SimpleModalData} from "../modals/SimpleModal";
 import InfoModal, {InfoModalData} from "../modals/InfoModal";
 import timestamp from "time-stamp";
 
@@ -57,11 +57,13 @@ const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, 
 	const [getPresignedUrlsQuery] = useLazyQuery(GET_PRESIGNED_URLS_QUERY);
 	const [getEntryQuery] = useLazyQuery(GET_ENTRY_QUERY);
 	const [putEntriesInBinMutation] = useMutation(PUT_ENTRIES_IN_BIN_MUTATION);
+	const [restoreEntriesMutation] = useMutation(RESTORE_ENTRIES_MUTATION);
+	const [fullyDeleteEntriesMutation] = useMutation(FULLY_DELETE_ENTRIES_MUTATION);
 
 	const [shareEntriesModalData, setShareEntriesModalData] = useState<ShareEntriesModalData>(null);
 	const [moveEntriesModalData, setMoveEntriesModalData] = useState<MoveEntriesModalData>(null);
 	const [renameEntryModalData, setRenameEntryModalData] = useState<RenameEntryModalData>(null);
-	const [confirmModalData, setConfirmModalData] = useState<ConfirmModalData | null>(null);
+	const [simpleModalData, setSimpleModalData] = useState<SimpleModalData | null>(null);
 	const [infoModalData, setInfoModalData] = useState<InfoModalData | null>(null);
 
 	const [imagePreviewData, setImagePreviewData] = useState<Entry | null>(null);
@@ -160,7 +162,7 @@ const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, 
 
 	const onDelete = (entry?: Entry) => {
 		const onAction = async (isConfirmed: boolean) => {
-			setConfirmModalData(null);
+			setSimpleModalData(null);
 			if (!isConfirmed) return;
 
 			const entries = getEntries(entry);
@@ -186,7 +188,7 @@ const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, 
 			});
 		};
 
-		setConfirmModalData({title: "Are you sure you want to delete?", info: "Files will be moved to bin and deleted in 3 days.", onAction});
+		setSimpleModalData({title: "Are you sure?", info: "Files will be moved to bin and deleted in 3 days.", onAction});
 	};
 
 	const onDownload = async (entry?: Entry) => {
@@ -243,12 +245,35 @@ const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, 
 	const onPreview = (entry?: Entry) => setImagePreviewData(getEntries(entry)[0]);
 
 	const onFullyDelete = (entry?: Entry) => {
-		const entries = getEntries(entry);
-		
+		const onAction = async (isConfirmed: boolean) => {
+			setSimpleModalData(null);
+			if (!isConfirmed) return;
+
+			const entries = getEntries(entry);
+			const {data} = await fullyDeleteEntriesMutation({variables: {entry_ids: entries.map(entry => entry.id)}});
+			if (!data.fullyDelete) return;
+			console.log(data);
+
+			// TODO. Update cache
+		};
+
+		setSimpleModalData({title: "Are you sure?", info: "Files will be deleted and cannot be restored.", onAction});
 	};
 
-	const onRestore = (entry?: Entry) => {
-		const entries = getEntries(entry);
+	const onRestore = async (entry?: Entry) => {
+		const onAction = async (isConfirmed: boolean, option?: number) => {
+			setSimpleModalData(null);
+			if (!isConfirmed) return;
+
+			const entries = getEntries(entry);
+			const restore_to_drive = option === 1; // Option 0 - prev location, 1 - drive.
+			const {data} = await restoreEntriesMutation({variables: {entry_ids: entries.map(entry => entry.id), restore_to_drive}});
+			if (!data.restoreEntries) return;
+
+			// TODO. Update cache
+		};
+
+		setSimpleModalData({title: "Where you want to restore files to?", onAction, buttons: ["Previous location", "Drive"]});
 	};
 
 	const onInfo = async (entry?: Entry) => {
@@ -279,7 +304,7 @@ const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, 
 							  setCurrentEntries={setCurrentEntries} currentEntries={currentEntries}/>
 			<RenameEntryModal setModalData={setRenameEntryModalData as any} modalData={renameEntryModalData}
 							  setCurrentEntries={setCurrentEntries} currentEntries={currentEntries}/>
-			<ConfirmModal modalData={confirmModalData}/>
+			<SimpleModal modalData={simpleModalData}/>
 			<InfoModal modalData={infoModalData} setModalData={setInfoModalData}/>
 			<PreviewOverlay setIsOpen={setImagePreviewData as any} data={imagePreviewData}/>
 
