@@ -13,9 +13,10 @@ type FolderProps = {
 	onClick: (e: MouseEvent) => void;
 	isLoading: boolean;
 	binData: BinData | null;
+	canEdit: boolean;
 }
 
-const Folder = ({entry, isSelected, onClick, isLoading, binData}: FolderProps) => {
+const Folder = ({entry, isSelected, onClick, isLoading, binData, canEdit}: FolderProps) => {
 	const {openContextMenu} = useContext(ContextMenuContext);
 	const {onDelete, onDownload, onRename, onShare, onMoveTo, onRestore, onInfo, onFullyDelete} = useContext(EntryActionsContext);
 
@@ -31,6 +32,11 @@ const Folder = ({entry, isSelected, onClick, isLoading, binData}: FolderProps) =
 			};
 
 			openContextMenu(e, contextMenuData, EContextMenuTypes.DELETED);
+			return;
+		}
+
+		if (!canEdit) {
+			openContextMenu(e, {onDownload: () => onDownload(entry)}, EContextMenuTypes.VIEW_ONLY_FOLDER);
 			return;
 		}
 

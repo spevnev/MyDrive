@@ -14,7 +14,9 @@ import infoIcon from "assets/info.svg";
 
 export enum EContextMenuTypes {
 	FILE,
+	VIEW_ONLY_FILE,
 	FOLDER,
+	VIEW_ONLY_FOLDER,
 	CREATE,
 	DELETED
 }
@@ -37,8 +39,15 @@ const contextMenuOptionFactory = (type: EContextMenuTypes, data: { [key: string]
 			);
 
 			return entryActions;
+		case EContextMenuTypes.VIEW_ONLY_FILE:
+			const actions = [{name: "Download", icon: downloadIcon, callback: data.onDownload}];
+			if (data.onPreview) actions.unshift({name: "Preview", icon: previewIcon, callback: data.onPreview});
+
+			return actions;
 		case EContextMenuTypes.FOLDER:
 			return entryActions;
+		case EContextMenuTypes.VIEW_ONLY_FOLDER:
+			return [{name: "Download", icon: downloadIcon, callback: data.onDownload}];
 		case EContextMenuTypes.CREATE:
 			return [
 				{name: "New folder", icon: createFolderIcon, callback: data.onNewFolder},

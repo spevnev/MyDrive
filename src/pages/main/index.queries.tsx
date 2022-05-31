@@ -30,10 +30,19 @@ export const CURRENT_FOLDER_QUERY = gql`
             id
             parent_id
             preview
+            can_edit
             bin_data {
                 put_at
                 prev_parent_id
             }
+        }
+    }
+`;
+
+export const CAN_EDIT_CURRENT_FOLDER_QUERY = gql`
+    query canEditCurrentFolder($id: Int!){
+        entry(id: $id) {
+            can_edit
         }
     }
 `;
@@ -51,6 +60,7 @@ export const USERS_SHARED_ENTRIES_QUERY = gql`
             parent_id
             id
             is_directory
+            can_edit
         }
     }
 `;

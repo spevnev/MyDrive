@@ -11,10 +11,12 @@ export const GET_PRESIGNED_URLS_QUERY = gql`
         }
     }
 `;
-
-export const PUT_ENTRIES_IN_BIN_MUTATION = gql`
-    mutation putEntriesInBin($entries: [MoveEntriesEntry!]!){
-        putEntriesInBin(entries: $entries)
+export const GET_ENTRIES_SHARE_POLICY_QUERY = gql`
+    query getEntriesSharePolicy($entry_ids: [Int!]!) {
+        entriesSharePolicies(entry_ids: $entry_ids) {
+            can_read_users
+            can_edit_users
+        }
     }
 `;
 
@@ -23,6 +25,22 @@ export const GET_ENTRY_QUERY = gql`
         entry(id: $id) {
             name
         }
+    }
+`;
+
+export const GET_USERNAMES_QUERY = gql`
+    query user($user_ids: [Int!]!) {
+        usernames(user_ids: $user_ids) {
+            username
+            id
+        }
+    }
+`;
+
+
+export const PUT_ENTRIES_IN_BIN_MUTATION = gql`
+    mutation putEntriesInBin($entries: [MoveEntriesEntry!]!){
+        putEntriesInBin(entries: $entries)
     }
 `;
 

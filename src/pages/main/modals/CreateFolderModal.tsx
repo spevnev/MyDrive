@@ -59,7 +59,7 @@ const CreateFolderModal = ({isOpen = false, setIsOpen}: CreateFolderModalProps) 
 		const share_id = entry ? entry.share_id : null;
 
 		cacheFolders({name: modalData.name, parent_id: curParentId, id, share_id, bin_data: null});
-		cacheCurrentEntries({name: modalData.name, parent_id: curParentId, id, is_directory: true, preview: null, bin_data: null});
+		cacheCurrentEntries({name: modalData.name, parent_id: curParentId, id, is_directory: true});
 	};
 
 

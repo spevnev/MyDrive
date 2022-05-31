@@ -17,7 +17,7 @@ type SidebarProps = {
 
 const MAX_CAPACITY = 1000; // in Megabytes
 const Sidebar = ({openCreateContextMenu}: SidebarProps) => {
-	const {isSidebarOpen, setIsSidebarOpen} = useContext(SidebarContext);
+	const {isSidebarOpen, setIsSidebarOpen, isCreateButtonEnabled} = useContext(SidebarContext);
 	const {sharedFolders, folders, space_used} = useContext(CurrentDataContext);
 
 
@@ -45,13 +45,13 @@ const Sidebar = ({openCreateContextMenu}: SidebarProps) => {
 
 
 	const spaceUsed = space_used ? bytesToMegabytes(space_used, 2) : 0;
-	const sharedFoldersObjects = groupFoldersByUsername(foldersArrayToObject(sharedFolders || []));
-	const driveFolders = foldersArrayToObject(folders || []);
+	const sharedFoldersObjects = groupFoldersByUsername(foldersArrayToObject(sharedFolders));
+	const driveFolders = foldersArrayToObject(folders);
 
 	return (
 		<Overlay className={isSidebarOpen ? "" : "hidden"} onClick={() => setIsSidebarOpen(false)}>
 			<Container>
-				<Button onClick={onClick}>
+				<Button onClick={onClick} isDisabled={!isCreateButtonEnabled}>
 					<Icon src={addIcon}/>
 					<Text>Add</Text>
 				</Button>

@@ -94,7 +94,7 @@ const FileInputs = ({setIsDropZoneVisible, isDropZoneVisible = false, setLoading
 
 			if (entry.is_directory) cacheFolders({name, id, parent_id: cur_parent_id, share_id, bin_data: null});
 			if (cur_parent_id === currentFolderId && parent_id === cur_parent_id)
-				cacheCurrentEntries({name, id, parent_id: cur_parent_id, is_directory: entry.is_directory || false, preview: null, bin_data: null});
+				cacheCurrentEntries({name, id, parent_id: cur_parent_id, is_directory: entry.is_directory || false});
 
 			if (entry.name && entry.data) {
 				if (parent_id !== cur_parent_id) setLoading(cur_parent_id, 1);

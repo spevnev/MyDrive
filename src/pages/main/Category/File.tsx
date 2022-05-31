@@ -37,9 +37,10 @@ type FileProps = {
 	isLoading: boolean;
 	imagePreview: Blob | null;
 	binData: BinData | null;
+	canEdit: boolean;
 }
 
-const File = ({entry, type, isSelected, onClick, isLoading = false, imagePreview = null, binData}: FileProps) => {
+const File = ({entry, type, isSelected, onClick, isLoading = false, imagePreview = null, binData, canEdit}: FileProps) => {
 	const {openContextMenu} = useContext(ContextMenuContext);
 	const {onDelete, onDownload, onRename, onShare, onMoveTo, onPreview, onRestore, onInfo, onFullyDelete} = useContext(EntryActionsContext);
 
@@ -57,6 +58,16 @@ const File = ({entry, type, isSelected, onClick, isLoading = false, imagePreview
 		}
 
 		const canPreview = type === EFileType.IMAGE;
+		if (!canEdit) {
+			const contextMenuData: object = {
+				onDownload: () => onDownload(entry),
+				onPreview: canPreview ? () => onPreview(entry) : undefined,
+			};
+
+			openContextMenu(e, contextMenuData, EContextMenuTypes.VIEW_ONLY_FILE);
+			return;
+		}
+
 		const contextMenuData: object = {
 			onDelete: () => onDelete(entry),
 			onDownload: () => onDownload(entry),

@@ -31,21 +31,27 @@ export const Container = styled.div`
   }
 `;
 
-export const Button = styled.button`
+type ButtonProps = {
+	isDisabled?: boolean;
+}
+
+export const Button = styled.button<ButtonProps>`
   border-radius: 100px;
   border: 1px solid #aaa;
-  background: #fdfdfd;
+  background: ${props => props.isDisabled ? "#dbdbdb" : "#fdfdfd"};
   padding: 5px 3px;
   width: 70%;
   display: flex;
   flex-direction: row;
   align-items: center;
-  cursor: pointer;
+  cursor: ${props => props.isDisabled ? "default" : "pointer"};
   margin: 8px;
   transition: all .2s;
 
-  &:hover {
-    background: #f2f2f2;
+  ${props => props.isDisabled ? "" : `
+	&:hover {
+		background: #f2f2f2;
+  	}`
   }
 `;
 

@@ -14,7 +14,7 @@ import Path from "./Path";
 import {ContextMenuContext, SidebarContext} from "../index";
 import {EntryActionsContext} from "../FileExplorer/FileExplorer";
 
-export enum EActionType {
+export enum ENavigationType {
 	HIDDEN,
 	SINGLE,
 	MULTIPLE
@@ -22,11 +22,13 @@ export enum EActionType {
 
 type NavigationProps = {
 	path: string;
-	actionType: EActionType;
+	navigationType: ENavigationType;
 	inBin: boolean;
+	canEdit: boolean;
+	canPreview: boolean;
 }
 
-const Navigation = ({path = "", actionType = EActionType.HIDDEN, inBin = false}: NavigationProps) => {
+const Navigation = ({path = "", navigationType = ENavigationType.HIDDEN, inBin, canEdit, canPreview}: NavigationProps) => {
 	const {setIsContextMenuOpen} = useContext(ContextMenuContext);
 	const {isSidebarOpen, setIsSidebarOpen} = useContext(SidebarContext);
 	const {onDelete, onDownload, onRename, onShare, onPreview, onMoveTo, onFullyDelete, onRestore, onInfo} = useContext(EntryActionsContext);
@@ -38,6 +40,37 @@ const Navigation = ({path = "", actionType = EActionType.HIDDEN, inBin = false}:
 	};
 
 
+	const arePropsDefined = inBin !== undefined && canEdit !== undefined && canPreview !== undefined;
+	const areIconsVisible = navigationType !== ENavigationType.HIDDEN && arePropsDefined;
+
+	const inBinIcons = (
+		<>
+			{navigationType === ENavigationType.SINGLE && <InfoIcon onClick={() => onInfo()}/>}
+			<FireIcon onClick={() => onFullyDelete()}/>
+			<ReloadIcon onClick={() => onRestore()}/>
+		</>
+	);
+
+	const canEditIcons = (
+		<>
+			{navigationType === ENavigationType.SINGLE && <>
+				{canPreview && <PreviewIcon onClick={() => onPreview()}/>}
+				<RenameIcon onClick={() => onRename()}/>
+			</>}
+			<MoveIcon onClick={() => onMoveTo()}/>
+			<ShareIcon onClick={() => onShare()}/>
+			<DownloadIcon onClick={() => onDownload()}/>
+			<BinIcon onClick={() => onDelete()}/>
+		</>
+	);
+
+	const viewOnlyIcons = (
+		<>
+			{navigationType === ENavigationType.SINGLE && canPreview && <PreviewIcon onClick={() => onPreview()}/>}
+			<DownloadIcon onClick={() => onDownload()}/>
+		</>
+	);
+
 	return (
 		<Container>
 			<Row>
@@ -45,27 +78,9 @@ const Navigation = ({path = "", actionType = EActionType.HIDDEN, inBin = false}:
 				<Path path={path}/>
 			</Row>
 
-			{actionType !== EActionType.HIDDEN &&
+			{areIconsVisible &&
 				<Icons onClick={onClick}>
-					{inBin ? (
-						<>
-							{actionType === EActionType.SINGLE && <InfoIcon onClick={() => onInfo()}/>}
-							<FireIcon onClick={() => onFullyDelete()}/>
-							<ReloadIcon onClick={() => onRestore()}/>
-						</>
-					) : (
-						<>
-							{actionType === EActionType.SINGLE && <>
-								<PreviewIcon onClick={() => onPreview()}/>
-								<RenameIcon onClick={() => onRename()}/>
-							</>}
-							<MoveIcon onClick={() => onMoveTo()}/>
-							<ShareIcon onClick={() => onShare()}/>
-							<DownloadIcon onClick={() => onDownload()}/>
-							<BinIcon onClick={() => onDelete()}/>
-						</>
-					)
-					}
+					{inBin ? inBinIcons : canEdit ? canEditIcons : viewOnlyIcons}
 				</Icons>
 			}
 		</Container>

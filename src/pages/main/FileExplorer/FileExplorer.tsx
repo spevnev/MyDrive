@@ -1,6 +1,6 @@
 import React, {createContext, MouseEvent, useContext, useEffect, useState} from "react";
 import PreviewOverlay from "./PreviewOverlay";
-import Navigation, {EActionType} from "../Navigation/Navigation";
+import Navigation, {ENavigationType} from "../Navigation/Navigation";
 import {Column, Main} from "./FileExplorer.styles";
 import Category, {DataElement} from "../Category/Category";
 import Folder from "../Category/Folder";
@@ -8,12 +8,20 @@ import File, {EFileType} from "../Category/File";
 import {getFileType} from "helpers/FileType";
 import {useLocation} from "react-router-dom";
 import {ContextMenuContext, CurrentDataContext, Entry} from "../index";
-import ShareEntriesModal, {ShareEntriesModalData} from "../modals/ShareEntriesModal";
+import ShareEntriesModal, {ShareEntriesModalData, User} from "../modals/ShareEntriesModal";
 import {getFolderPath, splitName} from "services/file/file";
 import MoveEntriesModal, {MoveEntriesModalData} from "../modals/MoveEntriesModal";
 import RenameEntryModal, {RenameEntryModalData} from "../modals/RenameEntryModal";
 import {useLazyQuery, useMutation} from "@apollo/client";
-import {FULLY_DELETE_ENTRIES_MUTATION, GET_ENTRY_QUERY, GET_PRESIGNED_URLS_QUERY, PUT_ENTRIES_IN_BIN_MUTATION, RESTORE_ENTRIES_MUTATION} from "./FileExplorer.queries";
+import {
+	FULLY_DELETE_ENTRIES_MUTATION,
+	GET_ENTRIES_SHARE_POLICY_QUERY,
+	GET_ENTRY_QUERY,
+	GET_PRESIGNED_URLS_QUERY,
+	GET_USERNAMES_QUERY,
+	PUT_ENTRIES_IN_BIN_MUTATION,
+	RESTORE_ENTRIES_MUTATION,
+} from "./FileExplorer.queries";
 import {downloadFile} from "../../../services/download";
 import JSZip from "jszip";
 import {client} from "../../../index";
@@ -56,6 +64,8 @@ const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, 
 
 	const [getPresignedUrlsQuery] = useLazyQuery(GET_PRESIGNED_URLS_QUERY);
 	const [getEntryQuery] = useLazyQuery(GET_ENTRY_QUERY);
+	const [getEntriesSharePolicyQuery] = useLazyQuery(GET_ENTRIES_SHARE_POLICY_QUERY);
+	const [getUsernamesQuery] = useLazyQuery(GET_USERNAMES_QUERY);
 	const [putEntriesInBinMutation] = useMutation(PUT_ENTRIES_IN_BIN_MUTATION);
 	const [restoreEntriesMutation] = useMutation(RESTORE_ENTRIES_MUTATION);
 	const [fullyDeleteEntriesMutation] = useMutation(FULLY_DELETE_ENTRIES_MUTATION);
@@ -93,7 +103,7 @@ const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, 
 
 	const getFolderData = (): DataElement[] => {
 		return currentEntries.filter(entry => entry.is_directory).map(folder => (
-			{entry: folder, key: String(folder.id), isLoading: (loadingIds.get(folder.id) || 0) > 0, binData: folder.bin_data || null}
+			{entry: folder, key: String(folder.id), isLoading: (loadingIds.get(folder.id) || 0) > 0, binData: folder.bin_data, canEdit: folder.can_edit}
 		)).sort(sortEntries);
 	};
 
@@ -103,14 +113,11 @@ const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, 
 			const type = extension ? getFileType(extension.slice(1)) : EFileType.OTHER;
 			const imagePreview = type === EFileType.IMAGE ? imagePreviews[file.id] : null;
 
-			return {entry: file, key: String(file.id), type, isLoading: (loadingIds.get(file.id) || 0) > 0, imagePreview, binData: file.bin_data || null};
+			return {entry: file, key: String(file.id), type, isLoading: (loadingIds.get(file.id) || 0) > 0, imagePreview, binData: file.bin_data, canEdit: file.can_edit};
 		}).sort(sortEntries);
 	};
 
-	const categoryNameToDataGetter = {
-		"Folders": getFolderData,
-		"Files": getFileData,
-	};
+	const categoryNameToDataGetter = {"Folders": getFolderData, "Files": getFileData};
 
 	const getSelectedNum = (): number => {
 		const values = Object.values(selected);
@@ -126,11 +133,11 @@ const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, 
 		if (getSelectedNum() > 0) setSelected({});
 	};
 
-	const getNavigationActionType = (): EActionType => {
+	const getNavigationActionType = (): ENavigationType => {
 		const selectedNum = getSelectedNum();
 
-		if (selectedNum === 1) return EActionType.SINGLE;
-		else return selectedNum < 1 ? EActionType.HIDDEN : EActionType.MULTIPLE;
+		if (selectedNum === 1) return ENavigationType.SINGLE;
+		else return selectedNum < 1 ? ENavigationType.HIDDEN : ENavigationType.MULTIPLE;
 	};
 
 	const getSelectedEntries = (): Entry[] => {
@@ -238,7 +245,78 @@ const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, 
 
 	const onRename = (entry?: Entry) => setRenameEntryModalData({entry: getEntries(entry)[0], input: null});
 
-	const onShare = (entry?: Entry) => setShareEntriesModalData({entries: getEntries(entry), users: []});
+	const onShare = async (entry?: Entry) => {
+		const arePoliciesDifferent = (...policies: { [key: string]: number[] }[]): boolean => {
+			if (policies.length === 1) return false;
+
+			const rl = [];
+			const el = [];
+			for (let i = 0; i < policies.length; i++) {
+				const {can_read_users, can_edit_users} = policies[i];
+				if (rl.length === 0 && el.length === 0) {
+					rl.push(...can_read_users);
+					el.push(...can_edit_users);
+					continue;
+				}
+
+				if (rl.length !== can_read_users.length || el.length !== can_edit_users.length) return true;
+				for (let j = 0; j < rl.length; j++) if (rl[j] !== can_read_users[j]) return true;
+				for (let j = 0; j < el.length; j++) if (el[j] !== can_edit_users[j]) return true;
+			}
+
+			return false;
+		};
+
+		const entries = getEntries(entry);
+		const entry_ids = entries.map(entry => entry.id);
+		const {data} = await getEntriesSharePolicyQuery({variables: {entry_ids}});
+		if (!data.entriesSharePolicies) return;
+
+		if (data.entriesSharePolicies.length === 0) {
+			setShareEntriesModalData({entries, users: []});
+			return;
+		}
+
+		if (arePoliciesDifferent(...data.entriesSharePolicies)) {
+			const onAction = (isConfirmed: boolean) => {
+				setSimpleModalData(null);
+				if (!isConfirmed) return;
+
+				setShareEntriesModalData({entries, users: []});
+			};
+
+			setSimpleModalData({title: "Sharing files", info: "Selected files have different sharing policies. Do you want to create new one for all of them?", onAction});
+			return;
+		}
+
+		const policies = data.entriesSharePolicies[0];
+		const user_ids = [...policies.can_edit_users, ...policies.can_read_users];
+		const {data: usernamesData} = await getUsernamesQuery({variables: {user_ids}});
+		if (!usernamesData.usernames) return;
+
+		const idToUsername = new Map<number, string>();
+		const usernamesIdArray: { username: string, id: number }[] = usernamesData.usernames;
+		usernamesIdArray.forEach(({username, id}) => idToUsername.set(id, username));
+
+		const usernames = new Set<string>();
+		const users: User[] = [];
+		policies.can_edit_users.forEach((id: number) => {
+			const username = idToUsername.get(id) || "";
+			if (usernames.has(username)) return;
+
+			usernames.add(username);
+			users.push({username, canEdit: true});
+		});
+		policies.can_read_users.forEach((id: number) => {
+			const username = idToUsername.get(id) || "";
+			if (usernames.has(username)) return;
+
+			usernames.add(username);
+			users.push({username, canEdit: false});
+		});
+
+		setShareEntriesModalData({entries, users});
+	};
 
 	const onMoveTo = (entry?: Entry) => setMoveEntriesModalData({entries: getEntries(entry), input: getFolderPath(folders, currentFolderId) || "/"});
 
@@ -297,6 +375,10 @@ const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, 
 	};
 
 
+	const navigationType = getNavigationActionType();
+	const canEditSelectedEntries = getSelectedEntries().reduce((res, cur) => res ? !!cur.can_edit : false, true);
+	const canPreviewSelectedEntry = navigationType === ENavigationType.SINGLE ? getFileType((splitName(getSelectedEntries()[0].name)[1] || "").slice(1)) === EFileType.IMAGE : false;
+
 	return (
 		<Main onClick={onClick}>
 			<ShareEntriesModal setModalData={setShareEntriesModalData as any} modalData={shareEntriesModalData}/>
@@ -309,7 +391,7 @@ const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, 
 			<PreviewOverlay setIsOpen={setImagePreviewData as any} data={imagePreviewData}/>
 
 			<EntryActionsContext.Provider value={{onDelete, onDownload, onRename, onShare, onMoveTo, onPreview, onFullyDelete, onRestore, onInfo}}>
-				<Navigation path={path} actionType={getNavigationActionType()} inBin={path === "Bin"}/>
+				<Navigation path={path} navigationType={navigationType} inBin={path === "Bin"} canEdit={canEditSelectedEntries} canPreview={canPreviewSelectedEntry}/>
 				<Column onContextMenu={openCreateContextMenu}>
 					<CategoryContext.Provider value={{dataGetterMap: categoryNameToDataGetter, selected, setSelected}}>
 						<Category name="Folders" Element={Folder}/>

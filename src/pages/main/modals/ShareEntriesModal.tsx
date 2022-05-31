@@ -8,7 +8,7 @@ import {useLazyQuery, useMutation} from "@apollo/client";
 import {DOES_USER_EXIST_QUERY, GET_USER_IDS_QUERY, SHARE_ENTRIES_MUTATION} from "./ShareEntriesModal.queries";
 import {getData} from "../../../services/token";
 
-type User = {
+export type User = {
 	username: string;
 	canEdit: boolean;
 }

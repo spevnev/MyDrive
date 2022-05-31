@@ -8,7 +8,7 @@ import useTitle from "hooks/useTitle";
 import usePath from "hooks/usePath";
 import FileInputs from "./FileInputs";
 import {useLazyQuery, useQuery} from "@apollo/client";
-import {CURRENT_FOLDER_QUERY, MAIN_QUERY, USERNAMES_WHO_SHARE_WITH_ME_QUERY, USERS_SHARED_ENTRIES_QUERY} from "./index.queries";
+import {CAN_EDIT_CURRENT_FOLDER_QUERY, CURRENT_FOLDER_QUERY, MAIN_QUERY, USERNAMES_WHO_SHARE_WITH_ME_QUERY, USERS_SHARED_ENTRIES_QUERY} from "./index.queries";
 import {getData} from "services/token";
 import CreateFolderModal from "./modals/CreateFolderModal";
 import {FolderArrayElement} from "services/file/fileTypes";
@@ -23,12 +23,13 @@ export const ContextMenuContext = createContext({
 	openContextMenu: (e: MouseEvent, contextMenuData: object, contextMenuType: EContextMenuTypes) => {},
 });
 export const SidebarContext = createContext({
+	isCreateButtonEnabled: true,
 	isSidebarOpen: false,
 	setIsSidebarOpen: (arg: boolean) => {},
 });
 export const CurrentDataContext = createContext({currentFolderId: 0, space_used: 0, folders: [] as FolderArrayElement[], sharedFolders: [] as FolderArrayElement[]});
 export const CacheContext = createContext({
-	cacheCurrentEntries: (...args: Entry[]) => {},
+	cacheCurrentEntries: (...args: CacheEntry[]) => {},
 	cacheFolders: (...args: FolderArrayElement[]) => {},
 	cacheImagePreviews: (id: number, data: Blob) => {},
 });
@@ -38,6 +39,16 @@ export type BinData = {
 	prev_parent_id: number;
 }
 
+export type CacheEntry = {
+	id: number;
+	parent_id: number;
+	name: string;
+	is_directory: boolean;
+	preview?: string | null;
+	bin_data?: BinData | null;
+	can_edit?: boolean | null;
+}
+
 export type Entry = {
 	id: number;
 	parent_id: number;
@@ -45,6 +56,7 @@ export type Entry = {
 	is_directory: boolean;
 	preview: string | null;
 	bin_data: BinData | null;
+	can_edit: boolean | null;
 }
 
 let dropzoneTimeout: NodeJS.Timeout | null = null;
@@ -59,14 +71,16 @@ const MainPage = () => {
 	const [currentFolderDataQuery] = useLazyQuery(CURRENT_FOLDER_QUERY);
 	const [usersSharedEntriesQuery] = useLazyQuery(USERS_SHARED_ENTRIES_QUERY);
 	const [usernamesWhoShareWithMeQuery] = useLazyQuery(USERNAMES_WHO_SHARE_WITH_ME_QUERY);
+	const [canEditCurrentFolderQuery] = useLazyQuery(CAN_EDIT_CURRENT_FOLDER_QUERY);
 
 	const {data} = useQuery(MAIN_QUERY);
 	const space_used = data ? data.user ? data.user.space_used : null : 0;
-	const folders: FolderArrayElement[] = data ? data.folders : [];
-	const sharedFolders: FolderArrayElement[] = data ? data.sharedFolders : [];
+	const folders: FolderArrayElement[] = data ? data.folders || [] : [];
+	const sharedFolders: FolderArrayElement[] = data ? data.sharedFolders || [] : [];
 
-	const [currentFolderId, setCurrentFolderId] = useState<number>(drive_id);
+	const [currentFolderId, setCurrentFolderId] = useState(drive_id);
 	const [currentEntries, setCurrentEntries] = useState<Entry[]>([]);
+	const [canEditCurrentFolder, setCanEditCurrentFolder] = useState(true);
 	const [loadingIds, setLoadingIds] = useState(new Map<number, number>());
 	const [imagePreviews, setImagePreviews] = useState<{ [key: string]: Blob }>({});
 
@@ -113,6 +127,7 @@ const MainPage = () => {
 		const entries = data.entries || [];
 
 		setCurrentEntries(entries);
+		setCanEditCurrentFolder(true);
 		loadPreviews(entries);
 	};
 
@@ -132,12 +147,13 @@ const MainPage = () => {
 				if (usernames.has(username)) return;
 
 				usernames.add(username);
-				entries.push({name: username, id: ++maxId, parent_id: 0, is_directory: true, preview: null, bin_data: null});
+				entries.push({name: username, id: ++maxId, parent_id: 0, is_directory: true, preview: null, bin_data: null, can_edit: false});
 			});
 
 			setCurrentEntries(entries);
+			setCanEditCurrentFolder(false);
 			loadPreviews(entries);
-		} else if (cleanPath.split("/").length === 1) {
+		} else if (cleanPath.split("/").length === 1) { // shared by user
 			const username = cleanPath.split("/")[0];
 			const {data} = await usersSharedEntriesQuery({variables: {username}});
 			const entries = data.usersSharedEntries;
@@ -145,8 +161,9 @@ const MainPage = () => {
 			if (entries.length === 0) navigate("/");
 
 			setCurrentEntries(entries);
+			setCanEditCurrentFolder(false);
 			loadPreviews(entries);
-		} else {
+		} else { // shared folder
 			const username = cleanPath.split("/")[0];
 			const pathWithoutUsername = cleanPath.split("/").slice(1).join("/");
 
@@ -154,10 +171,12 @@ const MainPage = () => {
 			if (id === null && sharedFolders.length > 0) navigate("/");
 			if (id === null) return;
 
+			const {data: {entry}} = await canEditCurrentFolderQuery({variables: {id}});
 			const {data} = await currentFolderDataQuery({variables: {parent_id: id}});
 			const entries = data.entries || [];
 
 			setCurrentEntries(entries);
+			setCanEditCurrentFolder(entry?.can_edit || false);
 			loadPreviews(entries);
 		}
 	};
@@ -238,7 +257,10 @@ const MainPage = () => {
 	const cacheFolders = (...newFolders: FolderArrayElement[]) => changeCachedFolders(folders => [...(folders || []), ...newFolders]);
 
 	const changeCachedEntries = debounce(30, (data: Entry[] | null) => writeEntriesToCache(...(data || [])));
-	const cacheCurrentEntries = (...newEntries: Entry[]) => changeCachedEntries(entries => [...(entries || []), ...newEntries]);
+	const cacheCurrentEntries = (...newEntries: CacheEntry[]) => {
+		const newEntriesWithDefaultValues = newEntries.map(entry => ({preview: null, bin_data: null, can_edit: true, ...entry}));
+		changeCachedEntries(entries => [...(entries || []), ...newEntriesWithDefaultValues]);
+	};
 
 	const changeImagePreviews = debounce(30, (data: null | { [key: string]: Blob }) => setImagePreviews(data || {}));
 	const cacheImagePreviews = (id: number, image: Blob) => changeImagePreviews((data: null | { [key: string]: Blob }) => ({...(data || imagePreviews), [String(id)]: image}));
@@ -254,6 +276,8 @@ const MainPage = () => {
 	});
 
 
+	const isCreateButtonEnabled = path.startsWith("Drive") ? true : canEditCurrentFolder;
+
 	return (
 		<Page onContextMenu={() => setIsContextMenuOpen(false)} onClick={() => setIsContextMenuOpen(false)} onDragOver={onDragOver}>
 			<CurrentDataContext.Provider value={{folders, sharedFolders, currentFolderId, space_used}}>
@@ -264,7 +288,7 @@ const MainPage = () => {
 
 				<Header/>
 				<Row>
-					<SidebarContext.Provider value={{isSidebarOpen, setIsSidebarOpen}}>
+					<SidebarContext.Provider value={{isSidebarOpen, setIsSidebarOpen, isCreateButtonEnabled}}>
 						<Sidebar openCreateContextMenu={openCreateContextMenu}/>
 
 						<ContextMenuContext.Provider value={{openContextMenu, setIsContextMenuOpen}}>
