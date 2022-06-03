@@ -35,7 +35,7 @@ const trie = new Trie();
 const FileInputs = ({setIsDropZoneVisible, isDropZoneVisible = false, setLoading}: FileInputsProps) => {
 	const drive_id = getData()?.drive_id;
 
-	const {currentFolderId, folders, space_used} = useContext(CurrentDataContext);
+	const {currentFolderId, folders, sharedFolders, space_used} = useContext(CurrentDataContext);
 	const {cacheCurrentEntries, cacheFolders, cacheImagePreviews} = useContext(CacheContext);
 
 	const [uploadFilesMutation] = useMutation(UPLOAD_FILES_MUTATION);
@@ -51,8 +51,10 @@ const FileInputs = ({setIsDropZoneVisible, isDropZoneVisible = false, setLoading
 		if (modalData === null) return;
 
 		trie.reset();
-		foldersArrayToPaths(folders).forEach(path => trie.add(path));
-	}, [folders, modalData]);
+		foldersArrayToPaths(folders).forEach(path => trie.add(`Drive/${path}`));
+		console.log(sharedFolders, sharedFolders.filter(folder => folder.can_edit));
+		foldersArrayToPaths(sharedFolders).forEach(path => trie.add(`Shared/${path}`)); // TODO. Filter out folders user doesn't have 'editor' access to
+	}, [folders, sharedFolders, modalData]);
 
 
 	const isEntryImage = (entry: FileEntry) => {

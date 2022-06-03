@@ -7,7 +7,7 @@ import Folder from "../Category/Folder";
 import File, {EFileType} from "../Category/File";
 import {getFileType} from "helpers/FileType";
 import {useLocation} from "react-router-dom";
-import {ContextMenuContext, CurrentDataContext, Entry} from "../index";
+import {CacheContext, ContextMenuContext, CurrentDataContext, Entry} from "../index";
 import ShareEntriesModal, {ShareEntriesModalData, User} from "../modals/ShareEntriesModal";
 import {getFolderPath, splitName} from "services/file/file";
 import MoveEntriesModal, {MoveEntriesModalData} from "../modals/MoveEntriesModal";
@@ -16,6 +16,7 @@ import {useLazyQuery, useMutation} from "@apollo/client";
 import {
 	FULLY_DELETE_ENTRIES_MUTATION,
 	GET_ENTRIES_SHARE_POLICY_QUERY,
+	GET_ENTRY_OWNER_USERNAME_QUERY,
 	GET_ENTRY_QUERY,
 	GET_PRESIGNED_URLS_QUERY,
 	GET_USERNAMES_QUERY,
@@ -24,8 +25,6 @@ import {
 } from "./FileExplorer.queries";
 import {downloadFile} from "../../../services/download";
 import JSZip from "jszip";
-import {client} from "../../../index";
-import {CURRENT_FOLDER_QUERY} from "../index.queries";
 import {getData} from "../../../services/token";
 import SimpleModal, {SimpleModalData} from "../modals/SimpleModal";
 import InfoModal, {InfoModalData} from "../modals/InfoModal";
@@ -52,20 +51,21 @@ export const CategoryContext = createContext({
 type FileExplorerProps = {
 	path: string;
 	openCreateContextMenu: (e: MouseEvent) => any;
-	currentEntries: Entry[];
 	loadingIds: Map<number, number>;
 	imagePreviews: { [key: number]: Blob };
-	setCurrentEntries: (entries: Entry[]) => void;
+	refetchMainQuery: () => void;
 }
 
-const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, imagePreviews, setCurrentEntries}: FileExplorerProps) => {
+const FileExplorer = ({path, openCreateContextMenu, loadingIds, imagePreviews, refetchMainQuery}: FileExplorerProps) => {
 	const {setIsContextMenuOpen} = useContext(ContextMenuContext);
-	const {folders, currentFolderId} = useContext(CurrentDataContext);
+	const {folders, currentFolderId, currentEntries} = useContext(CurrentDataContext);
+	const {writeEntriesToCache} = useContext(CacheContext);
 
 	const [getPresignedUrlsQuery] = useLazyQuery(GET_PRESIGNED_URLS_QUERY);
 	const [getEntryQuery] = useLazyQuery(GET_ENTRY_QUERY);
 	const [getEntriesSharePolicyQuery] = useLazyQuery(GET_ENTRIES_SHARE_POLICY_QUERY);
 	const [getUsernamesQuery] = useLazyQuery(GET_USERNAMES_QUERY);
+	const [getEntryOwnerUsernameQuery] = useLazyQuery(GET_ENTRY_OWNER_USERNAME_QUERY);
 	const [putEntriesInBinMutation] = useMutation(PUT_ENTRIES_IN_BIN_MUTATION);
 	const [restoreEntriesMutation] = useMutation(RESTORE_ENTRIES_MUTATION);
 	const [fullyDeleteEntriesMutation] = useMutation(FULLY_DELETE_ENTRIES_MUTATION);
@@ -180,19 +180,13 @@ const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, 
 			const removedIds = entries.map(entry => entry.id);
 			const remainingEntries = currentEntries.filter(entry => !removedIds.includes(entry.id));
 
-			setCurrentEntries(remainingEntries);
-			client.writeQuery({
-				query: CURRENT_FOLDER_QUERY,
-				data: {entries: remainingEntries},
-				variables: {parent_id: currentFolderId},
-			});
+			writeEntriesToCache(remainingEntries, false);
+			refetchMainQuery();
 
-			const bin_id = getData()?.bin_id;
-			client.writeQuery({
-				query: CURRENT_FOLDER_QUERY,
-				data: {entries},
-				variables: {parent_id: bin_id},
-			});
+			const {data: {entryOwnerUsername}} = await getEntryOwnerUsernameQuery({variables: {file_id: entries[0].id}});
+			if (!entryOwnerUsername || entryOwnerUsername !== getData()?.id) return;
+
+			writeEntriesToCache(entries, false, getData()?.bin_id);
 		};
 
 		setSimpleModalData({title: "Are you sure?", info: "Files will be moved to bin and deleted in 3 days.", onAction});
@@ -328,11 +322,12 @@ const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, 
 			if (!isConfirmed) return;
 
 			const entries = getEntries(entry);
-			const {data} = await fullyDeleteEntriesMutation({variables: {entry_ids: entries.map(entry => entry.id)}});
-			if (!data.fullyDelete) return;
-			console.log(data);
+			const removedIds = entries.map(entry => entry.id);
+			const {data} = await fullyDeleteEntriesMutation({variables: {entry_ids: removedIds}});
+			if (!data.fullyDeleteEntries) return;
 
-			// TODO. Update cache
+			const remainingEntries = currentEntries.filter(entry => !removedIds.includes(entry.id));
+			writeEntriesToCache(remainingEntries, false);
 		};
 
 		setSimpleModalData({title: "Are you sure?", info: "Files will be deleted and cannot be restored.", onAction});
@@ -345,10 +340,17 @@ const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, 
 
 			const entries = getEntries(entry);
 			const restore_to_drive = option === 1; // Option 0 - prev location, 1 - drive.
-			const {data} = await restoreEntriesMutation({variables: {entry_ids: entries.map(entry => entry.id), restore_to_drive}});
+			const restoredIds = entries.map(entry => entry.id);
+			const {data} = await restoreEntriesMutation({variables: {entry_ids: restoredIds, restore_to_drive}});
 			if (!data.restoreEntries) return;
+			// refetch sidebar - main query?
 
-			// TODO. Update cache
+			const remainingEntries = currentEntries.filter(entry => !restoredIds.includes(entry.id));
+			const drive_id = getData()?.drive_id;
+
+			writeEntriesToCache(remainingEntries, false);
+			writeEntriesToCache(entries, true, drive_id);
+			refetchMainQuery();
 		};
 
 		setSimpleModalData({title: "Where you want to restore files to?", onAction, buttons: ["Previous location", "Drive"]});
@@ -382,10 +384,8 @@ const FileExplorer = ({path, openCreateContextMenu, currentEntries, loadingIds, 
 	return (
 		<Main onClick={onClick}>
 			<ShareEntriesModal setModalData={setShareEntriesModalData as any} modalData={shareEntriesModalData}/>
-			<MoveEntriesModal setModalData={setMoveEntriesModalData as any} modalData={moveEntriesModalData}
-							  setCurrentEntries={setCurrentEntries} currentEntries={currentEntries}/>
-			<RenameEntryModal setModalData={setRenameEntryModalData as any} modalData={renameEntryModalData}
-							  setCurrentEntries={setCurrentEntries} currentEntries={currentEntries}/>
+			<MoveEntriesModal setModalData={setMoveEntriesModalData as any} modalData={moveEntriesModalData}/>
+			<RenameEntryModal setModalData={setRenameEntryModalData as any} modalData={renameEntryModalData}/>
 			<SimpleModal modalData={simpleModalData}/>
 			<InfoModal modalData={infoModalData} setModalData={setInfoModalData}/>
 			<PreviewOverlay setIsOpen={setImagePreviewData as any} data={imagePreviewData}/>

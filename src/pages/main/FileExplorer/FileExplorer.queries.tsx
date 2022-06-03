@@ -28,6 +28,12 @@ export const GET_ENTRY_QUERY = gql`
     }
 `;
 
+export const GET_ENTRY_OWNER_USERNAME_QUERY = gql`
+    query getEntryOwnerUsername($file_id: Int!) {
+        entryOwnerUsername(file_id: $file_id)
+    }
+`;
+
 export const GET_USERNAMES_QUERY = gql`
     query user($user_ids: [Int!]!) {
         usernames(user_ids: $user_ids) {

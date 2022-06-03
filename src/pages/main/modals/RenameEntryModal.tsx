@@ -1,12 +1,10 @@
 import React, {useContext, useState} from "react";
 import ModalWindow from "components/ModalWindow";
 import {Button, Buttons, Container, DisabledButton, Header, PrimaryButton} from "./Modal.styles";
-import {CurrentDataContext, Entry} from "../index";
+import {CacheContext, CurrentDataContext, Entry} from "../index";
 import {useMutation} from "@apollo/client";
 import {RENAME_ENTRY_MUTATION} from "./RenameEntryModal.queries";
 import StyledInput from "../../../components/StyledInput";
-import {client} from "../../../index";
-import {CURRENT_FOLDER_QUERY} from "../index.queries";
 
 export type RenameEntryModalData = {
 	entry: Entry | null;
@@ -16,12 +14,11 @@ export type RenameEntryModalData = {
 type RenameEntryModalProps = {
 	modalData: RenameEntryModalData;
 	setModalData: (arg: RenameEntryModalData) => void;
-	currentEntries: Entry[];
-	setCurrentEntries: (arg: Entry[]) => void;
 }
 
-const RenameEntryModal = ({modalData, setModalData, currentEntries, setCurrentEntries}: RenameEntryModalProps) => {
-	const {currentFolderId} = useContext(CurrentDataContext);
+const RenameEntryModal = ({modalData, setModalData}: RenameEntryModalProps) => {
+	const {writeEntriesToCache} = useContext(CacheContext);
+	const {currentEntries} = useContext(CurrentDataContext);
 
 	const [isNameValid, setIsNameValid] = useState(false);
 
@@ -46,12 +43,8 @@ const RenameEntryModal = ({modalData, setModalData, currentEntries, setCurrentEn
 
 		const newEntries = currentEntries.map(entry => entry.id === file_id ? {...entry, name: modalData.input || ""} : entry);
 
-		setCurrentEntries(newEntries);
-		client.writeQuery({
-			query: CURRENT_FOLDER_QUERY,
-			data: {entries: newEntries},
-			variables: {parent_id: currentFolderId},
-		});
+		// @ts-ignore
+		writeEntriesToCache(newEntries, false);
 	};
 
 

@@ -18,11 +18,14 @@ type CreateFolderModalProps = {
 
 const trie = new Trie();
 const CreateFolderModal = ({isOpen = false, setIsOpen}: CreateFolderModalProps) => {
-	const {currentFolderId, folders} = useContext(CurrentDataContext);
+	const {currentFolderId, folders, sharedFolders} = useContext(CurrentDataContext);
 	const {cacheFolders, cacheCurrentEntries} = useContext(CacheContext);
 
 	const initModalData = () => {
-		const path = getFolderPath(folders, currentFolderId) || "/";
+		const drivePath = getFolderPath(folders, currentFolderId);
+		const sharedPath = getFolderPath(sharedFolders, currentFolderId); // TODO. Filter out folders user doesn't have 'editor' access to
+
+		const path = drivePath ? `Drive/${drivePath}` : sharedPath || "Drive";
 		return {path, name: "New Folder"};
 	};
 
@@ -33,8 +36,10 @@ const CreateFolderModal = ({isOpen = false, setIsOpen}: CreateFolderModalProps) 
 
 	useEffect(() => {
 		trie.reset();
-		foldersArrayToPaths(folders).forEach(path => trie.add(path));
-	}, [folders]);
+
+		foldersArrayToPaths(folders).forEach(path => trie.add(`Drive/${path}`));
+		foldersArrayToPaths(sharedFolders).forEach(path => trie.add(`Shared/${path}`));
+	}, [folders, sharedFolders]);
 
 	useEffect(() => {
 		if (isOpen) setModalData(initModalData());

@@ -60,8 +60,8 @@ const Category = ({Element, name}: CategoryProps) => {
 
 			<Row>
 				{data.map((dataEl: DataElement, idx: number) =>
-					<Element {...dataEl} isSelected={curSelected ? curSelected[idx] : false} onClick={(e: MouseEvent) => changeSelection(e, idx)}/>)
-				}
+					<Element {...dataEl} isSelected={curSelected ? curSelected[idx] : false} onClick={(e: MouseEvent) => changeSelection(e, idx)}/>,
+				)}
 			</Row>
 		</Container>
 	);

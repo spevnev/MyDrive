@@ -7,6 +7,7 @@ export const MAIN_QUERY = gql`
             id
             parent_id
             share_id
+            can_edit
             username
         }
 
@@ -34,6 +35,7 @@ export const CURRENT_FOLDER_QUERY = gql`
             bin_data {
                 put_at
                 prev_parent_id
+                prev_share_id
             }
         }
     }

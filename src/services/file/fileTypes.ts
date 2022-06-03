@@ -5,6 +5,7 @@ export type FolderArrayElement = {
 	id: number;
 	parent_id: number;
 	share_id: number | null;
+	can_edit?: boolean;
 	username?: string;
 	bin_data: BinData | null;
 }

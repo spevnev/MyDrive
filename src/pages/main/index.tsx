@@ -27,16 +27,25 @@ export const SidebarContext = createContext({
 	isSidebarOpen: false,
 	setIsSidebarOpen: (arg: boolean) => {},
 });
-export const CurrentDataContext = createContext({currentFolderId: 0, space_used: 0, folders: [] as FolderArrayElement[], sharedFolders: [] as FolderArrayElement[]});
+export const CurrentDataContext = createContext({
+	currentFolderId: 0,
+	space_used: 0,
+	folders: [] as FolderArrayElement[],
+	sharedFolders: [] as FolderArrayElement[],
+	currentEntries: [] as Entry[],
+});
 export const CacheContext = createContext({
 	cacheCurrentEntries: (...args: CacheEntry[]) => {},
 	cacheFolders: (...args: FolderArrayElement[]) => {},
 	cacheImagePreviews: (id: number, data: Blob) => {},
+	writeEntriesToCache: (arg1: Entry[], arg2?: boolean, arg3?: number) => {},
+	writeFoldersToCache: (arg1: FolderArrayElement[], arg2: FolderArrayElement[], arg3: boolean) => {},
 });
 
 export type BinData = {
 	put_at: number;
 	prev_parent_id: number;
+	prev_share_id: number | null;
 }
 
 export type CacheEntry = {
@@ -73,7 +82,7 @@ const MainPage = () => {
 	const [usernamesWhoShareWithMeQuery] = useLazyQuery(USERNAMES_WHO_SHARE_WITH_ME_QUERY);
 	const [canEditCurrentFolderQuery] = useLazyQuery(CAN_EDIT_CURRENT_FOLDER_QUERY);
 
-	const {data} = useQuery(MAIN_QUERY);
+	const {data, refetch: refetchMainQuery} = useQuery(MAIN_QUERY);
 	const space_used = data ? data.user ? data.user.space_used : null : 0;
 	const folders: FolderArrayElement[] = data ? data.folders || [] : [];
 	const sharedFolders: FolderArrayElement[] = data ? data.sharedFolders || [] : [];
@@ -132,8 +141,7 @@ const MainPage = () => {
 	};
 
 	const sharedDirectoryEntries = async () => {
-		if (prevPath === path || sharedFolders.length === 0) return;
-		prevPath = path;
+		if (prevPath === path) return;
 
 		const cleanPath = path.replace(/^Shared\/?/, "");
 		if (cleanPath.length === 0) { // root shared
@@ -150,9 +158,9 @@ const MainPage = () => {
 				entries.push({name: username, id: ++maxId, parent_id: 0, is_directory: true, preview: null, bin_data: null, can_edit: false});
 			});
 
+			prevPath = path;
 			setCurrentEntries(entries);
 			setCanEditCurrentFolder(false);
-			loadPreviews(entries);
 		} else if (cleanPath.split("/").length === 1) { // shared by user
 			const username = cleanPath.split("/")[0];
 			const {data} = await usersSharedEntriesQuery({variables: {username}});
@@ -160,6 +168,7 @@ const MainPage = () => {
 
 			if (entries.length === 0) navigate("/");
 
+			prevPath = path;
 			setCurrentEntries(entries);
 			setCanEditCurrentFolder(false);
 			loadPreviews(entries);
@@ -175,6 +184,7 @@ const MainPage = () => {
 			const {data} = await currentFolderDataQuery({variables: {parent_id: id}});
 			const entries = data.entries || [];
 
+			prevPath = path;
 			setCurrentEntries(entries);
 			setCanEditCurrentFolder(entry?.can_edit || false);
 			loadPreviews(entries);
@@ -227,36 +237,33 @@ const MainPage = () => {
 		}, 200);
 	};
 
-	const writeFoldersToCache = (...newFolders: FolderArrayElement[]): void => {
+	const writeFoldersToCache = (newFolders: FolderArrayElement[], newSharedFolders: FolderArrayElement[] = [], includeCurrent: boolean = true): void => {
 		client.writeQuery({
 			query: MAIN_QUERY,
 			data: {
-				folders: [
-					...folders,
-					...newFolders,
-				],
-				sharedFolders: [...sharedFolders],
+				folders: includeCurrent ? [...folders, ...newFolders] : newFolders,
+				sharedFolders: includeCurrent ? [...sharedFolders, ...newSharedFolders] : newSharedFolders,
 				user: {space_used, __typename: "UserModel"},
 			},
 		});
 	};
 
-	const writeEntriesToCache = (...newEntries: Entry[]): void => {
-		const entries = [...currentEntries, ...newEntries];
+	const writeEntriesToCache = (newEntries: Entry[], includeCurrent: boolean = true, parent_id: number = currentFolderId): void => {
+		const entries = includeCurrent ? [...currentEntries, ...newEntries] : newEntries;
 
 		client.writeQuery({
 			query: CURRENT_FOLDER_QUERY,
 			data: {entries},
-			variables: {parent_id: currentFolderId},
+			variables: {parent_id},
 		});
-		setCurrentEntries(entries);
+		if (parent_id === currentFolderId) setCurrentEntries(entries);
 	};
 
 
-	const changeCachedFolders = debounce(30, (data: FolderArrayElement[] | null) => writeFoldersToCache(...(data || [])));
+	const changeCachedFolders = debounce(30, (data: FolderArrayElement[] | null) => writeFoldersToCache(data || []));
 	const cacheFolders = (...newFolders: FolderArrayElement[]) => changeCachedFolders(folders => [...(folders || []), ...newFolders]);
 
-	const changeCachedEntries = debounce(30, (data: Entry[] | null) => writeEntriesToCache(...(data || [])));
+	const changeCachedEntries = debounce(30, (data: Entry[] | null) => writeEntriesToCache(data || []));
 	const cacheCurrentEntries = (...newEntries: CacheEntry[]) => {
 		const newEntriesWithDefaultValues = newEntries.map(entry => ({preview: null, bin_data: null, can_edit: true, ...entry}));
 		changeCachedEntries(entries => [...(entries || []), ...newEntriesWithDefaultValues]);
@@ -280,24 +287,24 @@ const MainPage = () => {
 
 	return (
 		<Page onContextMenu={() => setIsContextMenuOpen(false)} onClick={() => setIsContextMenuOpen(false)} onDragOver={onDragOver}>
-			<CurrentDataContext.Provider value={{folders, sharedFolders, currentFolderId, space_used}}>
-				<CacheContext.Provider value={{cacheCurrentEntries, cacheFolders, cacheImagePreviews}}>
+			<CurrentDataContext.Provider value={{folders, sharedFolders, currentFolderId, space_used, currentEntries}}>
+				<CacheContext.Provider value={{cacheCurrentEntries, cacheFolders, cacheImagePreviews, writeEntriesToCache, writeFoldersToCache}}>
 					<FileInputs setIsDropZoneVisible={setIsDropZoneVisible} isDropZoneVisible={isDropZoneVisible} setLoading={setLoading}/>
 					<CreateFolderModal isOpen={isCreateFolderModalOpen} setIsOpen={setIsCreateFolderModalOpen}/>
+
+					<Header/>
+					<Row>
+						<SidebarContext.Provider value={{isSidebarOpen, setIsSidebarOpen, isCreateButtonEnabled}}>
+							<Sidebar openCreateContextMenu={openCreateContextMenu}/>
+
+							<ContextMenuContext.Provider value={{openContextMenu, setIsContextMenuOpen}}>
+								<FileExplorer openCreateContextMenu={openCreateContextMenu} loadingIds={loadingIds} path={path}
+											  imagePreviews={imagePreviews} refetchMainQuery={refetchMainQuery}/>
+							</ContextMenuContext.Provider>
+							{ContextMenu}
+						</SidebarContext.Provider>
+					</Row>
 				</CacheContext.Provider>
-
-				<Header/>
-				<Row>
-					<SidebarContext.Provider value={{isSidebarOpen, setIsSidebarOpen, isCreateButtonEnabled}}>
-						<Sidebar openCreateContextMenu={openCreateContextMenu}/>
-
-						<ContextMenuContext.Provider value={{openContextMenu, setIsContextMenuOpen}}>
-							<FileExplorer openCreateContextMenu={openCreateContextMenu} currentEntries={currentEntries} setCurrentEntries={setCurrentEntries}
-										  loadingIds={loadingIds} path={path} imagePreviews={imagePreviews}/>
-						</ContextMenuContext.Provider>
-						{ContextMenu}
-					</SidebarContext.Provider>
-				</Row>
 			</CurrentDataContext.Provider>
 		</Page>
 	);

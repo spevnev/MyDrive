@@ -3,15 +3,15 @@ import AutoCompleteInput from "components/AutoCompleteInput";
 import ModalWindow from "components/ModalWindow";
 import {Trie} from "dataStructures/trie";
 import {Button, Buttons, Container, DisabledButton, Header, PrimaryButton} from "./Modal.styles";
-import {CurrentDataContext, Entry} from "../index";
+import {CacheContext, CurrentDataContext, Entry} from "../index";
 import {foldersArrayToPaths, getFolderByPath, renameToAvoidNamingCollisions} from "../../../services/file/file";
 import {useLazyQuery, useMutation} from "@apollo/client";
 import {MOVE_ENTRIES_MUTATION} from "./MoveEntriesModal.queries";
 import {GET_ENTRIES_QUERY} from "../FileInputs.queries";
 import {getData} from "../../../services/token";
-import {FileEntry} from "../../../services/file/fileTypes";
+import {FileEntry, FolderArrayElement} from "../../../services/file/fileTypes";
 import {client} from "../../../index";
-import {CURRENT_FOLDER_QUERY, MAIN_QUERY} from "../index.queries";
+import {CURRENT_FOLDER_QUERY} from "../index.queries";
 
 export type MoveEntriesModalData = {
 	entries: Entry[] | null;
@@ -21,14 +21,14 @@ export type MoveEntriesModalData = {
 type UploadEntriesModalProps = {
 	modalData: MoveEntriesModalData;
 	setModalData: (arg: MoveEntriesModalData) => void;
-	setCurrentEntries: (entries: Entry[]) => void;
-	currentEntries: Entry[];
 }
 
 const trie = new Trie();
-const MoveEntriesModal = ({modalData, setModalData, setCurrentEntries, currentEntries}: UploadEntriesModalProps) => {
+const MoveEntriesModal = ({modalData, setModalData}: UploadEntriesModalProps) => {
 	const path = decodeURI(window.location.hash.slice(1)).replace(/^\/?Drive/, "");
-	const {folders, currentFolderId, sharedFolders, space_used} = useContext(CurrentDataContext);
+
+	const {folders, sharedFolders, currentEntries} = useContext(CurrentDataContext);
+	const {writeFoldersToCache, writeEntriesToCache} = useContext(CacheContext);
 
 	const [moveEntriesMutation] = useMutation(MOVE_ENTRIES_MUTATION);
 	const [getEntriesQuery] = useLazyQuery(GET_ENTRIES_QUERY);
@@ -37,40 +37,23 @@ const MoveEntriesModal = ({modalData, setModalData, setCurrentEntries, currentEn
 		if (!modalData) return;
 
 		trie.reset();
-		foldersArrayToPaths(folders).forEach(path => trie.add(path));
-	}, [modalData, folders]);
+		foldersArrayToPaths(folders).forEach(path => trie.add(`Drive/${path}`));
+		foldersArrayToPaths(sharedFolders).forEach(path => trie.add(`Shared/${path}`)); // TODO. Filter out folders user doesn't have 'editor' access to
+	}, [modalData, folders, sharedFolders]);
 
 
 	const updateCache = (movedEntries: Entry[], parent_id: number) => {
 		const idToEntry = new Map<number, Entry>(movedEntries.reduce((arr: [number, Entry][], cur) => [...arr, [cur.id, {...cur, parent_id}]], []));
-
-		client.writeQuery({
-			query: MAIN_QUERY,
-			data: {
-				folders: folders.map(folder => idToEntry.get(folder.id) || folder),
-				sharedFolders: [...sharedFolders],
-				user: {space_used, __typename: "UserModel"},
-			},
-		});
-
 		const movedIds = movedEntries.map(entry => entry.id);
 		const remainingEntries = currentEntries.filter(entry => !movedIds.includes(entry.id));
 
-		setCurrentEntries(remainingEntries);
-		client.writeQuery({
-			query: CURRENT_FOLDER_QUERY,
-			data: {entries: remainingEntries},
-			variables: {parent_id: currentFolderId},
-		});
+		writeFoldersToCache(folders.map(folder => idToEntry.get(folder.id) || folder) as FolderArrayElement[], [...sharedFolders], false);
+		writeEntriesToCache(remainingEntries, false);
 
 		const query = client.readQuery({query: CURRENT_FOLDER_QUERY, variables: {parent_id}});
 		if (!query) return;
 
-		client.writeQuery({
-			query: CURRENT_FOLDER_QUERY,
-			data: {entries: [...query.entries, ...movedEntries]},
-			variables: {parent_id},
-		});
+		writeEntriesToCache([...query.entries, ...movedEntries], false, parent_id);
 	};
 
 	const onClick = async () => {

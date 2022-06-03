@@ -34,13 +34,20 @@ export const client = new ApolloClient({
 						read: _ => _,
 						merge: (_, incoming) => _ ? incoming : _,
 					},
+					folders: {
+						read: _ => _,
+						merge: (_, incoming) => incoming || _,
+					},
+					sharedFolders: {
+						read: _ => _,
+						merge: (_, incoming) => incoming || _,
+					},
 				},
 			},
 		},
 	}),
 	link: concat(requestInterceptor, httpLink),
 	connectToDevTools: false,
-
 });
 
 const root: Element | null = document.getElementById("root");

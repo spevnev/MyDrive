@@ -56,10 +56,10 @@ const contextMenuOptionFactory = (type: EContextMenuTypes, data: { [key: string]
 			];
 		case EContextMenuTypes.DELETED:
 			return [
+				{name: "Info", icon: infoIcon, callback: data.onInfo},
+				"BR",
 				{name: "Restore file", icon: reloadIcon, callback: data.onRestore},
 				{name: "Fully delete", icon: fireIcon, callback: data.onFullyDelete},
-				"BR",
-				{name: "Info", icon: infoIcon, callback: data.onInfo},
 			];
 		default:
 			return null;
