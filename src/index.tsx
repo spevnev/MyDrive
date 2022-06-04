@@ -30,21 +30,14 @@ export const client = new ApolloClient({
 		typePolicies: {
 			Query: {
 				fields: {
-					entries: {
-						read: _ => _,
-						merge: (_, incoming) => _ ? incoming : _,
-					},
-					folders: {
-						read: _ => _,
-						merge: (_, incoming) => incoming || _,
-					},
-					sharedFolders: {
-						read: _ => _,
-						merge: (_, incoming) => incoming || _,
-					},
+					entry: {merge: (_, incoming) => _ ? incoming : _},
+					entries: {merge: (_, incoming) => _ ? incoming : _},
+					folders: {merge: (_, incoming) => incoming || []},
+					sharedFolders: {merge: (_, incoming) => incoming || []},
 				},
 			},
 		},
+		addTypename: false,
 	}),
 	link: concat(requestInterceptor, httpLink),
 	connectToDevTools: false,

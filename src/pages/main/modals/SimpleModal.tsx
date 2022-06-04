@@ -2,6 +2,7 @@ import React from "react";
 import {Button, Buttons, Container, Header, PrimaryButton} from "./Modal.styles";
 import {Info} from "./SimpleModal.styles";
 import ModalWindow from "../../../components/ModalWindow";
+import useKeyboard from "../../../hooks/useKeyboard";
 
 export type SimpleModalData = {
 	title: string;
@@ -15,6 +16,10 @@ type SimpleModalProps = {
 }
 
 const SimpleModal = ({modalData}: SimpleModalProps) => {
+	useKeyboard({key: "Escape", cb: () => modalData?.onAction(false)});
+	useKeyboard({key: "Enter", cb: () => !modalData?.buttons && modalData?.onAction(true)});
+
+
 	if (!modalData) return null;
 
 	const {title, info, onAction, buttons} = modalData;

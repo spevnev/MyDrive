@@ -5,6 +5,7 @@ import ModalWindow from "components/ModalWindow";
 import {FileEntry, SimpleFileEntry} from "services/file/fileTypes";
 import {Trie} from "dataStructures/trie";
 import {Button, Buttons, Container, DisabledButton, Header, PrimaryButton} from "./Modal.styles";
+import useKeyboard from "../../../hooks/useKeyboard";
 
 export type ModalData = {
 	files: File[] | FileEntry[] | SimpleFileEntry[];
@@ -22,6 +23,10 @@ type UploadEntriesModalProps = {
 }
 
 const UploadEntriesModal = ({modalData, setModalData, freeSpace, changeIncluded, trie}: UploadEntriesModalProps) => {
+	useKeyboard({key: "Escape", cb: () => setModalData(null)});
+	useKeyboard({key: "Enter", cb: () => isEnoughSpace && modalData.onContinue()});
+
+
 	const roundTo = (num: number, digits: number) => Math.floor(num * 10 ** digits) / 10 ** digits;
 
 	const getSize = (files: SimpleFileEntry[]): number => {
@@ -42,6 +47,8 @@ const UploadEntriesModal = ({modalData, setModalData, freeSpace, changeIncluded,
 	};
 
 
+	const isEnoughSpace = freeSpace > getSize(modalData.files);
+
 	return (
 		<ModalWindow>
 			<Container>
@@ -52,7 +59,7 @@ const UploadEntriesModal = ({modalData, setModalData, freeSpace, changeIncluded,
 
 				<Buttons>
 					<Button onClick={() => setModalData(null)}>Cancel</Button>
-					{freeSpace > getSize(modalData.files)
+					{isEnoughSpace
 						? <PrimaryButton onClick={() => modalData.onContinue()}>OK</PrimaryButton>
 						: <DisabledButton>Not enough space!</DisabledButton>
 					}

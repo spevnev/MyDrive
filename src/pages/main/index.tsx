@@ -39,7 +39,7 @@ export const CacheContext = createContext({
 	cacheFolders: (...args: FolderArrayElement[]) => {},
 	cacheImagePreviews: (id: number, data: Blob) => {},
 	writeEntriesToCache: (arg1: Entry[], arg2?: boolean, arg3?: number) => {},
-	writeFoldersToCache: (arg1: FolderArrayElement[], arg2: FolderArrayElement[], arg3: boolean) => {},
+	writeFoldersToCache: (arg1: FolderArrayElement[], arg2?: FolderArrayElement[], arg3?: boolean) => {},
 });
 
 export type BinData = {
@@ -120,6 +120,14 @@ const MainPage = () => {
 	};
 
 
+	const setData = (path: string, currentEntries: Entry[], newCanEditCurrentFolder: boolean, newCurrentFolderId: number, shouldLoadPreviews: boolean = true) => {
+		prevPath = path;
+		setCurrentEntries(currentEntries);
+		if (newCanEditCurrentFolder !== canEditCurrentFolder) setCanEditCurrentFolder(newCanEditCurrentFolder);
+		if (newCurrentFolderId !== currentFolderId) setCurrentFolderId(newCurrentFolderId);
+		if (shouldLoadPreviews) loadPreviews(currentEntries);
+	};
+
 	const driveDirectoryEntries = async () => {
 		const cleanPath = path.replace(/^Drive\/?/, "");
 		let parent_id: number | null = getFolderByPath(folders, cleanPath);
@@ -127,17 +135,12 @@ const MainPage = () => {
 		if (cleanPath.length > 0 && parent_id === null && folders.length > 0) navigate("/");
 		parent_id = parent_id || drive_id;
 
-		if (currentFolderId !== parent_id) setCurrentFolderId(parent_id);
-
 		if (prevPath === path && folders.length === 0 && currentEntries.length === 0) return;
-		prevPath = path;
 
 		const {data} = await currentFolderDataQuery({variables: {parent_id}});
 		const entries = data.entries || [];
 
-		setCurrentEntries(entries);
-		setCanEditCurrentFolder(true);
-		loadPreviews(entries);
+		setData(path, entries, true, parent_id);
 	};
 
 	const sharedDirectoryEntries = async () => {
@@ -158,9 +161,7 @@ const MainPage = () => {
 				entries.push({name: username, id: ++maxId, parent_id: 0, is_directory: true, preview: null, bin_data: null, can_edit: false});
 			});
 
-			prevPath = path;
-			setCurrentEntries(entries);
-			setCanEditCurrentFolder(false);
+			setData(path, entries, false, drive_id, false);
 		} else if (cleanPath.split("/").length === 1) { // shared by user
 			const username = cleanPath.split("/")[0];
 			const {data} = await usersSharedEntriesQuery({variables: {username}});
@@ -168,13 +169,10 @@ const MainPage = () => {
 
 			if (entries.length === 0) navigate("/");
 
-			prevPath = path;
-			setCurrentEntries(entries);
-			setCanEditCurrentFolder(false);
-			loadPreviews(entries);
+			setData(path, entries, false, drive_id);
 		} else { // shared folder
 			const username = cleanPath.split("/")[0];
-			const pathWithoutUsername = cleanPath.split("/").slice(1).join("/");
+			const pathWithoutUsername = cleanPath.slice(username.length + 1);
 
 			const id = getFolderByPath(sharedFolders.filter(folder => folder.username === username), pathWithoutUsername);
 			if (id === null && sharedFolders.length > 0) navigate("/");
@@ -184,33 +182,26 @@ const MainPage = () => {
 			const {data} = await currentFolderDataQuery({variables: {parent_id: id}});
 			const entries = data.entries || [];
 
-			prevPath = path;
-			setCurrentEntries(entries);
-			setCanEditCurrentFolder(entry?.can_edit || false);
-			loadPreviews(entries);
+			setData(path, entries, entry?.can_edit || false, id);
 		}
 	};
 
 	const binDirectoryEntries = async () => {
-		const cleanPath = path.replace(/^Bin/, "");
-		if (cleanPath.length > 0) navigate("/");
-
-		if (currentFolderId !== bin_id) setCurrentFolderId(bin_id);
+		if (path.length > 4) navigate("/");
 
 		if (prevPath === path && folders.length === 0 && currentEntries.length === 0) return;
-		prevPath = path;
 
 		const {data} = await currentFolderDataQuery({variables: {parent_id: bin_id}});
 		const entries = data.entries || [];
 
-		setCurrentEntries(entries);
+		setData("Bin", entries, false, bin_id);
 	};
 
 	useEffect(() => {
 		if (path.startsWith("Drive")) void driveDirectoryEntries();
 		else if (path.startsWith("Shared")) void sharedDirectoryEntries();
 		else if (path.startsWith("Bin")) void binDirectoryEntries();
-	}, [location, folders]);
+	}, [location, folders, sharedFolders]);
 
 
 	const clickIfExists = (elementId: string) => {
@@ -223,7 +214,7 @@ const MainPage = () => {
 		onUploadFolder: () => clickIfExists("folderUpload"),
 		onUploadFile: () => clickIfExists("fileUpload"),
 	};
-	const openCreateContextMenu = (e: MouseEvent) => openContextMenu(e, contextMenuData, EContextMenuTypes.CREATE);
+	const openCreateContextMenu = (e: MouseEvent) => canEditCurrentFolder && openContextMenu(e, contextMenuData, EContextMenuTypes.CREATE);
 
 	const onDragOver = (e: any) => {
 		const event: Event = e;
@@ -243,7 +234,7 @@ const MainPage = () => {
 			data: {
 				folders: includeCurrent ? [...folders, ...newFolders] : newFolders,
 				sharedFolders: includeCurrent ? [...sharedFolders, ...newSharedFolders] : newSharedFolders,
-				user: {space_used, __typename: "UserModel"},
+				user: {space_used},
 			},
 		});
 	};

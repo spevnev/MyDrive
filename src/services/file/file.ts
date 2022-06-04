@@ -1,5 +1,4 @@
 import {FileEntry, FileSystemHandle, Folder, FolderArrayElement, SimpleFileEntry} from "./fileTypes";
-import {getData} from "../token";
 
 export const foldersArrayToObject = (arr: FolderArrayElement[]): Folder[] => {
 	if (arr.length === 0) return [];
@@ -37,7 +36,7 @@ export const groupFoldersByUsername = (folders: Folder[]): Folder[] => {
 	return [...usernameToFolder.values()] as Folder[];
 };
 
-export const foldersArrayToPaths = (arr: FolderArrayElement[]): string[] => {
+export const foldersArrayToPaths = (arr: FolderArrayElement[], useUsernamesInPath: boolean = false): string[] => {
 	const getPaths = (folder: Folder, path: string = ""): string[] => {
 		const newPath = `${path}/${folder.name}`;
 		if (folder.children.length === 0) return [path, newPath];
@@ -49,11 +48,9 @@ export const foldersArrayToPaths = (arr: FolderArrayElement[]): string[] => {
 	const folders: Folder[] = foldersArrayToObject(arr);
 	const pathSet = new Set<string>();
 
-	folders.forEach(folder => getPaths(folder).forEach(value => pathSet.add(value)));
+	folders.forEach(folder => getPaths(folder).forEach(value => pathSet.add(useUsernamesInPath ? `/${folder.username}${value}` : value)));
 
 	pathSet.delete("");
-	pathSet.add("/");
-
 	return [...pathSet];
 };
 
@@ -179,12 +176,10 @@ export const getFolderPath = (arr: FolderArrayElement[], id: number): string | n
 	if (!el) return null;
 
 	const path = [];
-	const drive_id = getData()?.drive_id;
-	while (el.parent_id !== drive_id) {
+	while (el) {
 		path.push(el.name);
 		el = arr.filter((cur: FolderArrayElement) => cur.id === el.parent_id)[0];
 	}
-	path.push(el.name);
 
 	return "/" + path.reverse().join("/");
 };

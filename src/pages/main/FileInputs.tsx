@@ -33,8 +33,6 @@ type FileInputsProps = {
 
 const trie = new Trie();
 const FileInputs = ({setIsDropZoneVisible, isDropZoneVisible = false, setLoading}: FileInputsProps) => {
-	const drive_id = getData()?.drive_id;
-
 	const {currentFolderId, folders, sharedFolders, space_used} = useContext(CurrentDataContext);
 	const {cacheCurrentEntries, cacheFolders, cacheImagePreviews} = useContext(CacheContext);
 
@@ -47,13 +45,15 @@ const FileInputs = ({setIsDropZoneVisible, isDropZoneVisible = false, setLoading
 	const modalDataRef = useRef<ModalData | null>(null);
 	modalDataRef.current = modalData;
 
+	const editableSharedFolders = sharedFolders.filter(folder => folder.can_edit);
+
 	useEffect(() => {
 		if (modalData === null) return;
 
 		trie.reset();
-		foldersArrayToPaths(folders).forEach(path => trie.add(`Drive/${path}`));
-		console.log(sharedFolders, sharedFolders.filter(folder => folder.can_edit));
-		foldersArrayToPaths(sharedFolders).forEach(path => trie.add(`Shared/${path}`)); // TODO. Filter out folders user doesn't have 'editor' access to
+		trie.add("Drive");
+		foldersArrayToPaths(folders).forEach(path => trie.add(`Drive${path}`));
+		foldersArrayToPaths(editableSharedFolders, true).forEach(path => trie.add(`Shared${path}`));
 	}, [folders, sharedFolders, modalData]);
 
 
@@ -62,10 +62,7 @@ const FileInputs = ({setIsDropZoneVisible, isDropZoneVisible = false, setLoading
 		return extensions.reduce((res, extension) => res ? true : entry.name.endsWith(extension), false);
 	};
 
-	const upload = async (parent_id: number | null, entries: FileEntry[], uploadMethod: (obj: any) => Promise<any>, getResult: (obj: any) => any, entryToKey: (obj: any) => string) => {
-		const drive_id = getData()?.drive_id;
-		parent_id = parent_id || drive_id;
-
+	const upload = async (parent_id: number, entries: FileEntry[], uploadMethod: (obj: any) => Promise<any>, getResult: (obj: any) => any, entryToKey: (obj: any) => string) => {
 		const parentEntries = (await getEntriesQuery({variables: {parent_id}})).data.entries;
 		entries = renameToAvoidNamingCollisions(entries, parentEntries) as FileEntry[];
 
@@ -110,11 +107,11 @@ const FileInputs = ({setIsDropZoneVisible, isDropZoneVisible = false, setLoading
 		});
 	};
 
-	const uploadFiles = async (parent_id: number | null, entries: SimpleFileEntry[]) => {
+	const uploadFiles = async (parent_id: number, entries: SimpleFileEntry[]) => {
 		await upload(parent_id, entries as FileEntry[], uploadFilesMutation, result => result.data.uploadFiles, entry => entry.newName || entry.name);
 	};
 
-	const uploadFilesAndFolders = async (parent_id: number | null, entries: FileEntry[]) => {
+	const uploadFilesAndFolders = async (parent_id: number, entries: FileEntry[]) => {
 		entries.sort((a, b) => {
 			if (!a.path) return -1;
 			if (!b.path) return 1;
@@ -125,14 +122,27 @@ const FileInputs = ({setIsDropZoneVisible, isDropZoneVisible = false, setLoading
 		await upload(parent_id, entries, uploadFilesAndFoldersMutation, result => result.data.uploadFilesAndFolders, entry => entry.path ? `${entry.path}/${entry.name}` : entry.name);
 	};
 
-	const onContinueGenerator = (files: any[], cb: (parent_id: number | null, includedFiles: any[]) => void) => () => {
-		if (modalDataRef.current === null) return;
-		// @ts-ignore
-		const includedFiles = files.filter((_, i) => modalDataRef.current.included[i]);
-		const parent_id = getFolderByPath(folders, modalDataRef.current.input || "") || drive_id;
+	const onContinueGenerator = (files: any[], cb: (parent_id: number, includedFiles: any[]) => void) => () => {
+		const includedFiles = files.filter((_, i) => modalDataRef.current?.included[i]);
 
 		setModalData(null);
-		cb(parent_id, includedFiles);
+		cb(getCurrentFolderId(), includedFiles);
+	};
+
+	const getCurrentFolderId = (): number => {
+		const modalData = modalDataRef.current;
+		if (!modalData || !modalData.input) return -1;
+
+		if (modalData.input.startsWith("Drive")) return getFolderByPath(folders, modalData.input.slice(5)) || getData()?.drive_id;
+		return getFolderByPath(editableSharedFolders, modalData.input.split("/").slice(2).join("/")) || -1;
+	};
+
+	const getCurrentFolderPath = (): string => {
+		const drivePath = getFolderPath(folders, currentFolderId);
+		const sharedPath = getFolderPath(editableSharedFolders, currentFolderId);
+		const name = sharedPath ? editableSharedFolders.filter(folder => folder.id === currentFolderId)[0].username : "";
+
+		return drivePath ? `Drive${drivePath}` : sharedPath ? `Shared/${name}${sharedPath}` : "Drive";
 	};
 
 	const getFiles = (e: FormEvent): File[] | null => {
@@ -152,7 +162,7 @@ const FileInputs = ({setIsDropZoneVisible, isDropZoneVisible = false, setLoading
 		const included: boolean[] = new Array(files.length).fill(true);
 		const onContinue = onContinueGenerator(files, async (parent_id, includedFiles) => await uploadFiles(parent_id, await filesToEntries(includedFiles)));
 
-		setModalData({files, included, onContinue, input: getFolderPath(folders, currentFolderId) || "/"});
+		setModalData({files, included, onContinue, input: getCurrentFolderPath()});
 	};
 
 	const onFolderInput = (e: FormEvent) => {
@@ -162,7 +172,7 @@ const FileInputs = ({setIsDropZoneVisible, isDropZoneVisible = false, setLoading
 		const included: boolean[] = new Array(files.length).fill(true);
 		const onContinue = onContinueGenerator(files, async (parent_id, includedFiles) => await uploadFilesAndFolders(parent_id, await folderToEntries(includedFiles)));
 
-		setModalData({files, included, onContinue, input: getFolderPath(folders, currentFolderId) || "/"});
+		setModalData({files, included, onContinue, input: getCurrentFolderPath()});
 	};
 
 	const onDrop = async (e: any) => {
@@ -172,16 +182,17 @@ const FileInputs = ({setIsDropZoneVisible, isDropZoneVisible = false, setLoading
 		const {fileEntries, simpleFileEntries} = await dataTransferToEntries(e.dataTransfer.items);
 		if (!folders || !currentFolderId) return;
 
+		const input = getCurrentFolderPath();
 		if (fileEntries) {
 			const included: boolean[] = new Array(fileEntries.length).fill(true);
 			const onContinue = onContinueGenerator(fileEntries, uploadFilesAndFolders);
 
-			setModalData({files: fileEntries, included, onContinue, input: getFolderPath(folders, currentFolderId) || "/"});
+			setModalData({files: fileEntries, included, onContinue, input});
 		} else if (simpleFileEntries) {
 			const included: boolean[] = new Array(simpleFileEntries.length).fill(true);
 			const onContinue = onContinueGenerator(simpleFileEntries, uploadFiles);
 
-			setModalData({files: simpleFileEntries, included, onContinue, input: getFolderPath(folders, currentFolderId) || "/"});
+			setModalData({files: simpleFileEntries, included, onContinue, input});
 		}
 	};
 

@@ -7,6 +7,7 @@ import {Entry} from "../index";
 import {useLazyQuery, useMutation} from "@apollo/client";
 import {DOES_USER_EXIST_QUERY, GET_USER_IDS_QUERY, SHARE_ENTRIES_MUTATION} from "./ShareEntriesModal.queries";
 import {getData} from "../../../services/token";
+import useKeyboard from "../../../hooks/useKeyboard";
 
 export type User = {
 	username: string;
@@ -31,10 +32,12 @@ const ShareEntriesModal = ({setModalData, modalData}: ShareEntriesModalProps) =>
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 	const inputRef = useRef(null);
 
+	useKeyboard({key: "Escape", cb: () => setModalData(null)});
 
-	if (modalData === null) return null;
 
-	const share = async () => {
+	const onSubmit = async () => {
+		if (modalData === null) return null;
+
 		const {data} = await getUserIdsQuery({variables: {usernames: modalData.users.map(user => user.username)}});
 		const usernameToId = new Map<string, number>();
 		(data.users as { username: string, id: number }[]).forEach(({username, id}) => usernameToId.set(username, id));
@@ -54,6 +57,10 @@ const ShareEntriesModal = ({setModalData, modalData}: ShareEntriesModalProps) =>
 		});
 		setModalData(null);
 	};
+	useKeyboard({key: "Enter", cb: () => onSubmit()});
+
+	if (modalData === null) return null;
+
 
 	const onRoleChange = (username: string, value: string) => {
 		const canEdit = value === "true";
@@ -119,7 +126,7 @@ const ShareEntriesModal = ({setModalData, modalData}: ShareEntriesModalProps) =>
 
 				<Buttons>
 					<Button onClick={() => setModalData(null)}>Cancel</Button>
-					<PrimaryButton onClick={share}>OK</PrimaryButton>
+					<PrimaryButton onClick={onSubmit}>OK</PrimaryButton>
 				</Buttons>
 			</Container>
 		</ModalWindow>

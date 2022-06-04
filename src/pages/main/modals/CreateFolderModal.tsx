@@ -10,6 +10,7 @@ import {CacheContext, CurrentDataContext} from "../index";
 import {Button, Buttons, Container, DisabledButton, Header, PrimaryButton} from "./Modal.styles";
 import {foldersArrayToPaths, getFolderByPath, getFolderPath} from "../../../services/file/file";
 import {GET_ENTRY_SHARE_ID_QUERY} from "../index.queries";
+import useKeyboard from "../../../hooks/useKeyboard";
 
 type CreateFolderModalProps = {
 	isOpen: boolean;
@@ -19,13 +20,16 @@ type CreateFolderModalProps = {
 const trie = new Trie();
 const CreateFolderModal = ({isOpen = false, setIsOpen}: CreateFolderModalProps) => {
 	const {currentFolderId, folders, sharedFolders} = useContext(CurrentDataContext);
-	const {cacheFolders, cacheCurrentEntries} = useContext(CacheContext);
+	const {writeFoldersToCache, writeEntriesToCache} = useContext(CacheContext);
+
+	const editableSharedFolders = sharedFolders.filter(folder => folder.can_edit);
 
 	const initModalData = () => {
 		const drivePath = getFolderPath(folders, currentFolderId);
-		const sharedPath = getFolderPath(sharedFolders, currentFolderId); // TODO. Filter out folders user doesn't have 'editor' access to
+		const sharedPath = getFolderPath(editableSharedFolders, currentFolderId);
+		const name = sharedPath ? editableSharedFolders.filter(folder => folder.id === currentFolderId)[0].username : "";
 
-		const path = drivePath ? `Drive/${drivePath}` : sharedPath || "Drive";
+		const path = drivePath ? `Drive${drivePath}` : sharedPath ? `Shared/${name}${sharedPath}` : "Drive";
 		return {path, name: "New Folder"};
 	};
 
@@ -34,19 +38,28 @@ const CreateFolderModal = ({isOpen = false, setIsOpen}: CreateFolderModalProps) 
 	const [createFolderMutation] = useMutation(CREATE_FOLDER_MUTATION);
 	const [getEntryShareIdQuery] = useLazyQuery(GET_ENTRY_SHARE_ID_QUERY);
 
+	useKeyboard({key: "Escape", cb: () => onCancel()});
+	useKeyboard({key: "Enter", cb: () => onSubmit()});
+
 	useEffect(() => {
 		trie.reset();
-
-		foldersArrayToPaths(folders).forEach(path => trie.add(`Drive/${path}`));
-		foldersArrayToPaths(sharedFolders).forEach(path => trie.add(`Shared/${path}`));
+		trie.add("Drive");
+		foldersArrayToPaths(folders).forEach(path => trie.add(`Drive${path}`));
+		foldersArrayToPaths(editableSharedFolders, true).forEach(path => trie.add(`Shared${path}`));
 	}, [folders, sharedFolders]);
 
 	useEffect(() => {
 		if (isOpen) setModalData(initModalData());
 	}, [isOpen]);
 
+
+	const onCancel = () => {
+		setIsOpen(false);
+		setModalData(null);
+	};
+
 	const onSubmit = async () => {
-		if (!modalData) return;
+		if (!modalData || !canSubmit) return;
 
 		setIsOpen(false);
 		setModalData(initModalData());
@@ -54,25 +67,31 @@ const CreateFolderModal = ({isOpen = false, setIsOpen}: CreateFolderModalProps) 
 		const result = await createFolderMutation({variables: {name: modalData.name, parent_id}});
 		const data = result.data;
 		if (!data || !data.createFolder) return;
-
-		const drive_id = getData()?.drive_id;
 		const id = data.createFolder;
 
-		const curParentId = parent_id || drive_id;
-
-		const {data: {entry}} = await getEntryShareIdQuery({variables: {id: curParentId}});
+		const {data: {entry}} = await getEntryShareIdQuery({variables: {id: parent_id}});
 		const share_id = entry ? entry.share_id : null;
 
-		cacheFolders({name: modalData.name, parent_id: curParentId, id, share_id, bin_data: null});
-		cacheCurrentEntries({name: modalData.name, parent_id: curParentId, id, is_directory: true});
+		writeFoldersToCache([{name: modalData.name, parent_id, id, share_id, bin_data: null, can_edit: true}]);
+		if (parent_id !== currentFolderId) return;
+		writeEntriesToCache([{name: modalData.name, parent_id, id, is_directory: true, can_edit: true, preview: null, bin_data: null}]);
+	};
+
+	const getCurrentParentId = (): number => {
+		if (!modalData) return -1;
+		const drive_id = getData()?.drive_id;
+
+		if (modalData.path.startsWith("Drive")) return getFolderByPath(folders, modalData.path.slice(5)) || drive_id;
+		return getFolderByPath(editableSharedFolders, modalData.path.split("/").slice(2).join("/")) || -1;
 	};
 
 
 	if (!modalData || !isOpen) return null;
 
-	const drive_id = getData()?.drive_id;
-	const parent_id = getFolderByPath(folders, modalData.path) || drive_id;
-	const folderNames = folders.filter(folder => folder.parent_id === parent_id).map(folder => folder.name);
+	const parent_id = getCurrentParentId();
+	const folderNames = [...folders, ...sharedFolders].filter(folder => folder.parent_id === parent_id).map(folder => folder.name);
+	console.log(folders);
+	const canSubmit = modalData && modalData.name !== "" && !folderNames.includes(modalData.name);
 
 	return (
 		<ModalWindow>
@@ -83,10 +102,11 @@ const CreateFolderModal = ({isOpen = false, setIsOpen}: CreateFolderModalProps) 
 				<AutoCompleteInput placeholder="Path" initialValue={modalData.path} trie={trie} onChange={value => setModalData({...modalData, path: value || ""})}/>
 
 				<Buttons>
-					<Button onClick={() => setIsOpen(false)}>Cancel</Button>
-					{folderNames.includes(modalData.name)
-						? <DisabledButton>This name is already taken!</DisabledButton>
-						: <PrimaryButton onClick={onSubmit}>OK</PrimaryButton>}
+					<Button onClick={onCancel}>Cancel</Button>
+					{canSubmit
+						? <PrimaryButton onClick={onSubmit}>OK</PrimaryButton>
+						: <DisabledButton>This name is already taken!</DisabledButton>
+					}
 				</Buttons>
 			</Container>
 		</ModalWindow>

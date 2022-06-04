@@ -2,6 +2,7 @@ import React from "react";
 import {Buttons, Container, Header, PrimaryButton} from "./Modal.styles";
 import ModalWindow from "../../../components/ModalWindow";
 import {List, ListElement} from "./InfoModal.styles";
+import useKeyboard from "../../../hooks/useKeyboard";
 
 export type InfoModalData = {
 	title: string;
@@ -14,6 +15,10 @@ type InfoModalProps = {
 }
 
 const InfoModal = ({modalData, setModalData}: InfoModalProps) => {
+	useKeyboard({key: "Escape", cb: () => setModalData(null)});
+	useKeyboard({key: "Enter", cb: () => setModalData(null)});
+
+
 	if (!modalData) return null;
 
 	const {title, list} = modalData;

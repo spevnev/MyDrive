@@ -58,7 +58,7 @@ type FileExplorerProps = {
 
 const FileExplorer = ({path, openCreateContextMenu, loadingIds, imagePreviews, refetchMainQuery}: FileExplorerProps) => {
 	const {setIsContextMenuOpen} = useContext(ContextMenuContext);
-	const {folders, currentFolderId, currentEntries} = useContext(CurrentDataContext);
+	const {folders, sharedFolders, currentFolderId, currentEntries} = useContext(CurrentDataContext);
 	const {writeEntriesToCache} = useContext(CacheContext);
 
 	const [getPresignedUrlsQuery] = useLazyQuery(GET_PRESIGNED_URLS_QUERY);
@@ -312,7 +312,15 @@ const FileExplorer = ({path, openCreateContextMenu, loadingIds, imagePreviews, r
 		setShareEntriesModalData({entries, users});
 	};
 
-	const onMoveTo = (entry?: Entry) => setMoveEntriesModalData({entries: getEntries(entry), input: getFolderPath(folders, currentFolderId) || "/"});
+	const onMoveTo = (entry?: Entry) => {
+		const editableSharedFolders = sharedFolders.filter(folder => folder.can_edit);
+		const drivePath = getFolderPath(folders, currentFolderId);
+		const sharedPath = getFolderPath(editableSharedFolders, currentFolderId);
+		const name = sharedPath ? editableSharedFolders.filter(folder => folder.id === currentFolderId)[0].username : "";
+
+		const path = drivePath ? `Drive${drivePath}` : sharedPath ? `Shared/${name}${sharedPath}` : "Drive";
+		setMoveEntriesModalData({entries: getEntries(entry), input: path});
+	};
 
 	const onPreview = (entry?: Entry) => setImagePreviewData(getEntries(entry)[0]);
 

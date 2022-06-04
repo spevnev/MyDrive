@@ -80,11 +80,13 @@ const AutoCompleteInput = ({trie, placeholder, onChange, initialValue = ""}: Inp
 	});
 	useKeyboard({
 		key: "Enter", cb: e => {
+			e.preventDefault();
 			if (selected > -1 && selected < options.length) setChanges(options[selected]);
 		},
 	});
 	useKeyboard({
 		key: "Escape", cb: e => {
+			e.preventDefault();
 			if (showOptions) setShowOptions(false);
 		},
 	});
@@ -94,7 +96,7 @@ const AutoCompleteInput = ({trie, placeholder, onChange, initialValue = ""}: Inp
 	}, [options]);
 
 
-	const isValid = (value: string): boolean => trie.length === 0 || trie.has(value) || trie.has(`/${value}`) || trie.has(`${value}/`);
+	const isValid = (value: string): boolean => trie.length === 0 || value === "Drive" || trie.has(value) || trie.has(`/${value}`) || trie.has(`${value}/`);
 
 	const onInput = (e: ChangeEvent) => {
 		const value = (e.target as HTMLInputElement).value;

@@ -5,6 +5,7 @@ import {CacheContext, CurrentDataContext, Entry} from "../index";
 import {useMutation} from "@apollo/client";
 import {RENAME_ENTRY_MUTATION} from "./RenameEntryModal.queries";
 import StyledInput from "../../../components/StyledInput";
+import useKeyboard from "../../../hooks/useKeyboard";
 
 export type RenameEntryModalData = {
 	entry: Entry | null;
@@ -24,6 +25,9 @@ const RenameEntryModal = ({modalData, setModalData}: RenameEntryModalProps) => {
 
 	const [renameEntryMutation] = useMutation(RENAME_ENTRY_MUTATION);
 
+	useKeyboard({key: "Escape", cb: () => setModalData(null)});
+	useKeyboard({key: "Enter", cb: () => onSubmit()});
+
 
 	const onInput = (value: string) => {
 		if (!modalData) return;
@@ -33,8 +37,8 @@ const RenameEntryModal = ({modalData, setModalData}: RenameEntryModalProps) => {
 		setModalData({...modalData, input: value});
 	};
 
-	const onClick = async () => {
-		if (!modalData) return;
+	const onSubmit = async () => {
+		if (!modalData || !isNameValid) return;
 
 		const file_id = modalData.entry?.id;
 		const {data} = await renameEntryMutation({variables: {file_id, newFilename: modalData.input}});
@@ -42,9 +46,7 @@ const RenameEntryModal = ({modalData, setModalData}: RenameEntryModalProps) => {
 		if (!data.rename) return;
 
 		const newEntries = currentEntries.map(entry => entry.id === file_id ? {...entry, name: modalData.input || ""} : entry);
-
-		// @ts-ignore
-		writeEntriesToCache(newEntries, false);
+		writeEntriesToCache(newEntries.map(entry => ({...entry, bin_data: null, preview: null})), false);
 	};
 
 
@@ -60,7 +62,7 @@ const RenameEntryModal = ({modalData, setModalData}: RenameEntryModalProps) => {
 				<Buttons>
 					<Button onClick={() => setModalData(null)}>Cancel</Button>
 					{isNameValid
-						? <PrimaryButton onClick={onClick}>OK</PrimaryButton>
+						? <PrimaryButton onClick={onSubmit}>OK</PrimaryButton>
 						: <DisabledButton>File with this name already exists!</DisabledButton>
 					}
 				</Buttons>
