@@ -10,7 +10,7 @@ import {getToken} from "./services/token";
 const loading: Element | null = document.getElementById("loading");
 if (loading) setTimeout(() => loading.remove(), 200);
 
-const httpLink = new HttpLink({uri: process.env.BACKEND_URL});
+const httpLink = new HttpLink({uri: "https://mydrive-back.herokuapp.com/graphql"});
 const requestInterceptor = new ApolloLink((operation, forward) => {
 	const jwt = getToken();
 	if (jwt) {

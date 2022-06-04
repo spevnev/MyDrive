@@ -1,6 +1,5 @@
 FROM nginx:1.21.6-alpine
 
-ENV BACKEND_URL="http://localhost:3000/graphql"
 ENV PORT=80
 
 COPY nginx/nginx.conf /etc/nginx/nginx.conf.template
