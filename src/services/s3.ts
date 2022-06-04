@@ -15,7 +15,6 @@ export const uploadFileToS3 = async (url: string, fields: { [key: string]: strin
 	// @ts-ignore
 	Object.entries(body).forEach(e => formData.set(...e));
 
-	// const response = await fetch(url, {method: "POST", body: formData});
-	const response = await new Promise(resolve => setTimeout(() => resolve({status: 204}), 1000 * Math.random())) as { status: number };
+	const response = await fetch(url, {method: "POST", body: formData});
 	return response.status === 204;
 };
