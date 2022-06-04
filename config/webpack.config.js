@@ -14,6 +14,7 @@ const {WebpackManifestPlugin} = require("webpack-manifest-plugin");
 const InterpolateHtmlPlugin = require("react-dev-utils/InterpolateHtmlPlugin");
 const WorkboxWebpackPlugin = require("workbox-webpack-plugin");
 const ModuleScopePlugin = require("react-dev-utils/ModuleScopePlugin");
+const CompressionPlugin = require("compression-webpack-plugin");
 const ESLintPlugin = require("eslint-webpack-plugin");
 const paths = require("./paths");
 const modules = require("./modules");
@@ -103,6 +104,21 @@ module.exports = webpackEnv => {
 				}),
 				new CssMinimizerPlugin(),
 			],
+			splitChunks: isEnvProduction && {
+				chunks: "all",
+				minSize: 30720,
+				enforceSizeThreshold: 61440,
+				maxSize: 92160,
+				maxInitialRequests: 20,
+				maxAsyncRequests: 20,
+				cacheGroups: {
+					vendors: {
+						test: /[\\/]node_modules[\\/]/,
+						chunks: "all",
+						reuseExistingChunk: true,
+					},
+				},
+			},
 		},
 		resolve: {
 			modules: ["node_modules", paths.appNodeModules].concat(modules.additionalModulePaths || []),
@@ -310,6 +326,15 @@ module.exports = webpackEnv => {
 					extends: [require.resolve("eslint-config-react-app/base")],
 					rules: {...(!hasJsxRuntime && {"react/react-in-jsx-scope": "error"})},
 				},
+			}),
+			isEnvProduction && new CompressionPlugin({
+				filename: "[path][base].br",
+				algorithm: "brotliCompress",
+				test: /\.js/,
+				threshold: 5120,
+				minRatio: 0.8,
+				deleteOriginalAssets: true,
+				compressionOptions: {level: 11},
 			}),
 		].filter(Boolean),
 	};

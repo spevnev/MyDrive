@@ -10,7 +10,7 @@ import {getToken} from "./services/token";
 const loading: Element | null = document.getElementById("loading");
 if (loading) setTimeout(() => loading.remove(), 200);
 
-const httpLink = new HttpLink({uri: "http://127.0.0.1:3001/graphql"});
+const httpLink = new HttpLink({uri: process.env.BACKEND_URL});
 const requestInterceptor = new ApolloLink((operation, forward) => {
 	const jwt = getToken();
 	if (jwt) {
