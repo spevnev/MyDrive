@@ -1,6 +1,7 @@
 {
   "name": "my-drive-front",
-  "version": "0.1.0",
+  "version": "1.0.0",
+  "license": "MIT",
   "private": true,
   "dependencies": {
     "@apollo/client": "^3.6.4",
