@@ -1,4 +1,4 @@
-import React, {MouseEvent, useState} from "react";
+import React, {JSX, MouseEvent, useState} from "react";
 import dropDownIcon from "assets/dropdown.svg";
 import {DepthPadding, DropDownIcon, EntryContainer, Icon, Text} from "./Entry.styles";
 import {useNavigate} from "react-router-dom";

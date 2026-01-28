@@ -1,4 +1,4 @@
-import React, {MouseEvent, useContext, useEffect, useState} from "react";
+import React, {JSX, MouseEvent, useContext, useEffect, useState} from "react";
 import {Container, Name, Row} from "./Category.styles";
 import {CategoryContext} from "../FileExplorer/FileExplorer";
 
@@ -60,7 +60,7 @@ const Category = ({Element, name}: CategoryProps) => {
 
 			<Row>
 				{data.map((dataEl: DataElement, idx: number) =>
-					<Element {...dataEl} isSelected={curSelected ? curSelected[idx] : false} onClick={(e: MouseEvent) => changeSelection(e, idx)}/>,
+					<Element {...dataEl} key={dataEl.key} isSelected={curSelected ? curSelected[idx] : false} onClick={(e: MouseEvent) => changeSelection(e, idx)}/>,
 				)}
 			</Row>
 		</Container>

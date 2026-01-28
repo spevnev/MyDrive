@@ -1,4 +1,4 @@
-import React, {MouseEvent, useState} from "react";
+import React, {JSX, MouseEvent, useState} from "react";
 import {BR, Container, Icon, Name, Option} from "./useContextMenu.styles";
 import contextMenuOptionFactory, {EContextMenuTypes} from "helpers/contextMenuOptionFactory";
 
@@ -17,7 +17,7 @@ export type ContextMenuProps = {
 type ContextMenuReturn = [
 	(e: MouseEvent, contextMenuData: object, contextMenuType: EContextMenuTypes) => void,
 	(arg: boolean) => void,
-		JSX.Element | null
+	JSX.Element | null
 ]
 
 const useContextMenu = (): ContextMenuReturn => {

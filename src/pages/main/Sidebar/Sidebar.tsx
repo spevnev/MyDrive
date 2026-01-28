@@ -1,4 +1,4 @@
-import React, {MouseEvent, useContext} from "react";
+import React, {JSX, MouseEvent, useContext} from "react";
 import addIcon from "assets/add-solid.svg";
 import diskIcon from "assets/drive.svg";
 import ProgressBar from "components/ProgressBar";

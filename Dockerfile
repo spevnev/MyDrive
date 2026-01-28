@@ -7,4 +7,4 @@ COPY nginx/headers.conf /etc/nginx/headers.conf
 
 COPY build /usr/share/nginx/html
 
-CMD envsubst '$PORT' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && nginx
+RUN envsubst '$PORT' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf

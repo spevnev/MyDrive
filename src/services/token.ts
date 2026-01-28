@@ -1,10 +1,10 @@
-import decode, {JwtPayload} from "jwt-decode";
+import { jwtDecode, JwtPayload } from "jwt-decode";
 
 export const getToken = (): string | null => {
 	const token = localStorage.getItem("JWT");
 	if (!token) return null;
 
-	const data: JwtPayload = decode(token);
+	const data: JwtPayload = jwtDecode(token);
 	if (data.exp && data.exp < Date.now() / 1000) {
 		localStorage.removeItem("JWT");
 		return null;
@@ -17,5 +17,5 @@ export const getData = (): { [key: string]: any } | null => {
 	const token = getToken();
 	if (!token) return null;
 
-	return decode(token);
+	return jwtDecode(token);
 };

@@ -138,7 +138,7 @@ const MainPage = () => {
 		if (prevPath === path && folders.length === 0 && currentEntries.length === 0) return;
 
 		const {data} = await currentFolderDataQuery({variables: {parent_id}});
-		const entries = data.entries || [];
+		const entries = data?.entries || [];
 
 		setData(path, entries, true, parent_id);
 	};
@@ -180,7 +180,7 @@ const MainPage = () => {
 
 			const {data: {entry}} = await canEditCurrentFolderQuery({variables: {id}});
 			const {data} = await currentFolderDataQuery({variables: {parent_id: id}});
-			const entries = data.entries || [];
+			const entries = data?.entries || [];
 
 			setData(path, entries, entry?.can_edit || false, id);
 		}
@@ -192,7 +192,7 @@ const MainPage = () => {
 		if (prevPath === path && folders.length === 0 && currentEntries.length === 0) return;
 
 		const {data} = await currentFolderDataQuery({variables: {parent_id: bin_id}});
-		const entries = data.entries || [];
+		const entries = data?.entries || [];
 
 		setData("Bin", entries, false, bin_id);
 	};

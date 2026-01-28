@@ -90,7 +90,6 @@ const CreateFolderModal = ({isOpen = false, setIsOpen}: CreateFolderModalProps) 
 
 	const parent_id = getCurrentParentId();
 	const folderNames = [...folders, ...sharedFolders].filter(folder => folder.parent_id === parent_id).map(folder => folder.name);
-	console.log(folders);
 	const canSubmit = modalData && modalData.name !== "" && !folderNames.includes(modalData.name);
 
 	return (
