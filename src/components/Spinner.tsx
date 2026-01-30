@@ -17,11 +17,11 @@ const loadingAnimation = keyframes`
   }
 `;
 
-const Loader = styled.div<{ size: number }>`
+const Loader = styled.div<{ $size: number }>`
   display: inline-block;
   position: relative;
-  width: ${props => props.size}px;
-  height: ${props => props.size}px;
+  width: ${props => props.$size}px;
+  height: ${props => props.$size}px;
 
   & div {
     box-sizing: border-box;
@@ -31,7 +31,7 @@ const Loader = styled.div<{ size: number }>`
     height: 100%;
     border-radius: 50%;
     animation: ${loadingAnimation} 1.33s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-    border-width: ${props => props.size / 10}px;
+    border-width: ${props => props.$size / 10}px;
     border-style: solid;
     border-color: #000 transparent transparent transparent;
   }
@@ -56,7 +56,7 @@ type SpinnerProps = {
 
 const Spinner = ({size, margin = false}: SpinnerProps) => (
 	<Container style={margin ? {height: "100%", width: "100%"} : {}}>
-		<Loader size={size}>
+		<Loader $size={size}>
 			<div/>
 			<div/>
 			<div/>

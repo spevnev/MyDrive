@@ -51,7 +51,7 @@ const Sidebar = ({openCreateContextMenu}: SidebarProps) => {
 	return (
 		<Overlay className={isSidebarOpen ? "" : "hidden"} onClick={() => setIsSidebarOpen(false)}>
 			<Container>
-				<Button onClick={onClick} isDisabled={!isCreateButtonEnabled}>
+				<Button onClick={onClick} $isDisabled={!isCreateButtonEnabled}>
 					<Icon src={addIcon}/>
 					<Text>Add</Text>
 				</Button>
